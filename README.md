@@ -2,6 +2,8 @@
 
 Clasificador binario de imágenes: recibe la foto de un alimento y responde si es **fruta** o **verdura** (criterio botánico).
 
+[![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://www.kaggle.com/kernels/welcome?src=https://github.com/11909/Clasificador-fruta-verdura/blob/main/notebooks/kaggle_train.ipynb)
+
 ## Cómo trabajamos
 
 Solo se usan modelos clásicos de aprendizaje automático (regresión logística, SVM, KNN, Naive Bayes, árboles, random forest, gradient boosting y sus combinaciones). **No se usan redes neuronales.**
@@ -42,7 +44,7 @@ tests/
 
 ## Entrenar en Kaggle
 
-1. Crea un notebook nuevo en Kaggle e importa `notebooks/kaggle_train.ipynb` (File → Import Notebook → GitHub o subir el archivo).
+1. Da clic en [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://www.kaggle.com/kernels/welcome?src=https://github.com/11909/Clasificador-fruta-verdura/blob/main/notebooks/kaggle_train.ipynb). Se abre una copia del notebook en tu cuenta de Kaggle, tomada de la versión actual de `main`. Cada quien trabaja en su copia; los cambios de código van al repo, no al notebook.
 2. Adjunta el dataset **Fruits-360** (`moltean/fruits`) y activa Internet. No hace falta GPU.
 3. Ejecuta todo, o usa **Save Version → Save & Run All** para que corra sin la pestaña abierta.
 
