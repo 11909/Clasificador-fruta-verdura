@@ -1,0 +1,29 @@
+# Rutas para Kaggle con el dataset Fruits-360 adjunto al notebook.
+# Revisa la ruta exacta en el panel "Input" del notebook y ajústala si cambia.
+data:
+  train_dirs:
+    - /kaggle/input/fruits/fruits-360_100x100/fruits-360/Training
+  test_dirs:
+    - /kaggle/input/fruits/fruits-360_100x100/fruits-360/Test
+  val_fraction: 0.1
+  image_size: 224
+  max_samples: null   # p. ej. 2000 para una prueba rápida
+
+model:
+  name: efficientnet_b0
+  pretrained: true
+
+train:
+  epochs: 5
+  freeze_backbone_epochs: 1   # primeras épocas: solo se entrena la cabeza
+  batch_size: 64
+  lr: 0.0003
+  weight_decay: 0.0001
+  num_workers: 2
+  seed: 42
+
+output_dir: /kaggle/working/outputs
+
+wandb:
+  enabled: false
+  project: clasificador-fruta-verdura
