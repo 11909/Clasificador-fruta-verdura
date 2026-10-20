@@ -19,20 +19,20 @@ seed: 42
 fuentes:
   - nombre: fruits360
     splits:
-      train: /kaggle/input/fruits/fruits-360_100x100/fruits-360/Training
-      test: /kaggle/input/fruits/fruits-360_100x100/fruits-360/Test
+      train: /kaggle/input/datasets/moltean/fruits/fruits-360_100x100/fruits-360/Training
+      test: /kaggle/input/datasets/moltean/fruits/fruits-360_100x100/fruits-360/Test
     nivel_clase: 0
 
   - nombre: freshrotten
     splits:   # por confirmar con --explorar
-      train: /kaggle/input/fresh-and-stale-classification/dataset/Train
-      test: /kaggle/input/fresh-and-stale-classification/dataset/Test
+      train: /kaggle/input/datasets/swoyam2609/fresh-and-stale-classification/dataset/Train
+      test: /kaggle/input/datasets/swoyam2609/fresh-and-stale-classification/dataset/Test
     nivel_clase: 0
     quitar_prefijos: [fresh, rotten, stale]
 
   - nombre: packeat
     splits:   # por confirmar con --explorar
-      train: /kaggle/input/packed-fruits-and-vegetables-recognition-benchmark/train
-      test: /kaggle/input/packed-fruits-and-vegetables-recognition-benchmark/test
+      train: /kaggle/input/datasets/sergeynesteruk/packed-fruits-and-vegetables-recognition-benchmark/train
+      test: /kaggle/input/datasets/sergeynesteruk/packed-fruits-and-vegetables-recognition-benchmark/test
     nivel_clase: 0
     max_por_clase: 1500   # PackEat es grande y dominado por manzana y tomate

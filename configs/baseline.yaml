@@ -2,9 +2,9 @@
 # El notebook las detecta solo; si corres en otro lado, ajústalas.
 data:
   train_dirs:
-    - /kaggle/input/fruits/fruits-360_100x100/fruits-360/Training
+    - /kaggle/input/datasets/moltean/fruits/fruits-360_100x100/fruits-360/Training
   test_dirs:
-    - /kaggle/input/fruits/fruits-360_100x100/fruits-360/Test
+    - /kaggle/input/datasets/moltean/fruits/fruits-360_100x100/fruits-360/Test
   max_por_clase: 60         # imágenes por clase para entrenar (null = todas; más = más lento)
   max_por_clase_test: null  # null = todo el conjunto de prueba
   # Grupos de data/mapping.csv que se dejan fuera del entrenamiento y la prueba.
