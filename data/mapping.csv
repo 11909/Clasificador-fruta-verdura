@@ -1,82 +1,82 @@
-nombre_base,etiqueta,nota
-almonds,excluir,semilla sin fruto; revisar
-apple,fruta,
-apricot,fruta,
-avocado,fruta,
-banana,fruta,
-bean pod,fruta,vaina (legumbre)
-beetroot,verdura,raíz
-blackberry,fruta,
-blueberry,fruta,
-cabbage,verdura,hojas
-cactus fruit,fruta,tuna
-caju seed,excluir,semilla; revisar
-cantaloupe,fruta,
-carambola,fruta,
-carrot,verdura,raíz
-cauliflower,verdura,flor
-celery,verdura,tallo
-cherimoya,fruta,
-cherry,fruta,
-chestnut,excluir,nuez; revisar
-clementine,fruta,
-cocos,fruta,
-corn,fruta,elote (criterio del equipo)
-cucumber,fruta,
-dates,fruta,
-eggplant,fruta,
-fig,fruta,
-garlic,verdura,bulbo
-ginger,verdura,rizoma
-gooseberry,fruta,
-granadilla,fruta,
-grape,fruta,
-grapefruit,fruta,
-guava,fruta,
-hazelnut,excluir,nuez; revisar
-huckleberry,fruta,
-kaki,fruta,
-kiwi,fruta,
-kohlrabi,verdura,tallo
-kumquats,fruta,
-lemon,fruta,
-limes,fruta,
-lychee,fruta,
-mandarine,fruta,
-mango,fruta,
-mangostan,fruta,
-maracuja,fruta,
-melon,fruta,
-mulberry,fruta,
-mushroom,excluir,hongo
-nectarine,fruta,
-nut,excluir,nuez; revisar
-onion,verdura,bulbo
-orange,fruta,
-papaya,fruta,
-passion fruit,fruta,
-peach,fruta,
-peanut,excluir,semilla en vaina; revisar
-pear,fruta,
-pepino,fruta,pepino dulce (Solanum muricatum)
-pepper,fruta,pimiento
-physalis,fruta,
-pineapple,fruta,
-pistachio,excluir,semilla; revisar
-pitahaya,fruta,
-plum,fruta,
-pomegranate,fruta,
-pomelo,fruta,
-potato,verdura,tubérculo (incluye camote)
-quince,fruta,
-rambutan,fruta,
-raspberry,fruta,
-redcurrant,fruta,
-salak,fruta,
-strawberry,fruta,
-tamarillo,fruta,
-tangelo,fruta,
-tomato,fruta,
-walnut,excluir,nuez; revisar
-watermelon,fruta,
-zucchini,fruta,calabacita
+nombre_base,etiqueta,grupo,nota
+almonds,fruta,nueces_semillas,almendra
+apple,fruta,,
+apricot,fruta,,
+avocado,fruta,,
+banana,fruta,,
+bean pod,fruta,,vaina (legumbre)
+beetroot,verdura,,raíz
+blackberry,fruta,,
+blueberry,fruta,,
+cabbage,verdura,,hojas
+cactus fruit,fruta,,tuna
+caju seed,fruta,nueces_semillas,semilla de marañón
+cantaloupe,fruta,,
+carambola,fruta,,
+carrot,verdura,,raíz
+cauliflower,verdura,,flor
+celery,verdura,,tallo
+cherimoya,fruta,,
+cherry,fruta,,
+chestnut,fruta,nueces_semillas,castaña
+clementine,fruta,,
+cocos,fruta,,
+corn,fruta,,elote (criterio del equipo)
+cucumber,fruta,,
+dates,fruta,,
+eggplant,fruta,,
+fig,fruta,,
+garlic,verdura,,bulbo
+ginger,verdura,,rizoma
+gooseberry,fruta,,
+granadilla,fruta,,
+grape,fruta,,
+grapefruit,fruta,,
+guava,fruta,,
+hazelnut,fruta,nueces_semillas,avellana
+huckleberry,fruta,,
+kaki,fruta,,
+kiwi,fruta,,
+kohlrabi,verdura,,tallo
+kumquats,fruta,,
+lemon,fruta,,
+limes,fruta,,
+lychee,fruta,,
+mandarine,fruta,,
+mango,fruta,,
+mangostan,fruta,,
+maracuja,fruta,,
+melon,fruta,,
+mulberry,fruta,,
+mushroom,excluir,,hongo
+nectarine,fruta,,
+nut,fruta,nueces_semillas,nuez
+onion,verdura,,bulbo
+orange,fruta,,
+papaya,fruta,,
+passion fruit,fruta,,
+peach,fruta,,
+peanut,fruta,nueces_semillas,cacahuate
+pear,fruta,,
+pepino,fruta,,pepino dulce (Solanum muricatum)
+pepper,fruta,,pimiento
+physalis,fruta,,
+pineapple,fruta,,
+pistachio,fruta,nueces_semillas,pistache
+pitahaya,fruta,,
+plum,fruta,,
+pomegranate,fruta,,
+pomelo,fruta,,
+potato,verdura,,tubérculo (incluye camote)
+quince,fruta,,
+rambutan,fruta,,
+raspberry,fruta,,
+redcurrant,fruta,,
+salak,fruta,,
+strawberry,fruta,,
+tamarillo,fruta,,
+tangelo,fruta,,
+tomato,fruta,,
+walnut,fruta,nueces_semillas,nuez de nogal
+watermelon,fruta,,
+zucchini,fruta,,calabacita

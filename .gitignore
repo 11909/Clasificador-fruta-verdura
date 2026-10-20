@@ -10,10 +10,8 @@ venv/
 data/raw/
 data/processed/
 outputs/
-wandb/
-*.pt
-*.pth
-*.ckpt
+*.joblib
+*.npy
 *.zip
 
 # Secretos
