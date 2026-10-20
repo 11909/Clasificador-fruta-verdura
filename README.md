@@ -57,11 +57,12 @@ En `configs/baseline.yaml` se listan los modelos a comparar. Cada uno se evalúa
 
 ## Criterio de etiquetas
 
-`data/mapping.csv` asigna cada alimento a `fruta`, `verdura` o `excluir`. La coincidencia es por el inicio del nombre de la carpeta, así que `apple` cubre `Apple Granny Smith 2`.
+`data/mapping.csv` asigna cada alimento a `fruta`, `verdura` o `excluir`, y opcionalmente a un `grupo`. La coincidencia es por el inicio del nombre de la carpeta, así que `apple` cubre `Apple Granny Smith 2`.
 
 - **Fruta**: todo lo que proviene de la flor y contiene semillas, incluidos tomate, pepino, pimiento, berenjena, calabacita, aguacate y elote.
 - **Verdura**: raíces, tubérculos, bulbos, tallos, hojas y flores (zanahoria, papa, camote, cebolla, ajo, jengibre, apio, col, coliflor).
-- **Excluir**: hongos, y por ahora nueces y semillas sueltas (almendra, nuez, pistache, cacahuate, castaña). Están marcadas con `revisar` para que el equipo decida.
+- **Nueces y semillas** (almendra, nuez, avellana, castaña, pistache, cacahuate, marañón): por ahora cuentan como **fruta**. Están en el grupo `nueces_semillas` del CSV; para sacarlas del modelo basta con poner `excluir_grupos: [nueces_semillas]` en la config, sin tocar código ni el CSV.
+- **Excluir**: hongos.
 
 Si un dataset tiene una clase que no está en el CSV, el entrenamiento se detiene y la lista. `python scripts/check_mapping.py <carpeta>` lo revisa antes.
 

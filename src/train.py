@@ -48,9 +48,10 @@ def main(config_path: str):
     salida = Path(cfg["output_dir"])
     salida.mkdir(parents=True, exist_ok=True)
 
-    train = limitar_por_clase(listar_muestras(d["train_dirs"]), d.get("max_por_clase"), semilla)
-    test = limitar_por_clase(listar_muestras(d["test_dirs"]), d.get("max_por_clase_test"), semilla) \
-        if d.get("test_dirs") else []
+    excluir = d.get("excluir_grupos") or []
+    train = limitar_por_clase(listar_muestras(d["train_dirs"], excluir_grupos=excluir), d.get("max_por_clase"), semilla)
+    test = limitar_por_clase(listar_muestras(d["test_dirs"], excluir_grupos=excluir), d.get("max_por_clase_test"),
+                             semilla) if d.get("test_dirs") else []
     print(f"train {conteo(train)} | test {conteo(test)}")
 
     X = caracteristicas(train, cfg["features"], salida / "cache", "train")

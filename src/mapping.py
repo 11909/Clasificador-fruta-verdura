@@ -14,9 +14,16 @@ def normalizar(nombre_clase: str) -> str:
     return re.sub(r"\s+\d+$", "", nombre)
 
 
-def cargar_mapping(path: Path = MAPPING_PATH) -> dict[str, str]:
+def cargar_mapping(path: Path = MAPPING_PATH, excluir_grupos=()) -> dict[str, str]:
+    """Lee data/mapping.csv. Las filas cuyo `grupo` esté en `excluir_grupos` se marcan como "excluir",
+    lo que permite quitar un grupo completo (p. ej. "nueces_semillas") sin editar el CSV."""
+    excluir_grupos = set(excluir_grupos or ())
     with open(path, encoding="utf-8") as f:
-        return {fila["nombre_base"].strip().lower(): fila["etiqueta"].strip() for fila in csv.DictReader(f)}
+        return {
+            fila["nombre_base"].strip().lower():
+                EXCLUIR if (fila.get("grupo") or "").strip() in excluir_grupos else fila["etiqueta"].strip()
+            for fila in csv.DictReader(f)
+        }
 
 
 def etiqueta_de(nombre_clase: str, mapping: dict[str, str]) -> str | None:

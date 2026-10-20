@@ -8,12 +8,13 @@ from src.mapping import ETIQUETAS, EXCLUIR, cargar_mapping, etiqueta_de, normali
 EXTENSIONES = {".jpg", ".jpeg", ".png", ".bmp", ".webp"}
 
 
-def listar_muestras(raices: list[str], mapping: dict[str, str] | None = None) -> list[tuple[str, int, str]]:
+def listar_muestras(raices: list[str], mapping: dict[str, str] | None = None,
+                    excluir_grupos=()) -> list[tuple[str, int, str]]:
     """Recorre cada raíz y devuelve (ruta, etiqueta, clase) con etiqueta 0 = fruta y 1 = verdura.
 
     Falla si alguna carpeta de clase no está en data/mapping.csv, para no entrenar con etiquetas faltantes.
     """
-    mapping = mapping or cargar_mapping()
+    mapping = mapping or cargar_mapping(excluir_grupos=excluir_grupos)
     muestras, sin_mapeo = [], set()
     for raiz in raices:
         for carpeta in sorted(p for p in Path(raiz).iterdir() if p.is_dir()):

@@ -25,3 +25,15 @@ def test_coincidencia_por_palabra_completa():
 
 def test_etiquetas_validas():
     assert set(MAPPING.values()) <= {"fruta", "verdura", "excluir"}
+
+
+def test_nueces_y_semillas_son_fruta_por_defecto():
+    assert etiqueta_de("Walnut 1", MAPPING) == "fruta"
+    assert etiqueta_de("Almonds 1", MAPPING) == "fruta"
+
+
+def test_excluir_grupo_desde_config():
+    sin_nueces = cargar_mapping(excluir_grupos=["nueces_semillas"])
+    assert etiqueta_de("Walnut 1", sin_nueces) == "excluir"
+    assert etiqueta_de("Peanut shell 1x 1", sin_nueces) == "excluir"
+    assert etiqueta_de("Apple Red 1", sin_nueces) == "fruta"  # el resto no cambia
