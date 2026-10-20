@@ -80,3 +80,18 @@ tomato,fruta,,
 walnut,fruta,nueces_semillas,nuez de nogal
 watermelon,fruta,,
 zucchini,fruta,,calabacita
+bell pepper,fruta,,pimiento
+bitter gourd,fruta,,melón amargo
+bittergroud,fruta,,melón amargo (así viene escrito en algunos datasets)
+broccoli,verdura,,flor
+capsicum,fruta,,pimiento
+chili,fruta,,chile
+jalapeno,fruta,,chile
+lettuce,verdura,,hojas
+okra,fruta,,vaina
+pumpkin,fruta,,calabaza
+radish,verdura,,raíz
+spinach,verdura,,hojas
+squash,fruta,,calabaza
+sweetcorn,fruta,,elote
+turnip,verdura,,raíz
