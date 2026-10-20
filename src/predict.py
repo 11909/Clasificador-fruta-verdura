@@ -1,27 +1,24 @@
-"""Predicción sobre una imagen.  Uso:  python -m src.predict outputs/best.pt foto.jpg"""
+"""Predicción sobre una imagen.  Uso:  python -m src.predict outputs/modelo.joblib foto.jpg"""
 import sys
 
-import torch
+import joblib
 from PIL import Image
 
-from src.dataset import transformaciones
+from src.features import extraer
 from src.mapping import ETIQUETAS
-from src.model import crear_modelo
 
 
-def cargar(checkpoint: str, device: str = "cpu"):
-    ck = torch.load(checkpoint, map_location=device)
-    modelo = crear_modelo(ck["model"], preentrenado=False)
-    modelo.load_state_dict(ck["state_dict"])
-    return modelo.to(device).eval(), transformaciones(ck["image_size"], entrenamiento=False)
+def cargar(ruta_modelo: str) -> dict:
+    return joblib.load(ruta_modelo)
 
 
-@torch.no_grad()
-def predecir(modelo, transform, imagen: Image.Image) -> dict[str, float]:
-    probs = modelo(transform(imagen.convert("RGB")).unsqueeze(0)).softmax(1)[0]
-    return {e: float(p) for e, p in zip(ETIQUETAS, probs)}
+def predecir(paquete: dict, imagen: Image.Image) -> dict[str, float]:
+    x = extraer(imagen, **paquete["features"]).reshape(1, -1)
+    modelo = paquete["modelo"]
+    if hasattr(modelo, "predict_proba"):
+        return {e: float(p) for e, p in zip(ETIQUETAS, modelo.predict_proba(x)[0])}
+    return {e: float(i == modelo.predict(x)[0]) for i, e in enumerate(ETIQUETAS)}
 
 
 if __name__ == "__main__":
-    modelo, transform = cargar(sys.argv[1])
-    print(predecir(modelo, transform, Image.open(sys.argv[2])))
+    print(predecir(cargar(sys.argv[1]), Image.open(sys.argv[2])))

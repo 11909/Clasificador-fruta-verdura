@@ -1,107 +1,104 @@
-"""Entrenamiento con transfer learning.
+"""Entrenamiento con modelos clásicos: extrae características, compara modelos con validación
+cruzada, reentrena el mejor con todo el conjunto de entrenamiento y lo evalúa en test.
 
 Uso:  python -m src.train --config configs/baseline.yaml
 """
 import argparse
+import csv
+import hashlib
 import json
-import random
+import time
 from pathlib import Path
 
+import joblib
 import numpy as np
-import torch
 import yaml
-from torch import nn
-from torch.utils.data import DataLoader
+from sklearn.model_selection import GridSearchCV, StratifiedGroupKFold, StratifiedKFold, cross_validate
 
-from src.dataset import ImagenesBinarias, conteo, dividir, listar_muestras, transformaciones
-from src.evaluate import evaluar
-from src.mapping import ETIQUETAS
-from src.model import congelar_backbone, crear_modelo
+from src.dataset import conteo, limitar_por_clase, listar_muestras
+from src.evaluate import metricas
+from src.features import extraer_con_cache
+from src.models import crear_modelo
 
-
-def fijar_semilla(semilla: int):
-    random.seed(semilla)
-    np.random.seed(semilla)
-    torch.manual_seed(semilla)
-    torch.cuda.manual_seed_all(semilla)
+METRICAS_CV = ["accuracy", "f1_macro"]
 
 
-def submuestra(muestras: list, maximo: int | None, semilla: int) -> list:
-    """Para pruebas rápidas: limita el número de imágenes."""
-    if not maximo or len(muestras) <= maximo:
-        return muestras
-    return random.Random(semilla).sample(muestras, maximo)
+def crear_cv(cfg_cv: dict, semilla: int):
+    """"grupos": ninguna clase (variedad) aparece a la vez en entrenamiento y validación, lo que evita
+    que fotos casi idénticas de la misma pieza inflen el resultado. "estratificada": división aleatoria."""
+    if cfg_cv["tipo"] == "grupos":
+        return StratifiedGroupKFold(n_splits=cfg_cv["folds"], shuffle=True, random_state=semilla)
+    if cfg_cv["tipo"] == "estratificada":
+        return StratifiedKFold(n_splits=cfg_cv["folds"], shuffle=True, random_state=semilla)
+    raise ValueError(f"cv.tipo desconocido: {cfg_cv['tipo']}")
+
+
+def caracteristicas(muestras: list, cfg_feat: dict, cache_dir: Path, nombre: str) -> np.ndarray:
+    rutas = [m[0] for m in muestras]
+    clave = hashlib.md5(json.dumps([rutas, cfg_feat]).encode()).hexdigest()[:10]
+    inicio = time.time()
+    X = extraer_con_cache(rutas, cache_dir / f"{nombre}_{clave}.npy", **cfg_feat)
+    print(f"características {nombre}: {X.shape} en {time.time() - inicio:.0f} s")
+    return X
 
 
 def main(config_path: str):
     cfg = yaml.safe_load(open(config_path, encoding="utf-8"))
-    d, m, t = cfg["data"], cfg["model"], cfg["train"]
-    fijar_semilla(t["seed"])
-    device = "cuda" if torch.cuda.is_available() else "cpu"
+    d, semilla = cfg["data"], cfg["seed"]
     salida = Path(cfg["output_dir"])
     salida.mkdir(parents=True, exist_ok=True)
 
-    muestras = submuestra(listar_muestras(d["train_dirs"]), d.get("max_samples"), t["seed"])
-    train, val = dividir(muestras, d["val_fraction"], t["seed"])
-    test = submuestra(listar_muestras(d["test_dirs"]), d.get("max_samples"), t["seed"]) if d.get("test_dirs") else []
-    print(f"train {conteo(train)} | val {conteo(val)} | test {conteo(test)} | device {device}")
+    train = limitar_por_clase(listar_muestras(d["train_dirs"]), d.get("max_por_clase"), semilla)
+    test = limitar_por_clase(listar_muestras(d["test_dirs"]), d.get("max_por_clase_test"), semilla) \
+        if d.get("test_dirs") else []
+    print(f"train {conteo(train)} | test {conteo(test)}")
 
-    cargar = lambda ms, ent: DataLoader(
-        ImagenesBinarias(ms, transformaciones(d["image_size"], ent)),
-        batch_size=t["batch_size"], shuffle=ent, num_workers=t["num_workers"], pin_memory=device == "cuda",
-    )
-    dl_train, dl_val = cargar(train, True), cargar(val, False)
+    X = caracteristicas(train, cfg["features"], salida / "cache", "train")
+    y = np.array([m[1] for m in train])
+    grupos = np.array([m[2] for m in train])
+    cv = crear_cv(cfg["cv"], semilla)
 
-    modelo = crear_modelo(m["name"], m["pretrained"]).to(device)
-    # Pesos inversos a la frecuencia para compensar el desbalance fruta/verdura
-    n = conteo(train)
-    pesos = torch.tensor([len(train) / (len(ETIQUETAS) * max(n[e], 1)) for e in ETIQUETAS], device=device)
-    criterio = nn.CrossEntropyLoss(weight=pesos)
-    optim = torch.optim.AdamW(modelo.parameters(), lr=t["lr"], weight_decay=t["weight_decay"])
-    sched = torch.optim.lr_scheduler.CosineAnnealingLR(optim, T_max=t["epochs"])
-    scaler = torch.amp.GradScaler(enabled=device == "cuda")
+    resultados = []
+    for spec in cfg["models"]:
+        modelo = crear_modelo(spec["name"], spec.get("params"), spec.get("pca"), semilla)
+        inicio = time.time()
+        if spec.get("grid"):
+            # Búsqueda de hiperparámetros con la misma validación cruzada
+            busqueda = GridSearchCV(modelo, spec["grid"], cv=cv, scoring="f1_macro", n_jobs=-1)
+            busqueda.fit(X, y, groups=grupos)
+            fila_mejor = busqueda.best_index_
+            puntajes = {"f1_macro": busqueda.cv_results_["mean_test_score"][fila_mejor],
+                        "f1_macro_std": busqueda.cv_results_["std_test_score"][fila_mejor]}
+            spec = {**spec, "mejores_params": busqueda.best_params_}
+        else:
+            cvr = cross_validate(modelo, X, y, groups=grupos, cv=cv, scoring=METRICAS_CV, n_jobs=-1)
+            puntajes = {m: cvr[f"test_{m}"].mean() for m in METRICAS_CV}
+            puntajes["f1_macro_std"] = cvr["test_f1_macro"].std()
+        fila = {"modelo": spec["name"], **{k: round(float(v), 4) for k, v in puntajes.items()},
+                "segundos": round(time.time() - inicio, 1), "spec": spec}
+        print(json.dumps(fila, default=str))
+        resultados.append(fila)
 
-    wandb_run = None
-    if cfg.get("wandb", {}).get("enabled"):
-        import wandb
-        wandb_run = wandb.init(project=cfg["wandb"]["project"], config=cfg)
+    with open(salida / "resultados_cv.csv", "w", newline="", encoding="utf-8") as f:
+        campos = ["modelo", "accuracy", "f1_macro", "f1_macro_std", "segundos", "spec"]
+        writer = csv.DictWriter(f, fieldnames=campos, extrasaction="ignore")
+        writer.writeheader()
+        writer.writerows({**r, "spec": json.dumps(r["spec"], default=str)} for r in resultados)
 
-    mejor_f1 = -1.0
-    for epoca in range(t["epochs"]):
-        congelar_backbone(modelo, epoca < t["freeze_backbone_epochs"])
-        modelo.train()
-        perdida_total = 0.0
-        for x, y in dl_train:
-            x, y = x.to(device), y.to(device)
-            optim.zero_grad()
-            with torch.autocast(device_type=device, enabled=device == "cuda"):
-                perdida = criterio(modelo(x), y)
-            scaler.scale(perdida).backward()
-            scaler.step(optim)
-            scaler.update()
-            perdida_total += perdida.item() * len(y)
-        sched.step()
-
-        metricas = evaluar(modelo, dl_val, device)
-        registro = {"epoca": epoca + 1, "loss_train": perdida_total / len(train),
-                    **{f"val_{k}": v for k, v in metricas.items() if k != "matriz_confusion"}}
-        print(json.dumps(registro))
-        if wandb_run:
-            wandb_run.log(registro)
-        if metricas["f1_macro"] > mejor_f1:
-            mejor_f1 = metricas["f1_macro"]
-            torch.save({"model": m["name"], "image_size": d["image_size"], "state_dict": modelo.state_dict()},
-                       salida / "best.pt")
+    mejor = max(resultados, key=lambda r: r["f1_macro"])
+    spec = mejor["spec"]
+    print(f"mejor modelo en validación cruzada: {spec['name']} (f1_macro {mejor['f1_macro']})")
+    modelo = crear_modelo(spec["name"], spec.get("params"), spec.get("pca"), semilla)
+    if spec.get("mejores_params"):
+        modelo.set_params(**spec["mejores_params"])
+    modelo.fit(X, y)
+    joblib.dump({"modelo": modelo, "features": cfg["features"], "spec": spec}, salida / "modelo.joblib")
 
     if test:
-        modelo.load_state_dict(torch.load(salida / "best.pt", map_location=device)["state_dict"])
-        metricas = evaluar(modelo, cargar(test, False), device)
-        print("test", json.dumps(metricas))
-        json.dump(metricas, open(salida / "test_metrics.json", "w"), indent=2)
-        if wandb_run:
-            wandb_run.summary.update({f"test_{k}": v for k, v in metricas.items() if k != "matriz_confusion"})
-    if wandb_run:
-        wandb_run.finish()
+        X_test = caracteristicas(test, cfg["features"], salida / "cache", "test")
+        resultado = metricas([m[1] for m in test], modelo.predict(X_test))
+        print("test", json.dumps(resultado))
+        json.dump({"modelo": spec["name"], **resultado}, open(salida / "test_metrics.json", "w"), indent=2)
 
 
 if __name__ == "__main__":

@@ -1,21 +1,15 @@
 """Lectura de carpetas tipo ImageFolder (raiz/clase/imagen.jpg) con etiqueta binaria."""
 import random
-from collections import Counter
+from collections import Counter, defaultdict
 from pathlib import Path
 
-from PIL import Image
-from torch.utils.data import Dataset
-from torchvision import transforms
-
-from src.mapping import ETIQUETAS, EXCLUIR, cargar_mapping, etiqueta_de
+from src.mapping import ETIQUETAS, EXCLUIR, cargar_mapping, etiqueta_de, normalizar
 
 EXTENSIONES = {".jpg", ".jpeg", ".png", ".bmp", ".webp"}
-IMAGENET_MEAN = (0.485, 0.456, 0.406)
-IMAGENET_STD = (0.229, 0.224, 0.225)
 
 
-def listar_muestras(raices: list[str], mapping: dict[str, str] | None = None) -> list[tuple[str, int]]:
-    """Recorre cada raíz y devuelve (ruta, etiqueta) con 0 = fruta y 1 = verdura.
+def listar_muestras(raices: list[str], mapping: dict[str, str] | None = None) -> list[tuple[str, int, str]]:
+    """Recorre cada raíz y devuelve (ruta, etiqueta, clase) con etiqueta 0 = fruta y 1 = verdura.
 
     Falla si alguna carpeta de clase no está en data/mapping.csv, para no entrenar con etiquetas faltantes.
     """
@@ -29,56 +23,24 @@ def listar_muestras(raices: list[str], mapping: dict[str, str] | None = None) ->
                 continue
             if etiqueta == EXCLUIR:
                 continue
-            y = ETIQUETAS.index(etiqueta)
-            muestras += [(str(p), y) for p in sorted(carpeta.iterdir()) if p.suffix.lower() in EXTENSIONES]
+            y, clase = ETIQUETAS.index(etiqueta), normalizar(carpeta.name)
+            muestras += [(str(p), y, clase) for p in sorted(carpeta.iterdir()) if p.suffix.lower() in EXTENSIONES]
     if sin_mapeo:
         raise ValueError(f"Clases sin entrada en data/mapping.csv: {sorted(sin_mapeo)}")
     return muestras
 
 
-def dividir(muestras: list, fraccion_val: float, semilla: int) -> tuple[list, list]:
-    """División aleatoria estratificada por etiqueta."""
+def limitar_por_clase(muestras: list, maximo: int | None, semilla: int) -> list:
+    """Toma como máximo `maximo` imágenes de cada clase, para acotar memoria y tiempo."""
+    if not maximo:
+        return muestras
     rng = random.Random(semilla)
-    train, val = [], []
-    for y in range(len(ETIQUETAS)):
-        grupo = [m for m in muestras if m[1] == y]
-        rng.shuffle(grupo)
-        corte = int(len(grupo) * fraccion_val)
-        val += grupo[:corte]
-        train += grupo[corte:]
-    return train, val
+    por_clase = defaultdict(list)
+    for m in muestras:
+        por_clase[m[2]].append(m)
+    return [m for grupo in por_clase.values() for m in rng.sample(grupo, min(maximo, len(grupo)))]
 
 
 def conteo(muestras: list) -> dict[str, int]:
-    c = Counter(y for _, y in muestras)
+    c = Counter(m[1] for m in muestras)
     return {ETIQUETAS[y]: c.get(y, 0) for y in range(len(ETIQUETAS))}
-
-
-def transformaciones(tamano: int, entrenamiento: bool):
-    if entrenamiento:
-        return transforms.Compose([
-            transforms.RandomResizedCrop(tamano, scale=(0.6, 1.0)),
-            transforms.RandomHorizontalFlip(),
-            transforms.RandomRotation(20),
-            transforms.ColorJitter(0.3, 0.3, 0.3, 0.05),
-            transforms.ToTensor(),
-            transforms.Normalize(IMAGENET_MEAN, IMAGENET_STD),
-        ])
-    return transforms.Compose([
-        transforms.Resize((tamano, tamano)),
-        transforms.ToTensor(),
-        transforms.Normalize(IMAGENET_MEAN, IMAGENET_STD),
-    ])
-
-
-class ImagenesBinarias(Dataset):
-    def __init__(self, muestras: list[tuple[str, int]], transform):
-        self.muestras = muestras
-        self.transform = transform
-
-    def __len__(self):
-        return len(self.muestras)
-
-    def __getitem__(self, i):
-        ruta, y = self.muestras[i]
-        return self.transform(Image.open(ruta).convert("RGB")), y

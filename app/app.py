@@ -1,6 +1,6 @@
-"""Demo con Gradio.  Uso local:  python -m app.app outputs/best.pt
+"""Demo con Gradio.  Uso local:  python -m app.app outputs/modelo.joblib
 
-En Hugging Face Spaces: sube best.pt junto a este archivo y define CHECKPOINT=best.pt.
+En Hugging Face Spaces: sube modelo.joblib junto a este archivo y define MODELO=modelo.joblib.
 """
 import os
 import sys
@@ -9,15 +9,15 @@ import gradio as gr
 
 from src.predict import cargar, predecir
 
-checkpoint = sys.argv[1] if len(sys.argv) > 1 else os.environ.get("CHECKPOINT", "outputs/best.pt")
-modelo, transform = cargar(checkpoint)
+ruta = sys.argv[1] if len(sys.argv) > 1 else os.environ.get("MODELO", "outputs/modelo.joblib")
+paquete = cargar(ruta)
 
 demo = gr.Interface(
-    fn=lambda imagen: predecir(modelo, transform, imagen),
+    fn=lambda imagen: predecir(paquete, imagen),
     inputs=gr.Image(type="pil", label="Foto de una fruta o verdura"),
     outputs=gr.Label(label="Predicción"),
     title="¿Fruta o verdura?",
-    description="Clasificación con criterio botánico.",
+    description=f"Clasificación con criterio botánico. Modelo: {paquete['spec']['name']}.",
 )
 
 if __name__ == "__main__":
