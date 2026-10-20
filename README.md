@@ -34,19 +34,34 @@ src/
   train.py      # validación cruzada de todos los modelos, reentrena el mejor y evalúa en test
   evaluate.py   # accuracy, F1 por clase y matriz de confusión
   predict.py    # predicción sobre una imagen
+  build_dataset.py  # combina varios datasets en uno propio, sin duplicados
 configs/baseline.yaml       # rutas, características, tipo de validación y modelos a comparar
 data/mapping.csv            # diccionario del criterio botánico (lo revisa el equipo)
 notebooks/kaggle_train.ipynb
+notebooks/kaggle_build_dataset.ipynb
 app/app.py                  # demo con Gradio
 scripts/check_mapping.py    # lista clases sin etiqueta en un dataset
+configs/dataset.yaml        # fuentes del dataset combinado
 tests/
 ```
 
 ## Entrenar en Kaggle
 
 1. Da clic en [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://www.kaggle.com/kernels/welcome?src=https://github.com/11909/Clasificador-fruta-verdura/blob/main/notebooks/kaggle_train.ipynb). Se abre una copia del notebook en tu cuenta de Kaggle, tomada de la versión actual de `main`. Cada quien trabaja en su copia; los cambios de código van al repo, no al notebook.
-2. Adjunta el dataset **Fruits-360** (`moltean/fruits`) y activa Internet. No hace falta GPU.
+2. Adjunta el dataset combinado del equipo (o, mientras no exista, **Fruits-360** `moltean/fruits`) y activa **Settings → Internet**. No hace falta GPU.
 3. Ejecuta todo, o usa **Save Version → Save & Run All** para que corra sin la pestaña abierta.
+
+## Dataset combinado del equipo
+
+`src/build_dataset.py` junta varias fuentes en un solo dataset con estructura `train/<clase>/` y `test/<clase>/`. Las fuentes se describen en `configs/dataset.yaml`; el notebook [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://www.kaggle.com/kernels/welcome?src=https://github.com/11909/Clasificador-fruta-verdura/blob/main/notebooks/kaggle_build_dataset.ipynb) lo construye en Kaggle y explica cómo publicarlo como dataset privado.
+
+- **Adaptadores por fuente:** cada fuente indica dónde están sus splits, en qué nivel de carpeta está la clase, qué prefijos quitar (`freshapples` → `apple`) y renombres especiales. Los plurales se resuelven solos.
+- **Duplicados:** se eliminan por hash del contenido. Si una foto está en test de una fuente y en train de otra, se queda solo en test.
+- **Trazabilidad:** `manifest.csv` guarda la fuente y la ruta original de cada imagen, y `reporte.json` los conteos, duplicados y carpetas sin mapeo por fuente.
+- **Clases sin mapeo:** no se copian y se listan al final. Se agregan a `data/mapping.csv` y se vuelve a correr.
+- **Fuente nueva:** `python -m src.build_dataset --explorar <carpeta>` muestra su estructura para llenar la config.
+
+El dataset combinado mezcla licencias (Fruits-360 es CC BY-SA 4.0): manténganlo privado o revisen las licencias antes de publicarlo.
 
 ## Modelos y validación
 

@@ -1,0 +1,38 @@
+# Fuentes para construir el dataset combinado del equipo (python -m src.build_dataset).
+#
+# Por fuente:
+#   splits:          carpeta de cada split (train y/o test). Una fuente puede tener solo uno.
+#   nivel_clase:     en qué nivel bajo el split está la carpeta con el nombre de la clase
+#                    (0 = split/clase/imagen.jpg; 1 = split/algo/clase/imagen.jpg).
+#   quitar_prefijos: texto a quitar del inicio del nombre ("freshapples" -> "apples").
+#   renombrar:       nombre limpio -> nombre en data/mapping.csv, para casos especiales.
+#   max_por_clase:   opcional, limita imágenes por clase de esa fuente.
+#
+# Las rutas de Kaggle de abajo son las esperadas; revisa cada fuente con
+#   python -m src.build_dataset --explorar /kaggle/input/<dataset>
+# y corrige splits y nivel_clase si no coinciden.
+
+salida: /kaggle/working/dataset
+tamano_max: 256   # lado mayor de las imágenes guardadas (no se agrandan las pequeñas)
+seed: 42
+
+fuentes:
+  - nombre: fruits360
+    splits:
+      train: /kaggle/input/fruits/fruits-360_100x100/fruits-360/Training
+      test: /kaggle/input/fruits/fruits-360_100x100/fruits-360/Test
+    nivel_clase: 0
+
+  - nombre: freshrotten
+    splits:   # por confirmar con --explorar
+      train: /kaggle/input/fresh-and-stale-classification/dataset/Train
+      test: /kaggle/input/fresh-and-stale-classification/dataset/Test
+    nivel_clase: 0
+    quitar_prefijos: [fresh, rotten, stale]
+
+  - nombre: packeat
+    splits:   # por confirmar con --explorar
+      train: /kaggle/input/packed-fruits-and-vegetables-recognition-benchmark/train
+      test: /kaggle/input/packed-fruits-and-vegetables-recognition-benchmark/test
+    nivel_clase: 0
+    max_por_clase: 1500   # PackEat es grande y dominado por manzana y tomate
