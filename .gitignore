@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# Datos y modelos: viven en Kaggle / Hugging Face, no en el repo
+data/raw/
+data/processed/
+outputs/
+wandb/
+*.pt
+*.pth
+*.ckpt
+*.zip
+
+# Secretos
+.env
+kaggle.json
