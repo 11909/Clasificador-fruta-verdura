@@ -62,6 +62,45 @@ def resolver_clase(nombre_carpeta: str, fuente: dict, mapping: dict,
     return nombre, None
 
 
+def ubicar(raiz: Path, relativa: str) -> Path:
+    """`raiz/relativa`; si no existe, la carpeta bajo `raiz` cuya ruta termina en `relativa` (algunos
+    datasets de Kaggle traen un nivel extra, como dataset/dataset/Train)."""
+    directa = raiz / relativa
+    if directa.is_dir() or relativa in ("", "."):
+        return directa
+    candidatas = [p for p in raiz.rglob(Path(relativa).name)
+                  if p.is_dir() and p.as_posix().endswith("/" + Path(relativa).as_posix())]
+    return min(candidatas, key=lambda p: len(p.parts)) if candidatas else directa
+
+
+def preparar_fuentes(cfg: dict, descargar=None) -> dict:
+    """Para cada fuente con `kaggle: dueño/dataset`, la descarga (o monta, dentro de Kaggle) con
+    kagglehub y vuelve absolutas sus rutas, que en la config son relativas a la raíz del dataset.
+    Una fuente que no se puede descargar se quita con un aviso. Devuelve una copia de la config."""
+    if descargar is None:
+        import kagglehub
+        descargar = kagglehub.dataset_download
+    fuentes = []
+    for fuente in cfg["fuentes"]:
+        if "kaggle" not in fuente:
+            fuentes.append(fuente)
+            continue
+        try:
+            raiz = Path(descargar(fuente["kaggle"]))
+        except Exception as e:  # dataset privado sin acceso, nombre mal escrito, sin Internet...
+            print(f"Aviso: no se pudo descargar {fuente['kaggle']} ({fuente['nombre']}); se omite. {e}")
+            continue
+        fuente = {**fuente, "raiz": str(raiz)}
+        absoluta = lambda r: [str(ubicar(raiz, x)) for x in r] if isinstance(r, list) else str(ubicar(raiz, r))
+        if "ruta" in fuente:
+            fuente["ruta"] = absoluta(fuente["ruta"])
+        else:
+            fuente["splits"] = {k: absoluta(v) for k, v in fuente["splits"].items()}
+        print(f"{fuente['nombre']}: {raiz}")
+        fuentes.append(fuente)
+    return {**cfg, "fuentes": fuentes}
+
+
 def splits_de(fuente: dict) -> set[str]:
     """Splits que aporta una fuente. Una fuente con `ruta` (sin splits propios) aporta a los dos."""
     return set(SPLITS) if "ruta" in fuente else set(fuente["splits"])

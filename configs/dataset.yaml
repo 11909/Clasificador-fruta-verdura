@@ -1,6 +1,7 @@
 # Fuentes para construir el dataset combinado del equipo (python -m src.build_dataset).
 #
 # Por fuente:
+#   kaggle:          dueño/dataset en Kaggle; se descarga solo y las rutas son relativas a él.
 #   splits:          carpeta de cada split (train y/o test), o una lista de carpetas
 #                    (p. ej. train + validation). Una fuente puede tener solo uno.
 #   ruta:            en lugar de splits, para fuentes con una sola carpeta (como la del equipo):
@@ -17,9 +18,10 @@
 # Para agregar un alimento nuevo, primero se agrega su fila al CSV y luego su carpeta en las fotos
 # del equipo.
 #
-# Las rutas de Kaggle de abajo son las esperadas; revisa cada fuente con
-#   python -m src.build_dataset --explorar /kaggle/input/<dataset>
-# y corrige splits y nivel_clase si no coinciden.
+# Las fuentes con `kaggle: dueño/dataset` se descargan solas con kagglehub (no hace falta Add Input)
+# y sus rutas son relativas a la raíz de ese dataset. Si una ruta no existe tal cual, se busca una
+# carpeta que termine igual (p. ej. dataset/dataset/Train). Para revisar la estructura:
+#   python -m src.build_dataset --explorar <carpeta>
 
 salida: /kaggle/working/dataset
 tamano_max: 256   # lado mayor de las imágenes guardadas (no se agrandan las pequeñas)
@@ -27,37 +29,42 @@ seed: 42
 
 fuentes:
   - nombre: fruits360
+    kaggle: moltean/fruits
     splits:
-      train: /kaggle/input/datasets/moltean/fruits/fruits-360_100x100/fruits-360/Training
-      test: /kaggle/input/datasets/moltean/fruits/fruits-360_100x100/fruits-360/Test
+      train: fruits-360_100x100/fruits-360/Training
+      test: fruits-360_100x100/fruits-360/Test
     nivel_clase: 0
     renombrar:
       pepino: pepino dulce   # en Fruits-360 "Pepino" es el pepino dulce, no el pepino
 
   - nombre: freshrotten
+    kaggle: swoyam2609/fresh-and-stale-classification
     splits:   # por confirmar con --explorar
-      train: /kaggle/input/datasets/swoyam2609/fresh-and-stale-classification/dataset/Train
-      test: /kaggle/input/datasets/swoyam2609/fresh-and-stale-classification/dataset/Test
+      train: Train
+      test: Test
     nivel_clase: 0
     quitar_prefijos: [fresh, rotten, stale]
 
   - nombre: packeat
+    kaggle: sergeynesteruk/packed-fruits-and-vegetables-recognition-benchmark
     splits:   # por confirmar con --explorar
-      train: /kaggle/input/datasets/sergeynesteruk/packed-fruits-and-vegetables-recognition-benchmark/train
-      test: /kaggle/input/datasets/sergeynesteruk/packed-fruits-and-vegetables-recognition-benchmark/test
+      train: train
+      test: test
     nivel_clase: 0
     max_por_clase: 1500   # PackEat es grande y dominado por manzana y tomate
 
   - nombre: vegetales15   # Vegetable Image Dataset, 15 clases a 224x224
+    kaggle: misrakahmed/vegetable-image-dataset
     splits:
       train:
-        - /kaggle/input/datasets/misrakahmed/vegetable-image-dataset/Vegetable Images/train
-        - /kaggle/input/datasets/misrakahmed/vegetable-image-dataset/Vegetable Images/validation
-      test: /kaggle/input/datasets/misrakahmed/vegetable-image-dataset/Vegetable Images/test
+        - Vegetable Images/train
+        - Vegetable Images/validation
+      test: Vegetable Images/test
     nivel_clase: 0
 
   - nombre: equipo   # fotos del equipo (dataset privado de Kaggle): una carpeta por alimento
-    ruta: /kaggle/input/datasets/11909/fotos-equipo   # por confirmar al publicarlo
+    kaggle: 11909/fotos-equipo   # por confirmar al crearlo
+    ruta: .
     fraccion_test: 0.3
     nivel_clase: 0
 
