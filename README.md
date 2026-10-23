@@ -17,7 +17,7 @@ Recibe la foto de un alimento y dice si es **fruta** o **verdura** (criterio bot
 ## 3. Construye el dataset (una persona, cuando haya cambios)
 
 1. Abre [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://www.kaggle.com/kernels/welcome?src=https://github.com/11909/Clasificador-fruta-verdura/blob/main/notebooks/kaggle_build_dataset.ipynb).
-2. **Add Input** → agrega los datasets que lista la primera celda. Activa **Settings → Internet**.
+2. Activa **Settings → Internet**. No hace falta Add Input: el notebook descarga los datasets solo.
 3. **Save Version → Save & Run All**.
 4. En la versión guardada, **Output → New Dataset** la primera vez (privado y compartido con el equipo) o **New Version** las siguientes.
 

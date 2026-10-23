@@ -125,7 +125,7 @@ Por ahora el dataset se arma **solo con datasets de Kaggle**: Fruits-360, Fresh 
 
 ### Crear el dataset
 
-1. **Construir.** Abre `kaggle_build_dataset.ipynb` en Kaggle, agrega como input las fuentes que lista su primera celda y activa Internet. Corre la sección 1 y, si alguna ruta de `configs/dataset.yaml` no coincide, corrígela en la celda 2 (y luego en el repo). Después **Save Version → Save & Run All**.
+1. **Construir.** Abre `kaggle_build_dataset.ipynb` en Kaggle, activa Internet (los datasets se descargan solos con `kagglehub`, sin Add Input). La sección 1 muestra la estructura de cada fuente; si alguna ruta de `configs/dataset.yaml` no coincide, corrígela en la celda 2 (y luego en el repo). Después **Save Version → Save & Run All**.
 2. **Publicar.** En la versión guardada, **Output → New Dataset** (privado, compartido con el equipo). Ese es el dataset que se adjunta en `kaggle_train.ipynb`.
 3. **Actualizar.** Si cambia `data/mapping.csv` o la config, se vuelve a correr y se usa **Output → New Version** sobre el mismo dataset. Revisen `conteos.csv` para ver el balance.
 

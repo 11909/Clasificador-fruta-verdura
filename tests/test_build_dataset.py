@@ -4,7 +4,7 @@ import shutil
 import numpy as np
 from PIL import Image
 
-from src.build_dataset import construir, crear_plantilla, resolver_clase
+from src.build_dataset import construir, crear_plantilla, preparar_fuentes, resolver_clase
 from src.mapping import cargar_mapping
 
 MAPPING = cargar_mapping()
@@ -110,3 +110,27 @@ def test_plantilla_crea_una_carpeta_por_alimento_sin_alias(tmp_path):
     assert "hongo" not in nombres and "berenjena" in nombres and "brinjal" not in nombres
     for nombre in nombres:
         assert MAPPING[nombre] in ("fruta", "verdura")
+
+
+def test_preparar_fuentes_vuelve_absolutas_las_rutas_y_omite_las_que_fallan(tmp_path):
+    raiz = tmp_path / "kaggle" / "dueno" / "fresh"
+    (raiz / "dataset" / "dataset" / "Train").mkdir(parents=True)
+    (raiz / "Test").mkdir(parents=True)
+
+    def descargar(handle):
+        if handle == "dueno/privado":
+            raise PermissionError("403")
+        return str(raiz)
+
+    cfg = {"fuentes": [
+        {"nombre": "fresh", "kaggle": "dueno/fresh", "splits": {"train": "Train", "test": ["Test"]}},
+        {"nombre": "equipo", "kaggle": "dueno/privado", "ruta": "."},
+        {"nombre": "local", "splits": {"train": "/ya/absoluta"}},
+    ]}
+    listo = preparar_fuentes(cfg, descargar)
+
+    assert [f["nombre"] for f in listo["fuentes"]] == ["fresh", "local"]
+    fresh = listo["fuentes"][0]
+    assert fresh["splits"]["train"] == str(raiz / "dataset" / "dataset" / "Train")
+    assert fresh["splits"]["test"] == [str(raiz / "Test")]
+    assert cfg["fuentes"][0]["splits"]["train"] == "Train"  # no modifica la config original
