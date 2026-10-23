@@ -7,7 +7,7 @@ publicación todos (notebook de predicción, demo, línea de comandos) usan el m
 Por defecto solo publica si el modelo nuevo supera al publicado en accuracy balanceada de test,
 para que nadie reemplace por error un modelo mejor. Con --forzar publica de todas formas.
 
-Necesita un token de GitHub con permiso de escritura en el repo (ver README, "Publicar el modelo").
+Necesita un token de GitHub con permiso de escritura en el repo (ver docs/detalles.md, "Publicar el modelo").
 En Kaggle se guarda en Secrets con el nombre GITHUB_TOKEN; aquí se lee de la variable de entorno.
 
 Uso:  GITHUB_TOKEN=... python -m src.publicar --salida /kaggle/working/outputs

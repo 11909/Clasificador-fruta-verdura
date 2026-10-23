@@ -2,7 +2,7 @@
 para predecir sin volver a entrenar.
 
 El modelo "oficial" se publica como archivo `modelo.joblib` en un Release de GitHub del repo,
-así que cualquiera lo descarga con un enlace fijo (ver README, sección "Publicar el modelo").
+así que cualquiera lo descarga con un enlace fijo (ver docs/detalles.md, sección "Publicar el modelo").
 """
 import hashlib
 import os
