@@ -67,7 +67,7 @@ pitahaya,fruta,,
 plum,fruta,,
 pomegranate,fruta,,
 pomelo,fruta,,
-potato,verdura,,tubérculo (incluye camote)
+potato,verdura,,papa (tubérculo)
 quince,fruta,,
 rambutan,fruta,,
 raspberry,fruta,,
@@ -82,9 +82,9 @@ watermelon,fruta,,
 zucchini,fruta,,calabacita
 bell pepper,fruta,,pimiento
 bitter gourd,fruta,,melón amargo
-bittergroud,fruta,,melón amargo (así viene escrito en algunos datasets)
+bittergroud,fruta,alias,melón amargo (así viene escrito en algunos datasets)
 broccoli,verdura,,flor
-capsicum,fruta,,pimiento
+capsicum,fruta,alias,pimiento
 chili,fruta,,chile
 jalapeno,fruta,,chile
 lettuce,verdura,,hojas
@@ -95,3 +95,43 @@ spinach,verdura,,hojas
 squash,fruta,,calabaza
 sweetcorn,fruta,,elote
 turnip,verdura,,raíz
+arum lobe,verdura,,tallo de taro (kochu loti)
+ash gourd,fruta,,calabaza blanca
+asparagus,verdura,,espárrago (tallo)
+aubergine,fruta,alias,berenjena
+bean,fruta,,ejote (vaina)
+bitter melon,fruta,alias,melón amargo
+bottle gourd,fruta,,calabaza de peregrino
+brinjal,fruta,alias,berenjena
+brown cap mushroom,excluir,,hongo
+cassava,verdura,,yuca (raíz)
+chayote,fruta,,chayote
+chives,verdura,,cebollín (hojas)
+coconut,fruta,alias,coco
+coriander,verdura,,cilantro (hojas)
+elephant foot yam,verdura,,ñame pata de elefante (cormo)
+flat bean,fruta,,ejote plano (vaina)
+green chili,fruta,alias,chile verde
+green papaya,fruta,alias,papaya verde
+green spinach,verdura,alias,espinaca
+jicama,verdura,,jícama (raíz)
+ladies finger,fruta,alias,okra
+leek,verdura,,poro (tallo y hojas)
+lime,fruta,alias,lima
+malabar spinach seed,fruta,,fruto de espinaca de Malabar
+mashua,verdura,,mashua (tubérculo)
+nopal,verdura,,nopal (tallo)
+oca,verdura,,oca (tubérculo)
+olluco,verdura,,olluco (tubérculo)
+plantain,fruta,,plátano macho
+pointed gourd,fruta,,calabaza puntiaguda
+red amaranth,verdura,,amaranto rojo (hojas)
+red beet,verdura,alias,betabel
+red grapefruit,fruta,alias,toronja
+satsumas,fruta,,mandarina satsuma
+shaluk,verdura,,rizoma de nenúfar
+snake gourd,fruta,,calabaza serpiente
+sweet potato,verdura,,camote (raíz)
+taro,verdura,,malanga (cormo)
+yacon,verdura,,yacón (raíz)
+yardlong bean,fruta,,ejote largo (vaina)
