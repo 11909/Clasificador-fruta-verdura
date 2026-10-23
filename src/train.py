@@ -15,7 +15,7 @@ import yaml
 from sklearn.model_selection import (GridSearchCV, StratifiedGroupKFold, StratifiedKFold, cross_val_predict,
                                      cross_validate)
 
-from src.dataset import balancear_por_etiqueta, conteo, limitar_por_clase, listar_muestras
+from src.dataset import balancear_por_etiqueta, conteo, dividir_equipo, limitar_por_clase, listar_muestras
 from src.evaluate import elegir_umbral, metricas, predecir_con_umbral
 from src.features import extraer_con_cache
 from src.modelo import guardar_modelo
@@ -53,6 +53,11 @@ def main(config_path: str):
     train = limitar_por_clase(listar_muestras(d["train_dirs"], excluir_grupos=excluir), d.get("max_por_clase"), semilla)
     test = limitar_por_clase(listar_muestras(d["test_dirs"], excluir_grupos=excluir), d.get("max_por_clase_test"),
                              semilla) if d.get("test_dirs") else []
+    if d.get("equipo_dir"):
+        # Fotos del equipo dentro del dataset combinado: una parte fija a test, el resto a train
+        e_train, e_test = dividir_equipo(d["equipo_dir"], d.get("fraccion_test_equipo", 0.3), semilla, excluir)
+        print(f"fotos del equipo: train {conteo(e_train)} | test {conteo(e_test)}")
+        train, test = train + e_train, test + e_test
     if d.get("balancear_etiquetas"):
         # Mismo número de frutas que de verduras al entrenar; la prueba se deja como está
         train = balancear_por_etiqueta(train, d.get("max_por_etiqueta"), semilla)

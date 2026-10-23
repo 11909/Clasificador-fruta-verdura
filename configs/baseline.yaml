@@ -11,6 +11,9 @@ data:
   balancear_etiquetas: true
   max_por_etiqueta: null
   max_por_clase_test: null  # null = todo el conjunto de prueba
+  # Fotos del equipo (carpeta equipo/ del dataset combinado): ~30 % fijo a test, el resto a train.
+  equipo_dir: null
+  fraccion_test_equipo: 0.3
   # Grupos de data/mapping.csv que se dejan fuera del entrenamiento y la prueba.
   # Para quitar nueces y semillas: excluir_grupos: [nueces_semillas]
   excluir_grupos: []
