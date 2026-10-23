@@ -117,9 +117,29 @@ Pongan sus fotos en cualquier sitio con enlace público y agreguen los enlaces a
 
 `src/build_dataset.py` junta varias fuentes en un solo dataset con estructura `train/<clase>/` y `test/<clase>/`. Las fuentes se describen en `configs/dataset.yaml`; el notebook `kaggle_build_dataset.ipynb` lo construye en Kaggle y explica cómo publicarlo como dataset privado.
 
+Fuentes actuales: Fruits-360, Fresh and Rotten, PackEat, Vegetable Image Dataset (15 clases), vegetales de Bangladesh (Mendeley, CC BY 4.0), Grocery Store Dataset (GitHub, MIT) y las fotos del equipo. Las rutas marcadas "por confirmar" en la config se revisan con `--explorar`.
+
+**`data/mapping.csv` es la lista oficial de alimentos.** Cada fila es una fruta o verdura con su etiqueta; las filas con grupo `alias` son otro nombre del mismo alimento en algún dataset (`brinjal` = `eggplant`).
+
+**Fotos del equipo:** van en un dataset privado de Kaggle con una carpeta por alimento, sin carpetas de train/test ni de fruta/verdura:
+
+```
+fotos-equipo/
+  oca/
+  radish/
+  sweet_potato/
+  ...
+```
+
+- `python -m src.build_dataset --plantilla fotos-equipo` crea una carpeta vacía por cada alimento del CSV (sin alias ni excluidos).
+- Para un alimento que no está, primero se agrega su fila a `data/mapping.csv` y luego su carpeta.
+- El script decide si cada foto va a train o a test (`fraccion_test`, 30 % por defecto) a partir de su nombre, así que agregar fotos no mueve las que ya estaban.
+- Al subir fotos nuevas: **New Version** del dataset de fotos y se vuelve a correr el notebook.
+
 - **Adaptadores por fuente:** cada fuente indica dónde están sus splits, en qué nivel de carpeta está la clase, qué prefijos quitar (`freshapples` → `apple`) y renombres especiales. Los plurales se resuelven solos.
 - **Duplicados:** se eliminan por hash del contenido. Si una foto está en test de una fuente y en train de otra, se queda solo en test.
 - **Trazabilidad:** `manifest.csv` guarda la fuente y la ruta original de cada imagen, y `reporte.json` los conteos, duplicados y carpetas sin mapeo por fuente.
+- **Desbalance:** `conteos.csv` tiene una fila por etiqueta, clase y fuente con sus imágenes de train y test, de la clase con más imágenes a la que tiene menos.
 - **Clases sin mapeo:** no se copian y se listan al final. Se agregan a `data/mapping.csv` y se vuelve a correr.
 - **Fuente nueva:** `python -m src.build_dataset --explorar <carpeta>` muestra su estructura para llenar la config.
 

@@ -3,15 +3,20 @@
     salida/train/<clase>/<fuente>_<hash>.jpg
     salida/test/<clase>/<fuente>_<hash>.jpg
     salida/manifest.csv       (origen de cada imagen)
+    salida/conteos.csv        (imágenes por etiqueta, clase y fuente, para revisar el desbalance)
     salida/reporte.json       (conteos, duplicados y clases sin mapeo por fuente)
 
 Cada fuente se describe en configs/dataset.yaml (dónde están sus splits, en qué nivel de carpeta
 está la clase y cómo limpiar sus nombres). Las imágenes repetidas se eliminan por hash, y una imagen
 que aparece en test nunca se copia a train.
 
+Las clases válidas son las de data/mapping.csv: ahí se define cada fruta y verdura, y una carpeta
+por alimento basta para que la fuente del equipo entre al dataset.
+
 Uso:
     python -m src.build_dataset --config configs/dataset.yaml
     python -m src.build_dataset --explorar /kaggle/input/algun-dataset   # para ver su estructura
+    python -m src.build_dataset --plantilla fotos_equipo                 # una carpeta vacía por alimento
 """
 import argparse
 import csv
@@ -28,7 +33,7 @@ from joblib import Parallel, delayed
 from PIL import Image
 
 from src.dataset import EXTENSIONES
-from src.mapping import EXCLUIR, cargar_mapping, etiqueta_de, normalizar
+from src.mapping import EXCLUIR, MAPPING_PATH, cargar_mapping, etiqueta_de, normalizar
 
 SPLITS = ("test", "train")  # test primero: si una imagen está en ambos, se queda solo en test
 
@@ -54,24 +59,51 @@ def resolver_clase(nombre_carpeta: str, fuente: dict, mapping: dict) -> tuple[st
     return nombre, None
 
 
+def splits_de(fuente: dict) -> set[str]:
+    """Splits que aporta una fuente. Una fuente con `ruta` (sin splits propios) aporta a los dos."""
+    return set(SPLITS) if "ruta" in fuente else set(fuente["splits"])
+
+
+def rutas_de(fuente: dict, split: str) -> list[Path]:
+    """Carpetas de un split; en la config puede ser una ruta o una lista (p. ej. train + validation)."""
+    rutas = fuente["ruta"] if "ruta" in fuente else fuente["splits"][split]
+    return [Path(r) for r in ([rutas] if isinstance(rutas, str) else rutas)]
+
+
+def toca_split(ruta: Path, fuente: dict, split: str, semilla: int) -> bool:
+    """Para fuentes sin splits propios: decide por hash del nombre si la imagen va a test, de modo que
+    la asignación no cambia al agregar fotos nuevas."""
+    if "ruta" not in fuente:
+        return True
+    clave = f"{semilla}/{ruta.parent.name}/{ruta.name}".encode()
+    en_test = int(hashlib.md5(clave).hexdigest(), 16) % 1000 < fuente.get("fraccion_test", 0.3) * 1000
+    return en_test == (split == "test")
+
+
 def listar_fuente(fuente: dict, split: str, mapping: dict, semilla: int) -> tuple[list[dict], Counter, Counter]:
     """Lista las imágenes de un split de una fuente con su clase y etiqueta."""
-    raiz = Path(fuente["splits"][split])
     nivel = fuente.get("nivel_clase", 0)
+    ignorar = {c.lower() for c in fuente.get("ignorar", [])}
     por_clase, sin_mapeo, excluidas = defaultdict(list), Counter(), Counter()
-    for ruta in sorted(raiz.rglob("*")):
-        if ruta.suffix.lower() not in EXTENSIONES or not ruta.is_file():
+    for raiz in rutas_de(fuente, split):
+        if not raiz.is_dir():
+            print(f"Aviso: no existe {raiz} ({fuente['nombre']}/{split}); se omite. ¿Está adjunta la fuente?")
             continue
-        partes = ruta.relative_to(raiz).parts
-        if len(partes) <= nivel + 1:
-            continue
-        clase, etiqueta = resolver_clase(partes[nivel], fuente, mapping)
-        if etiqueta is None:
-            sin_mapeo[partes[nivel]] += 1
-        elif etiqueta == EXCLUIR:
-            excluidas[clase] += 1
-        else:
-            por_clase[clase].append({"ruta_original": str(ruta), "clase": clase, "etiqueta": etiqueta})
+        for ruta in sorted(raiz.rglob("*")):
+            if ruta.suffix.lower() not in EXTENSIONES or not ruta.is_file():
+                continue
+            partes = ruta.relative_to(raiz).parts
+            if len(partes) <= nivel + 1 or ignorar & {p.lower() for p in partes[:-1]}:
+                continue
+            if not toca_split(ruta, fuente, split, semilla):
+                continue
+            clase, etiqueta = resolver_clase(partes[nivel], fuente, mapping)
+            if etiqueta is None:
+                sin_mapeo[partes[nivel]] += 1
+            elif etiqueta == EXCLUIR:
+                excluidas[clase] += 1
+            else:
+                por_clase[clase].append({"ruta_original": str(ruta), "clase": clase, "etiqueta": etiqueta})
     rng = random.Random(semilla)
     maximo = fuente.get("max_por_clase")
     elegidas = []
@@ -105,7 +137,7 @@ def construir(cfg: dict):
 
     for split in SPLITS:
         for fuente in cfg["fuentes"]:
-            if split not in fuente["splits"]:
+            if split not in splits_de(fuente):
                 continue
             nombre = fuente["nombre"]
             muestras, sin_mapeo, excluidas = listar_fuente(fuente, split, mapping, semilla)
@@ -136,11 +168,48 @@ def construir(cfg: dict):
         writer.writeheader()
         writer.writerows(manifest)
     json.dump(reporte, open(salida / "reporte.json", "w", encoding="utf-8"), indent=2, ensure_ascii=False)
+    escribir_conteos(manifest, salida / "conteos.csv")
     faltantes = sorted({c for r in reporte.values() for c in r["sin_mapeo"]})
     if faltantes:
         print(f"\nCarpetas sin entrada en data/mapping.csv (no se copiaron): {faltantes}")
         print("Agrégalas al CSV (o a 'renombrar' en la config) y vuelve a correr.")
     return reporte
+
+
+def escribir_conteos(manifest: list[dict], destino: Path):
+    """Tabla etiqueta, clase, fuente, train, test, ordenada por etiqueta y de la clase con más
+    imágenes a la que tiene menos, e imprime el total por etiqueta."""
+    conteo = Counter((m["etiqueta"], m["clase"], m["fuente"], m["split"]) for m in manifest)
+    filas = defaultdict(lambda: {"train": 0, "test": 0})
+    for (etiqueta, clase, fuente, split), n in conteo.items():
+        filas[(etiqueta, clase, fuente)][split] += n
+    por_clase = Counter()
+    for (etiqueta, clase, _), n in filas.items():
+        por_clase[(etiqueta, clase)] += n["train"] + n["test"]
+    orden = sorted(filas, key=lambda k: (k[0], -por_clase[k[:2]], k[1], k[2]))
+    with open(destino, "w", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f)
+        writer.writerow(["etiqueta", "clase", "fuente", "train", "test"])
+        writer.writerows([*k, filas[k]["train"], filas[k]["test"]] for k in orden)
+    totales = Counter()
+    for (etiqueta, _), n in por_clase.items():
+        totales[etiqueta] += n
+    clases = Counter(etiqueta for etiqueta, _ in por_clase)
+    print("\nImágenes por etiqueta: " + ", ".join(
+        f"{e} {totales[e]} en {clases[e]} clases" for e in sorted(totales)))
+
+
+def crear_plantilla(destino: str, mapping_path: Path = MAPPING_PATH) -> list[str]:
+    """Crea una carpeta vacía por cada alimento de data/mapping.csv, para que el equipo suba sus fotos
+    en la que corresponde. Omite los excluidos y los alias (grupo "alias": otro nombre del mismo
+    alimento en algún dataset). Un alimento nuevo se agrega primero al CSV."""
+    with open(mapping_path, encoding="utf-8") as f:
+        nombres = sorted(fila["nombre_base"].strip().lower() for fila in csv.DictReader(f)
+                         if fila["etiqueta"].strip() != EXCLUIR and (fila.get("grupo") or "").strip() != "alias")
+    for nombre in nombres:
+        (Path(destino) / nombre.replace(" ", "_")).mkdir(parents=True, exist_ok=True)
+    print(f"{len(nombres)} carpetas en {destino}")
+    return nombres
 
 
 def explorar(raiz: str, profundidad: int = 3, ejemplos: int = 8):
@@ -163,8 +232,11 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", default="configs/dataset.yaml")
     parser.add_argument("--explorar", help="carpeta a inspeccionar en lugar de construir")
+    parser.add_argument("--plantilla", help="carpeta donde crear una subcarpeta vacía por alimento")
     args = parser.parse_args()
     if args.explorar:
         explorar(args.explorar)
+    elif args.plantilla:
+        crear_plantilla(args.plantilla)
     else:
         construir(yaml.safe_load(open(args.config, encoding="utf-8")))
