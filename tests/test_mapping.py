@@ -37,3 +37,14 @@ def test_excluir_grupo_desde_config():
     assert etiqueta_de("Walnut 1", sin_nueces) == "excluir"
     assert etiqueta_de("Peanut shell 1x 1", sin_nueces) == "excluir"
     assert etiqueta_de("Apple Red 1", sin_nueces) == "fruta"  # el resto no cambia
+
+
+def test_nombres_en_espanol_y_alimentos():
+    from src.mapping import cargar_alimentos
+    alimentos = cargar_alimentos()
+    assert etiqueta_de("Zanahoria", MAPPING) == "verdura"
+    assert etiqueta_de("limón_amarillo", MAPPING) == "fruta"
+    assert etiqueta_de("Rábano negro 2", MAPPING) == "verdura"
+    assert alimentos["brinjal"] == alimentos["eggplant"] == alimentos["berenjena"] == "berenjena"
+    assert alimentos["potato sweet"] == "camote" and alimentos["potato"] == "papa"
+    assert normalizar("Ñame") == "name"

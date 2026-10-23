@@ -9,12 +9,13 @@
 #                    (0 = split/clase/imagen.jpg; 1 = split/algo/clase/imagen.jpg).
 #   ignorar:         carpetas a saltar en cualquier nivel (p. ej. productos empacados).
 #   quitar_prefijos: texto a quitar del inicio del nombre ("freshapples" -> "apples").
-#   renombrar:       nombre limpio -> nombre en data/mapping.csv, para casos especiales
-#                    (sirve también para juntar alias: "brinjal" -> "eggplant").
+#   renombrar:       nombre limpio -> nombre en data/mapping.csv, para casos especiales.
 #   max_por_clase:   opcional, limita imágenes por clase de esa fuente.
 #
-# Las clases válidas son las filas de data/mapping.csv. Para agregar un alimento nuevo, primero
-# se agrega su fila al CSV y luego su carpeta en las fotos del equipo.
+# Las clases válidas son los alimentos de data/mapping.csv: cada carpeta se busca por su nombre en
+# español o por los nombres_dataset de su fila, y en el dataset final queda con el nombre en español.
+# Para agregar un alimento nuevo, primero se agrega su fila al CSV y luego su carpeta en las fotos
+# del equipo.
 #
 # Las rutas de Kaggle de abajo son las esperadas; revisa cada fuente con
 #   python -m src.build_dataset --explorar /kaggle/input/<dataset>
@@ -30,6 +31,8 @@ fuentes:
       train: /kaggle/input/datasets/moltean/fruits/fruits-360_100x100/fruits-360/Training
       test: /kaggle/input/datasets/moltean/fruits/fruits-360_100x100/fruits-360/Test
     nivel_clase: 0
+    renombrar:
+      pepino: pepino dulce   # en Fruits-360 "Pepino" es el pepino dulce, no el pepino
 
   - nombre: freshrotten
     splits:   # por confirmar con --explorar
@@ -52,19 +55,11 @@ fuentes:
         - /kaggle/input/datasets/misrakahmed/vegetable-image-dataset/Vegetable Images/validation
       test: /kaggle/input/datasets/misrakahmed/vegetable-image-dataset/Vegetable Images/test
     nivel_clase: 0
-    renombrar:
-      brinjal: eggplant
 
   - nombre: bangladesh   # Mendeley rtx9ngb68j, subido a Kaggle como dataset privado del equipo
     ruta: /kaggle/input/datasets/11909/vegetales-bangladesh   # por confirmar con --explorar
     fraccion_test: 0.3
     nivel_clase: 0
-    renombrar:
-      bitter melon: bitter gourd
-      green spinach: spinach
-      green papaya: papaya
-      lime: limes
-      coconut: cocos
 
   - nombre: grocery   # GroceryStoreDataset (GitHub, MIT); el notebook lo clona en /kaggle/working/fuentes
     splits:
@@ -72,11 +67,6 @@ fuentes:
       test: /kaggle/working/fuentes/GroceryStoreDataset/dataset/test
     nivel_clase: 1        # train/Fruit/Apple/Granny-Smith -> apple; train/Vegetables/Leek -> leek
     ignorar: [Packages]   # jugos, leches y yogures
-    renombrar:
-      aubergine: eggplant
-      red beet: beetroot
-      red grapefruit: grapefruit
-      lime: limes
 
   - nombre: equipo   # fotos del equipo: una carpeta por alimento de data/mapping.csv
     ruta: /kaggle/input/datasets/11909/fotos-equipo   # por confirmar al publicarlo
