@@ -161,5 +161,5 @@ python -m src.train --config configs/baseline.yaml   # entrenar local: ajusta la
 
 - **Fuga de datos:** Fruits-360 tiene muchas fotos casi idénticas de la misma pieza. Por eso la validación cruzada agrupa por variedad y la evaluación final usa la partición Test original.
 - **Fondo blanco:** con solo Fruits-360 el modelo puede aprender el fondo. Prueben con fotos reales tomadas por el equipo.
-- **Desbalance:** hay más clases de fruta que de verdura; los modelos usan `class_weight="balanced"` donde aplica y se reporta F1, no solo accuracy.
+- **Desbalance:** Fruits-360 tiene ~15 imágenes de fruta por cada una de verdura. Por eso se entrena con el mismo número de ambas (`balancear_etiquetas`), los modelos usan `class_weight="balanced"` donde aplica, se ajusta el umbral de verdura con validación cruzada (`ajustar_umbral`) y se reporta accuracy balanceada y F1, no solo accuracy.
 - **Secretos:** las API keys van en Kaggle Secrets, nunca en el código.

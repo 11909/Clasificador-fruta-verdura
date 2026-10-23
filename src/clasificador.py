@@ -32,7 +32,8 @@ class Clasificador:
     def clasificar(self, entrada) -> dict:
         """Clasifica una imagen (ruta, enlace, bytes o imagen de PIL)."""
         probs = self.probabilidades(entrada)
-        etiqueta = max(probs, key=probs.get)
+        # El umbral se ajusta al entrenar (ver src/train.py); los modelos viejos no lo traen y usan 0.5
+        etiqueta = ETIQUETAS[1] if probs[ETIQUETAS[1]] >= self.paquete.get("umbral", 0.5) else ETIQUETAS[0]
         return {"entrada": nombre(entrada), "etiqueta": etiqueta, "confianza": probs[etiqueta],
                 "probabilidades": probs}
 

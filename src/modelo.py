@@ -21,11 +21,12 @@ MODELO_URL = "https://github.com/11909/Clasificador-fruta-verdura/releases/lates
 CACHE = Path(os.environ.get("CLASIFICADOR_CACHE", Path.home() / ".cache" / "clasificador-fruta-verdura"))
 
 
-def guardar_modelo(modelo, features: dict, spec: dict, ruta: Path) -> Path:
+def guardar_modelo(modelo, features: dict, spec: dict, ruta: Path, umbral: float = 0.5) -> Path:
     """Guarda el modelo junto con lo necesario para usarlo después: la configuración de
-    características y la versión de scikit-learn con la que se entrenó."""
+    características, el umbral de verdura y la versión de scikit-learn con la que se entrenó."""
     paquete = {
         "modelo": modelo,
+        "umbral": umbral,
         "features": features,
         "spec": spec,
         "sklearn": sklearn.__version__,
@@ -86,5 +87,5 @@ def cargar_modelo(fuente: str | os.PathLike | None = None) -> dict:
 
 
 def describir(paquete: dict) -> str:
-    return (f"{paquete['spec']['name']} (scikit-learn {paquete.get('sklearn', '?')}, "
+    return (f"{paquete['spec']['name']} (umbral de verdura {paquete.get('umbral', 0.5)}, scikit-learn {paquete.get('sklearn', '?')}, "
             f"entrenado {paquete.get('creado', 'fecha desconocida')})")
