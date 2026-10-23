@@ -17,11 +17,14 @@ def guardar(ruta, semilla):
 
 
 def test_resolver_clase_limpia_prefijos_y_plurales():
-    fuente = {"quitar_prefijos": ["fresh", "rotten"], "renombrar": {"bitter gourd": "bitter gourd"}}
-    assert resolver_clase("freshapples", fuente, MAPPING) == ("apple", "fruta")
-    assert resolver_clase("rottentomatoes", fuente, MAPPING) == ("tomato", "fruta")
-    assert resolver_clase("Fresh_Potato", fuente, MAPPING) == ("potato", "verdura")
-    assert resolver_clase("Apple Red 2", {}, MAPPING) == ("apple red", "fruta")
+    fuente = {"quitar_prefijos": ["fresh", "rotten"]}
+    assert resolver_clase("freshapples", fuente, MAPPING) == ("manzana", "fruta")
+    assert resolver_clase("rottentomatoes", fuente, MAPPING) == ("jitomate", "fruta")
+    assert resolver_clase("Fresh_Potato", fuente, MAPPING) == ("papa", "verdura")
+    assert resolver_clase("Apple Red 2", {}, MAPPING) == ("manzana", "fruta")
+    assert resolver_clase("Potato Sweet 1", {}, MAPPING) == ("camote", "verdura")
+    assert resolver_clase("Pepino 1", {"renombrar": {"pepino": "pepino dulce"}}, MAPPING) == ("pepino dulce", "fruta")
+    assert resolver_clase("Rábano_negro", {}, MAPPING) == ("rabano", "verdura")
     assert resolver_clase("freshxyz", fuente, MAPPING)[1] is None
 
 
@@ -49,13 +52,13 @@ def test_construir_combina_deduplica_y_reporta(tmp_path):
     reporte = construir(cfg)
 
     assert reporte["a/test"]["copiadas"] == 1
-    assert reporte["a/train"]["copiadas"] == 6 and reporte["a/train"]["excluidas"] == {"mushroom champignon": 1}
+    assert reporte["a/train"]["copiadas"] == 6 and reporte["a/train"]["excluidas"] == {"hongo": 1}
     assert reporte["b/train"]["copiadas"] == 2 and reporte["b/train"]["duplicadas"] == 2
     assert reporte["b/train"]["sin_mapeo"] == {"freshxyz": 1}
 
     filas = list(csv.DictReader(open(salida / "manifest.csv", encoding="utf-8")))
     assert len(filas) == 9
-    assert {f["clase"] for f in filas if f["fuente"] == "b"} == {"apple"}
+    assert {f["clase"] for f in filas if f["fuente"] == "b"} == {"manzana"}
     for f in filas:
         img = Image.open(salida / f["ruta"])
         assert max(img.size) <= 64
@@ -77,8 +80,7 @@ def test_fuente_sin_splits_listas_ignorar_y_conteos(tmp_path):
         {"nombre": "equipo", "ruta": str(equipo), "fraccion_test": 0.3},
         {"nombre": "grocery", "splits": {"train": str(grocery / "train")}, "nivel_clase": 1,
          "ignorar": ["Packages"]},
-        {"nombre": "v15", "splits": {"train": [str(v15 / "train"), str(v15 / "validation")]},
-         "renombrar": {"brinjal": "eggplant"}},
+        {"nombre": "v15", "splits": {"train": [str(v15 / "train"), str(v15 / "validation")]}},
         {"nombre": "falta", "splits": {"train": str(tmp_path / "no-existe")}},
     ]}
     reporte = construir(cfg)
@@ -89,8 +91,8 @@ def test_fuente_sin_splits_listas_ignorar_y_conteos(tmp_path):
     assert reporte["falta/train"]["copiadas"] == 0
 
     filas = list(csv.DictReader(open(salida / "manifest.csv", encoding="utf-8")))
-    assert {f["clase"] for f in filas if f["fuente"] == "grocery"} == {"leek", "apple"}
-    assert {f["clase"] for f in filas if f["fuente"] == "v15"} == {"eggplant", "radish"}
+    assert {f["clase"] for f in filas if f["fuente"] == "grocery"} == {"poro", "manzana"}
+    assert {f["clase"] for f in filas if f["fuente"] == "v15"} == {"berenjena", "rabano"}
 
     conteos = list(csv.DictReader(open(salida / "conteos.csv", encoding="utf-8")))
     oca_fila = next(f for f in conteos if f["clase"] == "oca")
@@ -104,7 +106,7 @@ def test_fuente_sin_splits_listas_ignorar_y_conteos(tmp_path):
 
 def test_plantilla_crea_una_carpeta_por_alimento_sin_alias(tmp_path):
     nombres = crear_plantilla(str(tmp_path / "fotos"))
-    assert (tmp_path / "fotos" / "oca").is_dir() and (tmp_path / "fotos" / "sweet_potato").is_dir()
-    assert "brinjal" not in nombres and "mushroom" not in nombres and "eggplant" in nombres
+    assert (tmp_path / "fotos" / "oca").is_dir() and (tmp_path / "fotos" / "limon_amarillo").is_dir()
+    assert "hongo" not in nombres and "berenjena" in nombres and "brinjal" not in nombres
     for nombre in nombres:
         assert MAPPING[nombre] in ("fruta", "verdura")

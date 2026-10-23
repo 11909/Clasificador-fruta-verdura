@@ -33,29 +33,32 @@ from joblib import Parallel, delayed
 from PIL import Image
 
 from src.dataset import EXTENSIONES
-from src.mapping import EXCLUIR, MAPPING_PATH, cargar_mapping, etiqueta_de, normalizar
+from src.mapping import EXCLUIR, MAPPING_PATH, cargar_alimentos, cargar_mapping, clave_de, leer_filas, normalizar
 
 SPLITS = ("test", "train")  # test primero: si una imagen está en ambos, se queda solo en test
 
 
-def resolver_clase(nombre_carpeta: str, fuente: dict, mapping: dict) -> tuple[str, str | None]:
+def resolver_clase(nombre_carpeta: str, fuente: dict, mapping: dict,
+                   alimentos: dict | None = None) -> tuple[str, str | None]:
     """Limpia el nombre de carpeta de una fuente y lo busca en el mapeo.
 
-    Devuelve (clase_limpia, etiqueta); etiqueta es None si no está en data/mapping.csv.
+    Devuelve (alimento en español, etiqueta), p. ej. "Apple Red 2" -> ("manzana", "fruta"). Si no está
+    en data/mapping.csv devuelve (nombre limpio, None).
     """
+    alimentos = alimentos or cargar_alimentos()
     nombre = nombre_carpeta.lower().replace("_", " ").replace("-", " ").strip()
     for prefijo in fuente.get("quitar_prefijos", []):
         # cubre "fresh apple" y también "freshapples"
         if nombre.startswith(prefijo):
             nombre = nombre[len(prefijo):].strip()
             break
-    nombre = fuente.get("renombrar", {}).get(nombre, nombre)
     nombre = normalizar(nombre)
+    nombre = normalizar(fuente.get("renombrar", {}).get(nombre, nombre))
     # Prueba el nombre tal cual y luego en singular ("apples" -> "apple", "tomatoes" -> "tomato")
     for candidato in (nombre, re.sub(r"es$", "", nombre), re.sub(r"s$", "", nombre)):
-        etiqueta = etiqueta_de(candidato, mapping)
-        if etiqueta is not None:
-            return candidato, etiqueta
+        clave = clave_de(candidato, mapping)
+        if clave is not None:
+            return alimentos[clave], mapping[clave]
     return nombre, None
 
 
@@ -80,9 +83,11 @@ def toca_split(ruta: Path, fuente: dict, split: str, semilla: int) -> bool:
     return en_test == (split == "test")
 
 
-def listar_fuente(fuente: dict, split: str, mapping: dict, semilla: int) -> tuple[list[dict], Counter, Counter]:
+def listar_fuente(fuente: dict, split: str, mapping: dict, semilla: int,
+                  alimentos: dict | None = None) -> tuple[list[dict], Counter, Counter]:
     """Lista las imágenes de un split de una fuente con su clase y etiqueta."""
     nivel = fuente.get("nivel_clase", 0)
+    alimentos = alimentos or cargar_alimentos()
     ignorar = {c.lower() for c in fuente.get("ignorar", [])}
     por_clase, sin_mapeo, excluidas = defaultdict(list), Counter(), Counter()
     for raiz in rutas_de(fuente, split):
@@ -97,7 +102,7 @@ def listar_fuente(fuente: dict, split: str, mapping: dict, semilla: int) -> tupl
                 continue
             if not toca_split(ruta, fuente, split, semilla):
                 continue
-            clase, etiqueta = resolver_clase(partes[nivel], fuente, mapping)
+            clase, etiqueta = resolver_clase(partes[nivel], fuente, mapping, alimentos)
             if etiqueta is None:
                 sin_mapeo[partes[nivel]] += 1
             elif etiqueta == EXCLUIR:
@@ -132,7 +137,7 @@ def copiar(origen: str, destino: Path, tamano_max: int):
 def construir(cfg: dict):
     salida = Path(cfg["salida"])
     semilla, tamano_max = cfg.get("seed", 42), cfg.get("tamano_max", 256)
-    mapping = cargar_mapping()
+    mapping, alimentos = cargar_mapping(), cargar_alimentos()
     vistas, manifest, reporte = set(), [], {}
 
     for split in SPLITS:
@@ -140,7 +145,7 @@ def construir(cfg: dict):
             if split not in splits_de(fuente):
                 continue
             nombre = fuente["nombre"]
-            muestras, sin_mapeo, excluidas = listar_fuente(fuente, split, mapping, semilla)
+            muestras, sin_mapeo, excluidas = listar_fuente(fuente, split, mapping, semilla, alimentos)
             hashes = Parallel(n_jobs=-1, batch_size=64)(delayed(huella)(m["ruta_original"]) for m in muestras)
             nuevas, duplicadas = [], 0
             for m, h in zip(muestras, hashes):
@@ -200,12 +205,11 @@ def escribir_conteos(manifest: list[dict], destino: Path):
 
 
 def crear_plantilla(destino: str, mapping_path: Path = MAPPING_PATH) -> list[str]:
-    """Crea una carpeta vacía por cada alimento de data/mapping.csv, para que el equipo suba sus fotos
-    en la que corresponde. Omite los excluidos y los alias (grupo "alias": otro nombre del mismo
-    alimento en algún dataset). Un alimento nuevo se agrega primero al CSV."""
-    with open(mapping_path, encoding="utf-8") as f:
-        nombres = sorted(fila["nombre_base"].strip().lower() for fila in csv.DictReader(f)
-                         if fila["etiqueta"].strip() != EXCLUIR and (fila.get("grupo") or "").strip() != "alias")
+    """Crea una carpeta vacía por cada alimento de data/mapping.csv (con su nombre en español, sin
+    acentos), para que el equipo suba sus fotos en la que corresponde. Omite los excluidos. Un
+    alimento nuevo se agrega primero al CSV."""
+    nombres = sorted(normalizar(fila["alimento"]) for fila in leer_filas(mapping_path)
+                     if fila["etiqueta"].strip() != EXCLUIR)
     for nombre in nombres:
         (Path(destino) / nombre.replace(" ", "_")).mkdir(parents=True, exist_ok=True)
     print(f"{len(nombres)} carpetas en {destino}")
