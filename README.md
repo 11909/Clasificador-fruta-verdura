@@ -18,8 +18,9 @@ Nada pesado corre en las laptops:
 | Datos | Kaggle Datasets (Fruits-360 y, más adelante, el dataset combinado del equipo) |
 | Entrenamiento | Kaggle Notebooks en CPU (`notebooks/kaggle_train.ipynb`) |
 | Experimentos | `resultados_cv.csv` y `test_metrics.json` de cada corrida |
-| Modelos | `modelo.joblib` como salida del notebook; el mejor se publica en Hugging Face Hub |
+| Modelos | `modelo.joblib` como salida del notebook; el elegido se publica en un Release de GitHub |
 | Demo | Gradio (`app/app.py`), alojable en Hugging Face Spaces |
+| Modelo publicado | Releases de GitHub (`modelo.joblib`), se descarga con un enlace fijo |
 
 Las imágenes y los pesos **no se suben al repo** (ver `.gitignore`).
 
@@ -33,13 +34,18 @@ src/
   models.py     # catálogo de modelos de scikit-learn, incluidos voting y stacking
   train.py      # validación cruzada de todos los modelos, reentrena el mejor y evalúa en test
   evaluate.py   # accuracy, F1 por clase y matriz de confusión
-  predict.py    # predicción sobre una imagen
+  modelo.py     # módulo del modelo: guardar y cargar (de archivo o del Release publicado)
+  entrada.py    # módulo de entrada: rutas, enlaces (GitHub, Drive), .txt con enlaces, carpetas
+  clasificador.py  # une modelo y entrada; lo usan la terminal, los notebooks y la interfaz
+  predict.py    # clasificar desde la terminal
   build_dataset.py  # combina varios datasets en uno propio, sin duplicados
 configs/baseline.yaml       # rutas, características, tipo de validación y modelos a comparar
 data/mapping.csv            # diccionario del criterio botánico (lo revisa el equipo)
 notebooks/kaggle_train.ipynb
 notebooks/kaggle_build_dataset.ipynb
-app/app.py                  # demo con Gradio
+app/app.py                  # interfaz gráfica con Gradio (foto o enlace)
+entradas/ejemplos.txt       # enlaces de ejemplo para probar
+notebooks/predecir.ipynb    # clasificar con el modelo publicado, sin entrenar
 scripts/check_mapping.py    # lista clases sin etiqueta en un dataset
 configs/dataset.yaml        # fuentes del dataset combinado
 tests/
@@ -50,6 +56,43 @@ tests/
 1. Da clic en [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://www.kaggle.com/kernels/welcome?src=https://github.com/11909/Clasificador-fruta-verdura/blob/main/notebooks/kaggle_train.ipynb). Se abre una copia del notebook en tu cuenta de Kaggle, tomada de la versión actual de `main`. Cada quien trabaja en su copia; los cambios de código van al repo, no al notebook.
 2. Adjunta el dataset combinado del equipo (o, mientras no exista, **Fruits-360** `moltean/fruits`) y activa **Settings → Internet**. No hace falta GPU.
 3. Ejecuta todo, o usa **Save Version → Save & Run All** para que corra sin la pestaña abierta.
+
+## Predecir sin reentrenar
+
+[![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://www.kaggle.com/kernels/welcome?src=https://github.com/11909/Clasificador-fruta-verdura/blob/main/notebooks/predecir.ipynb) [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/11909/Clasificador-fruta-verdura/blob/main/notebooks/predecir.ipynb)
+
+La predicción está separada en módulos, así que el modelo se entrena una vez y se reutiliza:
+
+| Módulo | Qué hace |
+|---|---|
+| `src/modelo.py` | Guarda el modelo y lo carga desde un archivo o un enlace. Por defecto descarga el `modelo.joblib` del **Release más reciente** del repo. |
+| `src/entrada.py` | Convierte la entrada en imagen: ruta, enlace (GitHub, Google Drive, cualquier enlace directo), `.txt` con un enlace por línea, o carpeta. |
+| `src/clasificador.py` | `Clasificador().clasificar(entrada)` devuelve etiqueta, confianza y probabilidades. Es lo único que necesita una interfaz. |
+| `src/predict.py`, `app/app.py`, `notebooks/predecir.ipynb` | Interfaces: terminal, interfaz gráfica (Gradio) y notebook. Todas llaman al mismo `Clasificador`. |
+
+```bash
+python -m src.predict entradas/ejemplos.txt                 # modelo publicado + enlaces de ejemplo
+python -m src.predict https://.../foto.jpg mi_foto.jpg
+python -m app.app                                           # interfaz gráfica en el navegador
+```
+
+```python
+from src.clasificador import Clasificador
+clf = Clasificador()                                        # se descarga una vez
+clf.clasificar("https://drive.google.com/file/d/<ID>/view") # {'etiqueta': 'fruta', 'confianza': 0.93, ...}
+```
+
+### Publicar el modelo
+
+1. Entrena con `notebooks/kaggle_train.ipynb`, haz **Save Version → Save & Run All** y descarga `outputs/modelo.joblib` desde la pestaña **Output**.
+2. En GitHub, **Releases → Draft a new release**: etiqueta nueva (p. ej. `modelo-v1`), adjunta `modelo.joblib` y pega `test_metrics.json` en la descripción.
+3. Desde ese momento, todo lo de arriba usa ese modelo. Para cambiarlo, se publica un Release nuevo; los anteriores quedan como historial.
+
+El modelo guarda la versión de scikit-learn con la que se entrenó; si al cargarlo hay otra, se muestra un aviso con el comando para instalar la correcta. Solo carguen modelos del propio equipo: un `.joblib` puede ejecutar código al abrirse.
+
+### Fotos de prueba
+
+Pongan sus fotos en cualquier sitio con enlace público y agreguen los enlaces a un `.txt` (como `entradas/ejemplos.txt`). En Google Drive, compártanlas como "cualquier persona con el enlace"; el enlace normal de compartir sirve tal cual.
 
 ## Dataset combinado del equipo
 
@@ -89,8 +132,8 @@ Si un dataset tiene una clase que no está en el CSV, el entrenamiento se detien
 pip install -r requirements.txt
 pytest
 python -m src.train --config configs/baseline.yaml   # ajusta las rutas de data/
-python -m src.predict outputs/modelo.joblib foto.jpg
-python -m app.app outputs/modelo.joblib
+python -m src.predict foto.jpg --modelo outputs/modelo.joblib
+python -m app.app --modelo outputs/modelo.joblib
 ```
 
 ## Cuidados
