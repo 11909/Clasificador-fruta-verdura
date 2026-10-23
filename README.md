@@ -41,6 +41,7 @@ src/
   train.py          # validación cruzada de todos los modelos, reentrena el mejor y evalúa en test
   evaluate.py       # accuracy, F1 por clase y matriz de confusión
   modelo.py         # módulo del modelo: guardar y cargar (de archivo o del Release publicado)
+  publicar.py       # publica el modelo entrenado como Release de GitHub
   entrada.py        # módulo de entrada: rutas, enlaces (GitHub, Drive), .txt con enlaces, carpetas
   clasificador.py   # une modelo y entrada; lo usan la terminal, los notebooks y la interfaz
   predict.py        # clasificar desde la terminal
@@ -72,6 +73,7 @@ La predicción está separada en módulos, así que el modelo se entrena una vez
 | Módulo | Qué hace |
 |---|---|
 | `src/modelo.py` | Guarda el modelo y lo carga desde un archivo o un enlace. Por defecto descarga el `modelo.joblib` del **Release más reciente** del repo. |
+| `src/publicar.py` | Sube el modelo entrenado como Release nuevo; lo llama la última celda del notebook de entrenamiento. |
 | `src/entrada.py` | Convierte la entrada en imagen: ruta, enlace (GitHub, Google Drive, cualquier enlace directo), `.txt` con un enlace por línea, o carpeta. |
 | `src/clasificador.py` | `Clasificador().clasificar(entrada)` devuelve etiqueta, confianza y probabilidades. Es lo único que necesita una interfaz. |
 | `src/predict.py`, `app/app.py`, `notebooks/predecir.ipynb` | Interfaces: terminal, interfaz gráfica (Gradio) y notebook. Todas llaman al mismo `Clasificador`. |
@@ -90,9 +92,22 @@ clf.clasificar("https://drive.google.com/file/d/<ID>/view") # {'etiqueta': 'frut
 
 ### Publicar el modelo
 
-1. Entrena con `notebooks/kaggle_train.ipynb`, haz **Save Version → Save & Run All** y descarga `outputs/modelo.joblib` desde la pestaña **Output**.
-2. En GitHub, **Releases → Draft a new release**: etiqueta nueva (p. ej. `modelo-v1`), adjunta `modelo.joblib` y pega `test_metrics.json` en la descripción.
-3. Desde ese momento, todo lo de arriba usa ese modelo. Para cambiarlo, se publica un Release nuevo; los anteriores quedan como historial.
+Es automático: al final de `notebooks/kaggle_train.ipynb` hay una celda que crea un Release nuevo (etiqueta `modelo-AAAAMMDD-HHMMSS`) con `modelo.joblib`, `test_metrics.json` y `resultados_cv.csv`. Desde ese momento, todo lo de arriba usa ese modelo; los Releases anteriores quedan como historial. Basta con **Run All** (o **Save Version → Save & Run All**).
+
+- **Solo publica si mejora:** compara la accuracy balanceada de test con la del Release más reciente. Si no la supera, no publica y lo dice. Con `FORZAR = True` en esa celda publica de todas formas, por ejemplo al cambiar de dataset de prueba (las métricas dejan de ser comparables). Con `PUBLICAR = False` solo entrena.
+- **Sin token no publica**, pero el notebook termina bien.
+
+**Configurar el token (una vez por persona).** Cada integrante necesita permiso de escritura en el repo (Settings → Collaborators) y su propio token:
+
+1. En GitHub, **Settings → Developer settings → Personal access tokens**.
+   - Dueño del repo: **Fine-grained tokens → Generate new token**, en *Repository access* elige solo `Clasificador-fruta-verdura` y en *Permissions* da a **Contents** el permiso **Read and write**.
+   - Colaboradores: los tokens fine-grained solo sirven para repos propios, así que usen **Tokens (classic) → Generate new token** con el permiso `public_repo`.
+   - Pongan fecha de vencimiento y copien el token.
+2. En Kaggle, dentro del notebook: **Add-ons → Secrets → Add a new secret**, con nombre `GITHUB_TOKEN` y el token como valor. Activen la casilla para que el notebook lo use.
+
+El token nunca va en el código ni en el notebook: los secretos de Kaggle no se copian al compartir el notebook. Para publicar desde otra máquina: `GITHUB_TOKEN=... python -m src.publicar --salida outputs`.
+
+Si hace falta publicar a mano: **Releases → Draft a new release**, etiqueta nueva, adjunta `modelo.joblib` (con ese nombre exacto) y `test_metrics.json`.
 
 El modelo guarda la versión de scikit-learn con la que se entrenó; si al cargarlo hay otra, se muestra un aviso con el comando para instalar la correcta. Solo carguen modelos del propio equipo: un `.joblib` puede ejecutar código al abrirse.
 
@@ -154,6 +169,8 @@ python -m src.train --config configs/baseline.yaml   # entrenar local: ajusta la
 | `No module named 'src'` o falta `/kaggle/working/repo` | La sesión se reinició y Kaggle borró `/kaggle/working`. Corre desde la primera celda. |
 | Aviso de pip `dependency conflicts` (p. ej. `dopamine-rl`, `gym`) | Paquetes preinstalados de Kaggle que no usamos. Se puede ignorar. |
 | "¿Ya se publicó un Release con modelo.joblib?" | Todavía no hay modelo publicado; ver [Publicar el modelo](#publicar-el-modelo). |
+| "No encontré el secreto GITHUB_TOKEN" | Falta agregar o activar el secreto; ver [Publicar el modelo](#publicar-el-modelo). |
+| "GitHub rechazó el token" | El token venció o no tiene permiso de escritura; genera otro. |
 | Aviso de versión de scikit-learn | El modelo se entrenó con otra versión; instala la que indica el aviso. |
 | Una copia vieja del notebook falla | Abre una copia nueva desde los botones de [Inicio rápido](#inicio-rápido). |
 
