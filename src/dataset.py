@@ -1,4 +1,5 @@
 """Lectura de carpetas tipo ImageFolder (raiz/clase/imagen.jpg) con etiqueta binaria."""
+import hashlib
 import random
 from collections import Counter, defaultdict
 from pathlib import Path
@@ -29,6 +30,24 @@ def listar_muestras(raices: list[str], mapping: dict[str, str] | None = None,
     if sin_mapeo:
         raise ValueError(f"Clases sin entrada en data/mapping.csv: {sorted(sin_mapeo)}")
     return muestras
+
+
+def va_a_test(ruta, fraccion_test: float, semilla: int) -> bool:
+    """Decide por hash de la carpeta y el nombre del archivo si una foto va a test, de modo que la
+    asignación no cambia al agregar fotos nuevas ni entre versiones del dataset."""
+    ruta = Path(ruta)
+    clave = f"{semilla}/{ruta.parent.name}/{ruta.name}".encode()
+    return int(hashlib.md5(clave).hexdigest(), 16) % 1000 < fraccion_test * 1000
+
+
+def dividir_equipo(raiz: str, fraccion_test: float, semilla: int, excluir_grupos=()) -> tuple[list, list]:
+    """Fotos del equipo (raiz/alimento/foto.jpg) repartidas entre train y test con va_a_test."""
+    if not Path(raiz).is_dir():
+        return [], []
+    muestras = listar_muestras([raiz], excluir_grupos=excluir_grupos)
+    test = [m for m in muestras if va_a_test(m[0], fraccion_test, semilla)]
+    en_test = {m[0] for m in test}
+    return [m for m in muestras if m[0] not in en_test], test
 
 
 def limitar_por_clase(muestras: list, maximo: int | None, semilla: int) -> list:
