@@ -56,19 +56,23 @@ fuentes:
       test: /kaggle/input/datasets/misrakahmed/vegetable-image-dataset/Vegetable Images/test
     nivel_clase: 0
 
-  - nombre: bangladesh   # Mendeley rtx9ngb68j, subido a Kaggle como dataset privado del equipo
-    ruta: /kaggle/input/datasets/11909/vegetales-bangladesh   # por confirmar con --explorar
-    fraccion_test: 0.3
-    nivel_clase: 0
+# Fuentes fuera de Kaggle, desactivadas por ahora: el dataset se arma solo con los datasets
+# públicos de Kaggle de arriba. Para activarlas, quita el "# " de cada línea (la de grocery
+# además necesita la celda que clona su repo en el notebook; ver el README).
+#
+#   - nombre: bangladesh   # Mendeley rtx9ngb68j, subido a Kaggle como dataset privado del equipo
+#     ruta: /kaggle/input/datasets/11909/vegetales-bangladesh   # por confirmar con --explorar
+#     fraccion_test: 0.3
+#     nivel_clase: 0
 
-  - nombre: grocery   # GroceryStoreDataset (GitHub, MIT); el notebook lo clona en /kaggle/working/fuentes
-    splits:
-      train: /kaggle/working/fuentes/GroceryStoreDataset/dataset/train
-      test: /kaggle/working/fuentes/GroceryStoreDataset/dataset/test
-    nivel_clase: 1        # train/Fruit/Apple/Granny-Smith -> apple; train/Vegetables/Leek -> leek
-    ignorar: [Packages]   # jugos, leches y yogures
+#   - nombre: grocery   # GroceryStoreDataset (GitHub, MIT); el notebook lo clona en /kaggle/working/fuentes
+#     splits:
+#       train: /kaggle/working/fuentes/GroceryStoreDataset/dataset/train
+#       test: /kaggle/working/fuentes/GroceryStoreDataset/dataset/test
+#     nivel_clase: 1        # train/Fruit/Apple/Granny-Smith -> apple; train/Vegetables/Leek -> leek
+#     ignorar: [Packages]   # jugos, leches y yogures
 
-  - nombre: equipo   # fotos del equipo: una carpeta por alimento de data/mapping.csv
-    ruta: /kaggle/input/datasets/11909/fotos-equipo   # por confirmar al publicarlo
-    fraccion_test: 0.3
-    nivel_clase: 0
+#   - nombre: equipo   # fotos del equipo: una carpeta por alimento de data/mapping.csv
+#     ruta: /kaggle/input/datasets/11909/fotos-equipo   # por confirmar al publicarlo
+#     fraccion_test: 0.3
+#     nivel_clase: 0
