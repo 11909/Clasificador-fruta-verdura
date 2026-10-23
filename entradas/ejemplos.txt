@@ -2,7 +2,4 @@
 # Una ruta o enlace por línea. Sirven enlaces de GitHub (normal o raw), Google Drive
 # ("cualquier persona con el enlace") y cualquier enlace directo a una imagen.
 # Para probar con sus propias fotos, agreguen aquí sus enlaces o creen otro .txt.
-https://raw.githubusercontent.com/fruits-360/fruits-360-100x100/main/Test/Carrot%201/r0_103_100.jpg
-https://raw.githubusercontent.com/fruits-360/fruits-360-100x100/main/Test/Banana%201/100_100.jpg
-https://raw.githubusercontent.com/fruits-360/fruits-360-100x100/main/Test/Onion%20White%201/100_100.jpg
-https://raw.githubusercontent.com/fruits-360/fruits-360-100x100/main/Test/Tomato%201/10_100.jpg
+https://images.milenio.com/N6G9WQ7N5afEMnuodBCAhJlHTOk=/942x532/uploads/media/2025/07/16/rabano-negro-hortaliza-multiples-propiedades.jpeg
