@@ -97,15 +97,13 @@ Es automático: al final de `notebooks/kaggle_train.ipynb` hay una celda que cre
 - **Solo publica si mejora:** compara la accuracy balanceada de test con la del Release más reciente. Si no la supera, no publica y lo dice. Con `FORZAR = True` en esa celda publica de todas formas, por ejemplo al cambiar de dataset de prueba (las métricas dejan de ser comparables). Con `PUBLICAR = False` solo entrena.
 - **Sin token no publica**, pero el notebook termina bien.
 
-**Configurar el token (una vez por persona).** Cada integrante necesita permiso de escritura en el repo (Settings → Collaborators) y su propio token:
+**Token del equipo.** Hay un solo token, creado por el dueño del repo y compartido por mensaje privado. Nadie más tiene que crear uno.
 
-1. En GitHub, **Settings → Developer settings → Personal access tokens**.
-   - Dueño del repo: **Fine-grained tokens → Generate new token**, en *Repository access* elige solo `Clasificador-fruta-verdura` y en *Permissions* da a **Contents** el permiso **Read and write**.
-   - Colaboradores: los tokens fine-grained solo sirven para repos propios, así que usen **Tokens (classic) → Generate new token** con el permiso `public_repo`.
-   - Pongan fecha de vencimiento y copien el token.
-2. En Kaggle, dentro del notebook: **Add-ons → Secrets → Add a new secret**, con nombre `GITHUB_TOKEN` y el token como valor. Activen la casilla para que el notebook lo use.
+- **Agregarlo (cada integrante, una vez):** en el notebook de Kaggle, **Add-ons → Secrets → Add a new secret**, con nombre `GITHUB_TOKEN` y el token como valor. Activen la casilla para que el notebook lo use.
+- **Cómo se creó (solo el dueño):** GitHub → **Settings → Developer settings → Personal access tokens → Fine-grained tokens → Generate new token**. En *Repository access* solo `Clasificador-fruta-verdura`, en *Permissions* **Contents: Read and write**, y con fecha de vencimiento. Al vencer, se genera otro y se comparte igual.
+- **Cuidados:** el token permite subir código al repo, así que es solo para el equipo. Nunca va en el código, el notebook ni el chat del grupo; solo en Kaggle Secrets, que no se copian al compartir el notebook. Si se filtra, el dueño lo revoca en GitHub y comparte uno nuevo.
 
-El token nunca va en el código ni en el notebook: los secretos de Kaggle no se copian al compartir el notebook. Para publicar desde otra máquina: `GITHUB_TOKEN=... python -m src.publicar --salida outputs`.
+Para publicar desde otra máquina: `GITHUB_TOKEN=... python -m src.publicar --salida outputs`.
 
 Si hace falta publicar a mano: **Releases → Draft a new release**, etiqueta nueva, adjunta `modelo.joblib` (con ese nombre exacto) y `test_metrics.json`.
 
