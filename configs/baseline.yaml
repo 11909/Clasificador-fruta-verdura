@@ -5,7 +5,11 @@ data:
     - /kaggle/input/datasets/moltean/fruits/fruits-360_100x100/fruits-360/Training
   test_dirs:
     - /kaggle/input/datasets/moltean/fruits/fruits-360_100x100/fruits-360/Test
-  max_por_clase: 60         # imágenes por clase para entrenar (null = todas; más = más lento)
+  max_por_clase: 150        # imágenes por clase para entrenar (null = todas; más = más lento)
+  # Fruits-360 tiene ~15 imágenes de fruta por cada una de verdura. Con esto se entrena con
+  # el mismo número de ambas (el de la etiqueta con menos imágenes, o max_por_etiqueta si es menor).
+  balancear_etiquetas: true
+  max_por_etiqueta: null
   max_por_clase_test: null  # null = todo el conjunto de prueba
   # Grupos de data/mapping.csv que se dejan fuera del entrenamiento y la prueba.
   # Para quitar nueces y semillas: excluir_grupos: [nueces_semillas]
@@ -21,6 +25,10 @@ cv:
   folds: 5
 
 seed: 42
+
+# Busca con validación cruzada el umbral de probabilidad de verdura que mejor separa ambas
+# etiquetas (accuracy balanceada) y lo guarda con el modelo. false = umbral 0.5.
+ajustar_umbral: true
 
 # Modelos a comparar con validación cruzada. Se reentrena el de mayor f1_macro.
 # Opciones: logistic_regression, svm, knn, naive_bayes, decision_tree, random_forest,

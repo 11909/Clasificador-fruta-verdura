@@ -12,15 +12,16 @@ from pathlib import Path
 
 import numpy as np
 import yaml
-from sklearn.model_selection import GridSearchCV, StratifiedGroupKFold, StratifiedKFold, cross_validate
+from sklearn.model_selection import (GridSearchCV, StratifiedGroupKFold, StratifiedKFold, cross_val_predict,
+                                     cross_validate)
 
-from src.dataset import conteo, limitar_por_clase, listar_muestras
-from src.evaluate import metricas
+from src.dataset import balancear_por_etiqueta, conteo, limitar_por_clase, listar_muestras
+from src.evaluate import elegir_umbral, metricas, predecir_con_umbral
 from src.features import extraer_con_cache
 from src.modelo import guardar_modelo
 from src.models import crear_modelo
 
-METRICAS_CV = ["accuracy", "f1_macro"]
+METRICAS_CV = ["accuracy", "balanced_accuracy", "f1_macro"]
 
 
 def crear_cv(cfg_cv: dict, semilla: int):
@@ -52,6 +53,9 @@ def main(config_path: str):
     train = limitar_por_clase(listar_muestras(d["train_dirs"], excluir_grupos=excluir), d.get("max_por_clase"), semilla)
     test = limitar_por_clase(listar_muestras(d["test_dirs"], excluir_grupos=excluir), d.get("max_por_clase_test"),
                              semilla) if d.get("test_dirs") else []
+    if d.get("balancear_etiquetas"):
+        # Mismo número de frutas que de verduras al entrenar; la prueba se deja como está
+        train = balancear_por_etiqueta(train, d.get("max_por_etiqueta"), semilla)
     print(f"train {conteo(train)} | test {conteo(test)}")
 
     X = caracteristicas(train, cfg["features"], salida / "cache", "train")
@@ -81,7 +85,7 @@ def main(config_path: str):
         resultados.append(fila)
 
     with open(salida / "resultados_cv.csv", "w", newline="", encoding="utf-8") as f:
-        campos = ["modelo", "accuracy", "f1_macro", "f1_macro_std", "segundos", "spec"]
+        campos = ["modelo", "accuracy", "balanced_accuracy", "f1_macro", "f1_macro_std", "segundos", "spec"]
         writer = csv.DictWriter(f, fieldnames=campos, extrasaction="ignore")
         writer.writeheader()
         writer.writerows({**r, "spec": json.dumps(r["spec"], default=str)} for r in resultados)
@@ -92,14 +96,24 @@ def main(config_path: str):
     modelo = crear_modelo(spec["name"], spec.get("params"), spec.get("pca"), semilla)
     if spec.get("mejores_params"):
         modelo.set_params(**spec["mejores_params"])
+    umbral = 0.5
+    if cfg.get("ajustar_umbral") and hasattr(modelo, "predict_proba"):
+        # Probabilidades de validación cruzada (cada imagen predicha por un modelo que no la vio)
+        probs = cross_val_predict(modelo, X, y, groups=grupos, cv=cv, method="predict_proba", n_jobs=-1)
+        umbral = elegir_umbral(y, probs)
+        print(f"umbral de verdura: {umbral} (accuracy balanceada en validación cruzada: "
+              f"{metricas(y, predecir_con_umbral(probs, umbral))['balanced_accuracy']:.4f} "
+              f"vs {metricas(y, predecir_con_umbral(probs, 0.5))['balanced_accuracy']:.4f} con 0.5)")
     modelo.fit(X, y)
-    guardar_modelo(modelo, cfg["features"], spec, salida / "modelo.joblib")
+    guardar_modelo(modelo, cfg["features"], spec, salida / "modelo.joblib", umbral=umbral)
 
     if test:
         X_test = caracteristicas(test, cfg["features"], salida / "cache", "test")
-        resultado = metricas([m[1] for m in test], modelo.predict(X_test))
+        predichos = (predecir_con_umbral(modelo.predict_proba(X_test), umbral)
+                     if hasattr(modelo, "predict_proba") else modelo.predict(X_test))
+        resultado = metricas([m[1] for m in test], predichos)
         print("test", json.dumps(resultado))
-        json.dump({"modelo": spec["name"], **resultado}, open(salida / "test_metrics.json", "w"), indent=2)
+        json.dump({"modelo": spec["name"], "umbral_verdura": umbral, **resultado}, open(salida / "test_metrics.json", "w"), indent=2)
 
 
 if __name__ == "__main__":

@@ -42,6 +42,32 @@ def limitar_por_clase(muestras: list, maximo: int | None, semilla: int) -> list:
     return [m for grupo in por_clase.values() for m in rng.sample(grupo, min(maximo, len(grupo)))]
 
 
+def balancear_por_etiqueta(muestras: list, maximo: int | None, semilla: int) -> list:
+    """Deja el mismo número de imágenes de fruta y de verdura: el de la etiqueta con menos
+    imágenes, o `maximo` si es menor. Dentro de cada etiqueta reparte por igual entre clases
+    (una imagen de cada clase por turno) para no perder variedades."""
+    rng = random.Random(semilla)
+    por_etiqueta = defaultdict(lambda: defaultdict(list))
+    for m in muestras:
+        por_etiqueta[m[1]][m[2]].append(m)
+    if len(por_etiqueta) < 2:
+        return muestras
+    objetivo = min(sum(map(len, clases.values())) for clases in por_etiqueta.values())
+    if maximo:
+        objetivo = min(objetivo, maximo)
+    elegidas = []
+    for clases in por_etiqueta.values():
+        colas = [rng.sample(grupo, len(grupo)) for _, grupo in sorted(clases.items())]
+        rng.shuffle(colas)
+        tomadas = []
+        while len(tomadas) < objetivo:
+            for cola in colas:
+                if cola and len(tomadas) < objetivo:
+                    tomadas.append(cola.pop())
+        elegidas += tomadas
+    return elegidas
+
+
 def conteo(muestras: list) -> dict[str, int]:
     c = Counter(m[1] for m in muestras)
     return {ETIQUETAS[y]: c.get(y, 0) for y in range(len(ETIQUETAS))}
