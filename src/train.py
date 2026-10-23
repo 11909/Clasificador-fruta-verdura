@@ -10,7 +10,6 @@ import json
 import time
 from pathlib import Path
 
-import joblib
 import numpy as np
 import yaml
 from sklearn.model_selection import GridSearchCV, StratifiedGroupKFold, StratifiedKFold, cross_validate
@@ -18,6 +17,7 @@ from sklearn.model_selection import GridSearchCV, StratifiedGroupKFold, Stratifi
 from src.dataset import conteo, limitar_por_clase, listar_muestras
 from src.evaluate import metricas
 from src.features import extraer_con_cache
+from src.modelo import guardar_modelo
 from src.models import crear_modelo
 
 METRICAS_CV = ["accuracy", "f1_macro"]
@@ -93,7 +93,7 @@ def main(config_path: str):
     if spec.get("mejores_params"):
         modelo.set_params(**spec["mejores_params"])
     modelo.fit(X, y)
-    joblib.dump({"modelo": modelo, "features": cfg["features"], "spec": spec}, salida / "modelo.joblib")
+    guardar_modelo(modelo, cfg["features"], spec, salida / "modelo.joblib")
 
     if test:
         X_test = caracteristicas(test, cfg["features"], salida / "cache", "test")

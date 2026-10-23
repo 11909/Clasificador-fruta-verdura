@@ -1,24 +1,42 @@
-"""Predicción sobre una imagen.  Uso:  python -m src.predict outputs/modelo.joblib foto.jpg"""
-import sys
+"""Clasifica imágenes desde la línea de comandos sin reentrenar.
 
-import joblib
-from PIL import Image
+Uso:
+    python -m src.predict foto.jpg
+    python -m src.predict https://ejemplo.com/foto.jpg otra.jpg
+    python -m src.predict entradas/ejemplos.txt              # una ruta o enlace por línea
+    python -m src.predict carpeta/ --modelo outputs/modelo.joblib
 
-from src.features import extraer
-from src.mapping import ETIQUETAS
+Sin --modelo se usa el modelo publicado en el Release más reciente del repo.
+"""
+import argparse
+
+from src.clasificador import Clasificador
 
 
-def cargar(ruta_modelo: str) -> dict:
-    return joblib.load(ruta_modelo)
+def cargar(ruta_modelo: str):
+    """Compatibilidad con código anterior: devuelve un Clasificador."""
+    return Clasificador(ruta_modelo)
 
 
-def predecir(paquete: dict, imagen: Image.Image) -> dict[str, float]:
-    x = extraer(imagen, **paquete["features"]).reshape(1, -1)
-    modelo = paquete["modelo"]
-    if hasattr(modelo, "predict_proba"):
-        return {e: float(p) for e, p in zip(ETIQUETAS, modelo.predict_proba(x)[0])}
-    return {e: float(i == modelo.predict(x)[0]) for i, e in enumerate(ETIQUETAS)}
+def predecir(clasificador: Clasificador, imagen) -> dict[str, float]:
+    """Compatibilidad con código anterior: probabilidades de fruta y verdura."""
+    return clasificador.probabilidades(imagen)
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Clasifica imágenes como fruta o verdura.")
+    parser.add_argument("entradas", nargs="+", help="rutas, enlaces, carpetas o archivos .txt")
+    parser.add_argument("--modelo", help="ruta o enlace del modelo (por defecto, el publicado)")
+    args = parser.parse_args()
+
+    clf = Clasificador(args.modelo)
+    print(f"modelo: {clf.descripcion}\n")
+    for r in clf.clasificar_lote(args.entradas):
+        if "error" in r:
+            print(f"ERROR    {r['entrada']}: {r['error']}")
+        else:
+            print(f"{r['etiqueta']:8} {r['confianza']:.0%}  {r['entrada']}")
 
 
 if __name__ == "__main__":
-    print(predecir(cargar(sys.argv[1]), Image.open(sys.argv[2])))
+    main()
