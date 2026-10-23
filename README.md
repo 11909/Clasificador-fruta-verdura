@@ -7,7 +7,7 @@ Clasificador binario de imágenes: recibe la foto de un alimento y responde si e
 | Quiero… | Notebook |
 |---|---|
 | Entrenar y comparar modelos | `kaggle_train.ipynb` [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://www.kaggle.com/kernels/welcome?src=https://github.com/11909/Clasificador-fruta-verdura/blob/main/notebooks/kaggle_train.ipynb) |
-| Clasificar imágenes con el modelo ya publicado (sin entrenar) | `predecir.ipynb` [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://www.kaggle.com/kernels/welcome?src=https://github.com/11909/Clasificador-fruta-verdura/blob/main/notebooks/predecir.ipynb) [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/11909/Clasificador-fruta-verdura/blob/main/notebooks/predecir.ipynb) |
+| Clasificar imágenes con el modelo ya entrenado (sin volver a entrenar) | `predecir.ipynb` [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://www.kaggle.com/kernels/welcome?src=https://github.com/11909/Clasificador-fruta-verdura/blob/main/notebooks/predecir.ipynb) [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/11909/Clasificador-fruta-verdura/blob/main/notebooks/predecir.ipynb) |
 | Construir el dataset combinado del equipo | `kaggle_build_dataset.ipynb` [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://www.kaggle.com/kernels/welcome?src=https://github.com/11909/Clasificador-fruta-verdura/blob/main/notebooks/kaggle_build_dataset.ipynb) |
 
 El ciclo completo es: **entrenar** en Kaggle → **publicar** `modelo.joblib` en un Release de GitHub → **clasificar** desde cualquier lugar con enlaces a imágenes.
@@ -65,7 +65,7 @@ tests/
 
 Al terminar, en `outputs/` quedan `resultados_cv.csv` (comparación de modelos, con los segundos que tardó cada uno), `test_metrics.json` (calificación final en Test) y `modelo.joblib` (el modelo elegido). La última celda lo prueba con `entradas/ejemplos.txt`; si te convence, [publícalo](#publicar-el-modelo).
 
-## Predecir sin reentrenar
+## Predecir con el modelo ya entrenado (sin volver a entrenar)
 
 La predicción está separada en módulos, así que el modelo se entrena una vez y se reutiliza:
 
