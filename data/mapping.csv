@@ -9,10 +9,13 @@ apio,verdura,,celery,tallo
 arándano,fruta,,blueberry,
 arúgula,verdura,,arugula|rucula|rocket,hojas
 avellana,fruta,nueces_semillas,hazelnut,
+bardana,verdura,,burdock|gobo,raíz
 berenjena,fruta,,eggplant|aubergine|brinjal,
 berro,verdura,,watercress,hojas
 betabel,verdura,,beetroot|red beet,raíz
+bok choy,verdura,,pak choi|bok choy,hojas
 brócoli,verdura,,broccoli,flor
+brotes de bambú,verdura,,bamboo shoot,brote
 cacahuate,fruta,nueces_semillas,peanut,
 calabacita,fruta,,zucchini,
 calabaza,fruta,,pumpkin|squash,
@@ -23,11 +26,13 @@ calabaza serpiente,fruta,,snake gourd,
 camote,verdura,,sweet potato|potato sweet,raíz
 caqui,fruta,,kaki,
 carambola,fruta,,carambola|carambula,
+cardo,verdura,,cardoon,tallo
 castaña,fruta,nueces_semillas,chestnut,
 cebolla,verdura,,onion,bulbo
 cebollín,verdura,,chives,hojas
 cereza,fruta,,cherry,
 chabacano,fruta,,apricot,
+chaya,verdura,,tree spinach,hojas
 chayote,fruta,,chayote,
 chayotextle,verdura,,,raíz del chayote
 chile,fruta,,chili|green chili|jalapeno,
@@ -41,10 +46,12 @@ col,verdura,,cabbage,hojas
 col de bruselas,verdura,,brussels sprouts|brussel sprouts,yemas
 coliflor,verdura,,cauliflower,flor
 colinabo,verdura,,kohlrabi,tallo
+cúrcuma,verdura,,turmeric,rizoma
 dátil,fruta,,dates,
 durazno,fruta,,peach,
 ejote,fruta,,bean pod|bean|flat bean|yardlong bean,vaina (legumbre)
 elote,fruta,,corn|sweetcorn,criterio del equipo
+endibia,verdura,,endive|belgian endive,hojas
 espárrago,verdura,,asparagus,tallo
 espinaca,verdura,,spinach|green spinach,hojas
 flor de calabaza,verdura,,squash blossom|zucchini flower,flor
@@ -53,6 +60,7 @@ fresa,fruta,,strawberry,
 fruto de espinaca de malabar,fruta,,malabar spinach seed,
 granada,fruta,,pomegranate,
 granadilla,fruta,,granadilla,
+grelos,verdura,,rapini|broccoli rabe,hojas e inflorescencia
 grosella espinosa,fruta,,gooseberry,
 grosella roja,fruta,,redcurrant,
 guayaba,fruta,,guava,
@@ -82,6 +90,7 @@ mashua,verdura,,mashua,tubérculo
 melón,fruta,,melon|cantaloupe,
 melón amargo,fruta,,bitter gourd|bittergroud|bitter melon,
 membrillo,fruta,,quince,
+mizuna,verdura,,mizuna,hojas
 mora,fruta,,mulberry,
 nabo,verdura,,turnip,raíz
 ñame,verdura,,elephant foot yam,cormo
@@ -94,6 +103,7 @@ oca,verdura,,oca,tubérculo
 okra,fruta,,okra|ladies finger,vaina
 olluco,verdura,,olluco,tubérculo
 papa,verdura,,potato,tubérculo
+papaloquelite,verdura,,papalo,hojas
 papaya,fruta,,papaya|green papaya,
 pepino,fruta,,cucumber,
 pepino dulce,fruta,,,Solanum muricatum; en Fruits-360 se llama Pepino (ver renombrar en configs/dataset.yaml)
@@ -109,15 +119,21 @@ pomelo,fruta,,pomelo,
 poro,verdura,,leek,tallo y hojas
 quelite,verdura,,quelites,hojas
 rábano,verdura,,radish,raíz
+radicchio,verdura,,radicchio|chicory,hojas
 raíz de nenúfar,verdura,,shaluk,rizoma
 rambután,fruta,,rambutan,
+romanesco,verdura,,romanesco,inflorescencia
+romeritos,verdura,,seepweed,hojas y tallo
+ruibarbo,verdura,,rhubarb,tallo (peciolo)
 salak,fruta,,salak,
+salsifí,verdura,,salsify,raíz
 sandía,fruta,,watermelon,
 tallo de malanga,verdura,,arum lobe,tallo
 tamarillo,fruta,,tamarillo,
 tangelo,fruta,,tangelo,
 toronja,fruta,,grapefruit|red grapefruit,
 tuna,fruta,,cactus fruit,
+tupinambo,verdura,,jerusalem artichoke|sunchoke,tubérculo
 uchuva,fruta,,physalis,
 uva,fruta,,grape,
 verdolaga,verdura,,purslane,hojas y tallo
