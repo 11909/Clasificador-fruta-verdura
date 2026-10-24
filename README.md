@@ -36,7 +36,7 @@ Usa varias búsquedas por alimento: en español, en inglés, con el nombre cient
 
 **Antes, una sola vez:** que Miguel Angel te haya dado acceso al dataset `mendezrosalesmiguel/frankeinstein` y el token `GITHUB_TOKEN` (paso 1).
 
-1. **Abre el notebook:** [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://www.kaggle.com/kernels/welcome?src=https://github.com/11909/Clasificador-fruta-verdura/blob/main/notebooks/kaggle_train.ipynb). Kaggle crea una copia en tu cuenta con la versión más reciente del repo. Si ya tenías una copia vieja, abre una nueva desde este botón.
+1. **Abre el notebook:** [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://www.kaggle.com/kernels/welcome?src=https://github.com/11909/Clasificador-fruta-verdura/blob/main/notebooks/kaggle_train.ipynb). Kaggle crea una copia en tu cuenta con la versión más reciente del repo(pucharle al boton cada que se actualiza el repo). Si ya tenías una copia vieja, abre una nueva desde este botón.
 2. **Configura la sesión** en el panel derecho (**Settings**):
    - **Internet: On.** Es obligatorio: el notebook clona el repo y descarga el dataset y las fotos de Drive.
    - **Accelerator: None.** No hace falta GPU, porque los modelos corren en CPU.
