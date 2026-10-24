@@ -55,7 +55,11 @@ def main(config_path: str):
                              semilla) if d.get("test_dirs") else []
     if d.get("equipo_dir"):
         # Fotos del equipo dentro del dataset combinado: una parte fija a test, el resto a train
-        e_train, e_test = dividir_equipo(d["equipo_dir"], d.get("fraccion_test_equipo", 0.3), semilla, excluir)
+        dirs = d["equipo_dir"] if isinstance(d["equipo_dir"], list) else [d["equipo_dir"]]
+        e_train, e_test = [], []
+        for carpeta in dirs:
+            a, b = dividir_equipo(carpeta, d.get("fraccion_test_equipo", 0.3), semilla, excluir)
+            e_train, e_test = e_train + a, e_test + b
         print(f"fotos del equipo: train {conteo(e_train)} | test {conteo(e_test)}")
         train, test = train + e_train, test + e_test
     if d.get("balancear_etiquetas"):

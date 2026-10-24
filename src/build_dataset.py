@@ -24,7 +24,6 @@ import hashlib
 import json
 import random
 import re
-import shutil
 from collections import Counter, defaultdict
 from pathlib import Path
 
@@ -217,41 +216,6 @@ def construir(cfg: dict):
         print(f"\nCarpetas sin entrada en data/mapping.csv (no se copiaron): {faltantes}")
         print("Agrégalas al CSV (o a 'renombrar' en la config) y vuelve a correr.")
     return reporte
-
-
-LEEME_EQUIPO = """Fotos del equipo: una carpeta por alimento con su nombre en español y sin acentos
-(zanahoria/, rabano/, limon_amarillo/), como la columna `alimento` de data/mapping.csv.
-Se suben con New Version del dataset. El entrenamiento manda ~30 % de estas fotos a test.
-"""
-
-
-def copiar_equipo(cfg: dict, descargar=None):
-    """Deja en salida/equipo/ las fotos del equipo de la versión anterior del dataset combinado
-    (`previo` en la config), para que reconstruirlo no las borre. Sin versión anterior, deja la
-    carpeta solo con su LEEME.txt."""
-    destino = Path(cfg["salida"]) / "equipo"
-    destino.mkdir(parents=True, exist_ok=True)
-    (destino / "LEEME.txt").write_text(LEEME_EQUIPO, encoding="utf-8")
-    if not cfg.get("previo"):
-        return 0
-    if descargar is None:
-        import kagglehub
-        descargar = kagglehub.dataset_download
-    try:
-        anterior = ubicar(Path(descargar(cfg["previo"])), "equipo")
-    except Exception as e:  # primera vez: el dataset combinado todavía no existe
-        print(f"Sin versión anterior de {cfg['previo']} ({e}); la carpeta equipo/ queda vacía.")
-        return 0
-    if not anterior.is_dir():
-        print(f"{cfg['previo']} no tiene carpeta equipo/; queda vacía.")
-        return 0
-    fotos = [p for p in anterior.rglob("*") if p.suffix.lower() in EXTENSIONES and p.is_file()]
-    for foto in fotos:
-        copia = destino / foto.relative_to(anterior)
-        copia.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(foto, copia)
-    print(f"equipo/: {len(fotos)} fotos copiadas de la versión anterior")
-    return len(fotos)
 
 
 def escribir_conteos(manifest: list[dict], destino: Path):
