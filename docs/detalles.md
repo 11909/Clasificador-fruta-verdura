@@ -131,18 +131,22 @@ Por ahora el dataset se arma **solo con datasets públicos de Kaggle**: Fruits-3
 
 ### Fotos del equipo
 
-Viven en una carpeta compartida de Google Drive, no en Kaggle: cada integrante sube un zip por entrega con una subcarpeta por alimento. (El dataset combinado de Kaggle no sirve para esto porque los datasets creados desde el Output de un notebook no aceptan archivos subidos a mano.)
+Viven en una carpeta compartida de Google Drive, no en Kaggle. (El dataset combinado de Kaggle no sirve para esto porque los datasets creados desde el Output de un notebook no aceptan archivos subidos a mano.)
 
 ```
 carpeta de Drive/
-  ana_2026-10-24.zip   -> zanahoria/ana_001.jpg, rabano/ana_002.jpg, ...
-  luis_2026-10-25.zip  -> ...
+  faltantes.txt
+  zanahoria/ana_001.jpg, ana_002.jpg, luis_lote1.zip ...
+  flor_de_calabaza/...
+  eva_2026-10-24.zip      (opcional: zip con su propio árbol de alimentos)
 ```
 
-- El notebook de entrenamiento baja la carpeta con `gdown` (`data.equipo_drive` en `configs/baseline.yaml`, que debe estar compartida como "cualquier persona con el enlace"), descomprime cada zip (`src/equipo.py`) y manda cada foto a test con probabilidad `fraccion_test_equipo` (30 %) según su carpeta y nombre, así que agregar fotos no mueve las que ya estaban.
-- Si un zip trae una carpeta envolvente (`fotos/zanahoria/...`), se detecta sola; `__MACOSX` y archivos ocultos se ignoran.
-- Las carpetas pueden llevar acentos o guiones bajos (`limón_amarillo` = `limon amarillo`), y lo que sigue al nombre se ignora (`rabano_negro` cuenta como `rabano`). Si una carpeta no está en `data/mapping.csv`, el entrenamiento se detiene y la lista.
-- `python -m src.build_dataset --plantilla fotos` crea una carpeta vacía por cada alimento del CSV.
+- `data/plan_equipo.csv` dice qué alimento busca cada persona. Las carpetas de Drive salen de ahí.
+- El notebook de entrenamiento baja la carpeta con `gdown` (`EQUIPO_DRIVE` en la celda Parámetros, que debe estar compartida como "cualquier persona con el enlace") y descomprime los zips (`src/equipo.py`). Un zip dentro de una carpeta de alimento suelta sus fotos ahí; un zip en la raíz se lee como un árbol de alimentos aparte. `__MACOSX` y los archivos ocultos se ignoran.
+- Cada foto va a test con probabilidad `fraccion_test_equipo` (30 %) según su carpeta y nombre, así que agregar fotos no mueve las que ya estaban.
+- **faltantes.txt:** el notebook cuenta las imágenes de train de Kaggle y las del equipo por alimento del plan. Pide las fotos que hacen falta para llegar a `MAX_POR_CLASE` en train (las del equipo cuentan al 70 % porque el resto va a test) y al menos `MINIMO_EQUIPO` fotos reales. Lo escribe en `/kaggle/working/outputs/faltantes.txt`. El `faltantes.txt` inicial de Drive es un estimado hecho antes de tener los conteos reales.
+- Las carpetas pueden llevar acentos o guiones bajos (`limón_amarillo` = `limon amarillo`), y lo que sigue al nombre se ignora (`rabano_negro` cuenta como `rabano`). Si una carpeta no está en `data/mapping.csv`, el notebook se detiene y la lista.
+- Drive puede listar solo las primeras 50 entradas de una carpeta; si una carpeta trae justo 50, el notebook avisa. Por eso conviene subir lotes grandes como zips.
 
 ### Más adelante: fuentes fuera de Kaggle
 
