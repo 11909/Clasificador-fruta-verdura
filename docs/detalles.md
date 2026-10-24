@@ -148,6 +148,14 @@ carpeta de Drive/
 - Las carpetas pueden llevar acentos o guiones bajos (`limón_amarillo` = `limon amarillo`), y lo que sigue al nombre se ignora (`rabano_negro` cuenta como `rabano`). Si una carpeta no está en `data/mapping.csv`, el notebook se detiene y la lista.
 - Drive puede listar solo las primeras 50 entradas de una carpeta; si una carpeta trae justo 50, el notebook avisa. Por eso conviene subir lotes grandes como zips.
 
+#### Renombrar y subir las fotos
+
+**Renombrar.** Cada archivo empieza con tu nombre: `ana_001.jpg`. Sirven `.jpg`, `.jpeg`, `.png`, `.webp` y `.bmp`. En Windows, selecciónalas todas → F2 → escribe `ana_` y quedan `ana_ (1).jpg`, `ana_ (2).jpg`...
+
+**Subir.** Entra a la carpeta del alimento en Drive (`oca/`, `flor_de_calabaza/`...) y arrastra tus fotos ahí. Si son más de 50, comprímelas en zips de 100 a 200 y sube los zips a esa misma carpeta. No borres archivos de otros.
+
+Si un alimento no tiene carpeta, créala con el nombre de la columna `alimento` de [`data/mapping.csv`](../data/mapping.csv), sin acentos y con `_` en vez de espacios. Si no está en el CSV, avisa para agregarlo. No hace falta reconstruir nada: el entrenamiento baja Drive solo.
+
 ### Más adelante: fuentes fuera de Kaggle
 
 `configs/dataset.yaml` ya trae, comentadas, dos fuentes más. Para activarlas se quita el `# ` de sus líneas:

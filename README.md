@@ -32,12 +32,6 @@ Usa varias búsquedas por alimento: en español, en inglés, con el nombre cient
 - los duplicados (`dupeGuru` o `czkawka` los encuentran);
 - las que mezclan varios alimentos.
 
-**3. Renombra.** Cada archivo empieza con tu nombre: `ana_001.jpg`. Sirven `.jpg`, `.jpeg`, `.png`, `.webp` y `.bmp`. En Windows, selecciónalas todas → F2 → escribe `ana_` y quedan `ana_ (1).jpg`, `ana_ (2).jpg`...
-
-**4. Sube.** Entra a la carpeta del alimento en Drive (`oca/`, `flor_de_calabaza/`...) y arrastra tus fotos ahí. Si son más de 50, comprímelas en zips de 100 a 200 y sube los zips a esa misma carpeta. No borres archivos de otros.
-
-Si un alimento no tiene carpeta, créala con el nombre de la columna `alimento` de [`data/mapping.csv`](data/mapping.csv), sin acentos y con `_` en vez de espacios. Si no está en el CSV, avisa para agregarlo. No hace falta reconstruir nada: el entrenamiento baja Drive solo.
-
 ## 3. Entrena el modelo (Kaggle)
 
 **Antes, una sola vez:** que Miguel Angel te haya dado acceso al dataset `mendezrosalesmiguel/frankeinstein` y el token `GITHUB_TOKEN` (paso 1).
