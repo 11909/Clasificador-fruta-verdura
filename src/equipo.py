@@ -12,7 +12,7 @@ from collections import Counter
 from pathlib import Path
 
 from src.dataset import EXTENSIONES
-from src.mapping import cargar_alimentos, clave_de
+from src.mapping import cargar_alimentos, cargar_mapping, clave_de, etiqueta_de
 
 PLAN_PATH = Path(__file__).resolve().parent.parent / "data" / "plan_equipo.csv"
 
@@ -77,16 +77,19 @@ def contar_por_alimento(muestras: list) -> Counter:
 
 
 def faltantes(kaggle: Counter, equipo: Counter, max_por_clase: int, fraccion_test: float,
-              minimo_equipo: int, plan: list[dict]) -> list[dict]:
-    """Fotos que faltan por alimento del plan para que entrene con `max_por_clase` imágenes:
-    las de Kaggle cuentan completas y las del equipo solo en su parte de train. Cada alimento pide
-    además al menos `minimo_equipo` fotos reales del equipo, para que haya fotos fuera de estudio."""
+              minimo_equipo: int, plan: list[dict], max_por_clase_verdura: int | None = None) -> list[dict]:
+    """Fotos que faltan por alimento del plan para que entrene con `max_por_clase` imágenes
+    (`max_por_clase_verdura` en las verduras): las de Kaggle cuentan hasta ese tope y las del equipo
+    solo en su parte de train. Cada alimento pide además al menos `minimo_equipo` fotos reales del
+    equipo, para que haya fotos fuera de estudio."""
     filas = []
-    alimentos = cargar_alimentos()
+    alimentos, mapping = cargar_alimentos(), cargar_mapping()
     for p in plan:
         alimento = alimentos.get(clave_de(p["alimento"], alimentos), p["alimento"])
         k, e = kaggle.get(alimento, 0), equipo.get(alimento, 0)
-        necesarias = max(math.ceil(max(0, max_por_clase - k) / (1 - fraccion_test)), minimo_equipo)
+        objetivo = (max_por_clase_verdura or max_por_clase) if etiqueta_de(p["alimento"], mapping) == "verdura" \
+            else max_por_clase
+        necesarias = max(math.ceil(max(0, objetivo - min(k, objetivo)) / (1 - fraccion_test)), minimo_equipo)
         filas.append({"persona": p["persona"], "alimento": p["alimento"], "kaggle": k, "equipo": e,
                       "faltan": max(0, necesarias - e)})
     return filas

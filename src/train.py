@@ -50,7 +50,8 @@ def main(config_path: str):
     salida.mkdir(parents=True, exist_ok=True)
 
     excluir = d.get("excluir_grupos") or []
-    train = limitar_por_clase(listar_muestras(d["train_dirs"], excluir_grupos=excluir), d.get("max_por_clase"), semilla)
+    train = limitar_por_clase(listar_muestras(d["train_dirs"], excluir_grupos=excluir), d.get("max_por_clase"), semilla,
+                              d.get("max_por_clase_verdura"))
     test = limitar_por_clase(listar_muestras(d["test_dirs"], excluir_grupos=excluir), d.get("max_por_clase_test"),
                              semilla) if d.get("test_dirs") else []
     if d.get("equipo_dir"):

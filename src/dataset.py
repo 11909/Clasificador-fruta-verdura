@@ -58,15 +58,20 @@ def dividir_equipo(raiz: str, fraccion_test: float, semilla: int, excluir_grupos
     return [m for m in muestras if m[0] not in en_test], test
 
 
-def limitar_por_clase(muestras: list, maximo: int | None, semilla: int) -> list:
-    """Toma como máximo `maximo` imágenes de cada clase, para acotar memoria y tiempo."""
-    if not maximo:
+def limitar_por_clase(muestras: list, maximo: int | None, semilla: int, maximo_verdura: int | None = None) -> list:
+    """Toma como máximo `maximo` imágenes de cada clase, para acotar memoria y tiempo. Las clases de
+    verdura usan `maximo_verdura` si se da, para compensar que hay menos clases de verdura."""
+    if not maximo and not maximo_verdura:
         return muestras
     rng = random.Random(semilla)
     por_clase = defaultdict(list)
     for m in muestras:
         por_clase[m[2]].append(m)
-    return [m for grupo in por_clase.values() for m in rng.sample(grupo, min(maximo, len(grupo)))]
+    salida = []
+    for grupo in por_clase.values():
+        tope = (maximo_verdura or maximo) if grupo[0][1] == ETIQUETAS.index("verdura") else maximo
+        salida += rng.sample(grupo, min(tope, len(grupo))) if tope else grupo
+    return salida
 
 
 def balancear_por_etiqueta(muestras: list, maximo: int | None, semilla: int) -> list:
