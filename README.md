@@ -28,7 +28,7 @@ Para un alimento que no tiene carpeta, créala con el nombre de la columna `alim
 ## 4. Entrena
 
 1. Abre [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://www.kaggle.com/kernels/welcome?src=https://github.com/11909/Clasificador-fruta-verdura/blob/main/notebooks/kaggle_train.ipynb).
-2. **Add Input** → el dataset combinado del paso 2 (las fotos de Drive se bajan solas). Activa **Settings → Internet**.
+2. Activa **Settings → Internet**. No hace falta Add Input: el dataset combinado y las fotos de Drive se bajan solos.
 3. **Add-ons → Secrets** → agrega `GITHUB_TOKEN` con el token y activa la casilla.
 4. Si quieres, cambia los modelos y sus parámetros en la celda **Parámetros**.
 5. **Save Version → Save & Run All**. En **Output** queda `faltantes.txt` con las fotos que aún faltan. Si el modelo mejora al anterior, se publica solo en GitHub.
@@ -43,7 +43,7 @@ Abre [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](ht
 |---|---|
 | No aparece **Internet** | Verifica tu teléfono (paso 1). |
 | "No se pudo clonar el repo" | Activa **Settings → Internet**. |
-| "No encontré las carpetas de imágenes" | Falta adjuntar el dataset en **Add Input**. |
+| "No encontré las carpetas de imágenes" | Activa **Settings → Internet** y pide a Miguel Angel acceso al dataset combinado. |
 | `No module named 'src'` | Kaggle reinició la sesión: corre desde la primera celda. |
 | "No encontré el secreto GITHUB_TOKEN" | Agrégalo y activa la casilla (paso 4.3). |
 | "No pude bajar la carpeta de Drive" | Revisa que la carpeta esté compartida como *Cualquier persona con el enlace*, o espera un rato si Drive dice que hubo demasiados accesos. |
