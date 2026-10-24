@@ -38,13 +38,34 @@ Usa varias búsquedas por alimento: en español, en inglés, con el nombre cient
 
 Si un alimento no tiene carpeta, créala con el nombre de la columna `alimento` de [`data/mapping.csv`](data/mapping.csv), sin acentos y con `_` en vez de espacios. Si no está en el CSV, avisa para agregarlo. No hace falta reconstruir nada: el entrenamiento baja Drive solo.
 
-## 3. Entrena
+## 3. Entrena el modelo (Kaggle)
 
-1. Abre [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://www.kaggle.com/kernels/welcome?src=https://github.com/11909/Clasificador-fruta-verdura/blob/main/notebooks/kaggle_train.ipynb).
-2. Activa **Settings → Internet**. No hace falta Add Input: el dataset combinado y las fotos de Drive se bajan solos.
-3. **Add-ons → Secrets** → agrega `GITHUB_TOKEN` con el token y activa la casilla.
-4. En la celda **Parámetros** puedes cambiar los modelos y sus valores. `MUESTRA_POR_ETIQUETA` (5000 por defecto) entrena una versión preliminar con el mismo número de frutas y verduras, divididas 80/20. Ponlo en `None` para usar los splits normales cuando ya haya fotos del equipo.
-5. **Save Version → Save & Run All**. En **Output** queda `faltantes.txt` con las fotos que aún faltan. Si el modelo mejora al anterior, se publica solo en GitHub.
+**Antes, una sola vez:** que Miguel Angel te haya dado acceso al dataset `mendezrosalesmiguel/frankeinstein` y el token `GITHUB_TOKEN` (paso 1).
+
+1. **Abre el notebook:** [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://www.kaggle.com/kernels/welcome?src=https://github.com/11909/Clasificador-fruta-verdura/blob/main/notebooks/kaggle_train.ipynb). Kaggle crea una copia en tu cuenta con la versión más reciente del repo. Si ya tenías una copia vieja, abre una nueva desde este botón.
+2. **Configura la sesión** en el panel derecho (**Settings**):
+   - **Internet: On.** Es obligatorio: el notebook clona el repo y descarga el dataset y las fotos de Drive.
+   - **Accelerator: None.** No hace falta GPU, porque los modelos corren en CPU.
+   - No hace falta **Add Input**.
+3. **Agrega el token:** **Add-ons → Secrets → Add a new secret**, con nombre `GITHUB_TOKEN` y el token como valor. Activa la casilla junto al secreto. Sin token entrena igual, pero no publica el modelo.
+4. **Ajusta la celda Parámetros** (opcional). Lo principal:
+
+   | Parámetro | Qué hace | Valor por defecto |
+   |---|---|---|
+   | `MUESTRA_POR_ETIQUETA` | Versión preliminar: toma N frutas + N verduras de todo lo disponible y las divide 80/20. `None` = usar los splits normales (cuando ya haya fotos del equipo). | `5000` |
+   | `FRACCION_TEST_MUESTRA` | Parte que va a test en la versión preliminar. | `0.2` |
+   | `MAX_POR_CLASE` / `MAX_POR_CLASE_VERDURA` | Imágenes por fruta / verdura en los splits normales. Más es mejor, pero más lento. | `150` / `180` |
+   | `EXCLUIR_GRUPOS` | `["nueces_semillas"]` saca nueces y semillas. | `[]` |
+   | `MODELOS` | Los modelos a comparar y sus parámetros de scikit-learn. Quita los que no quieras para que corra más rápido. | 7 modelos |
+
+5. **Córrelo:** **Save Version → Save & Run All → Save**. Corre aunque cierres la pestaña. Kaggle permite hasta 12 horas por corrida, y con los valores por defecto tarda unas horas. Para probar rápido, usa **Run All** con un `MUESTRA_POR_ETIQUETA` chico, como `500`.
+6. **Revisa los resultados:** abre la versión guardada (**View → Output**, o desde tu perfil en **Code**). Ahí están:
+   - `comparacion_modelos.png`: gráficas con las métricas de cada modelo, el tiempo y la matriz de confusión.
+   - `resultados_cv.csv`: la validación cruzada de cada modelo.
+   - `test_metrics.json`: las métricas en test del modelo elegido.
+   - `modelo.joblib`: el modelo entrenado.
+   - `faltantes.txt`: las fotos que aún le faltan al equipo.
+7. **Publicación:** si el modelo nuevo supera en accuracy balanceada al publicado, la última celda lo sube solo como Release de GitHub, y desde ese momento lo usa el paso 4. Para publicar aunque no mejore, pon `FORZAR = True` en esa celda. Para no publicar, pon `PUBLICAR = False`.
 
 ## 4. Clasifica fotos
 
