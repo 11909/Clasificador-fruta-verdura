@@ -59,7 +59,7 @@ Si un alimento no tiene carpeta, créala con el nombre de la columna `alimento` 
    | `MODELOS` | Los modelos a comparar y sus parámetros de scikit-learn. Quita los que no quieras para que corra más rápido. | 7 modelos |
 
 5. **Córrelo:** **Save Version → Save & Run All → Save**. Corre aunque cierres la pestaña. Kaggle permite hasta 12 horas por corrida, y con los valores por defecto tarda unas horas. Para probar rápido, usa **Run All** con un `MUESTRA_POR_ETIQUETA` chico, como `500`.
-6. **Revisa los resultados:** abre la versión guardada (**View → Output**, o desde tu perfil en **Code**). Ahí están:
+6. **Revisa los resultados:** abre la versión guardada (desde tu perfil → **Code**) y ve a la pestaña **Output**. Ahí están:
    - `comparacion_modelos.png`: gráficas con las métricas de cada modelo, el tiempo y la matriz de confusión.
    - `resultados_cv.csv`: la validación cruzada de cada modelo.
    - `test_metrics.json`: las métricas en test del modelo elegido.
