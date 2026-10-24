@@ -74,7 +74,7 @@ Abre [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](ht
 | "No encontré las carpetas de imágenes" | Activa **Settings → Internet** y pide a Miguel Angel acceso al dataset combinado. |
 | `No module named 'src'` | Kaggle reinició la sesión: corre desde la primera celda. |
 | "No encontré el secreto GITHUB_TOKEN" | Agrégalo y activa la casilla (paso 3.3). |
-| "No pude bajar la carpeta de Drive" | Revisa que la carpeta esté compartida como *Cualquier persona con el enlace*, o espera un rato si Drive dice que hubo demasiados accesos. |
+| "AVISO: no pude bajar la carpeta de Drive" | El notebook sigue sin las fotos del equipo. Revisa que la carpeta esté compartida como *Cualquier persona con el enlace*, o espera un rato si Drive dice que hubo demasiados accesos. |
 
 El dataset combinado de Kaggle ya está creado (`mendezrosalesmiguel/frankeinstein`); solo se reconstruye si cambian `data/mapping.csv` o las fuentes de Kaggle (ver [docs/detalles.md](docs/detalles.md)).
 
