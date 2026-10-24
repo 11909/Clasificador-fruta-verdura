@@ -42,9 +42,17 @@ def va_a_test(ruta, fraccion_test: float, semilla: int) -> bool:
 
 def dividir_equipo(raiz: str, fraccion_test: float, semilla: int, excluir_grupos=()) -> tuple[list, list]:
     """Fotos del equipo (raiz/alimento/foto.jpg) repartidas entre train y test con va_a_test."""
-    if not Path(raiz).is_dir():
+    raiz = Path(raiz)
+    if not raiz.is_dir():
         return [], []
-    muestras = listar_muestras([raiz], excluir_grupos=excluir_grupos)
+    # Si el zip se subió con una carpeta envolvente (fotos/zanahoria/...), se entra en ella
+    mapping = cargar_mapping(excluir_grupos=excluir_grupos)
+    while True:
+        subcarpetas = [p for p in raiz.iterdir() if p.is_dir()]
+        if len(subcarpetas) != 1 or etiqueta_de(subcarpetas[0].name, mapping) is not None:
+            break
+        raiz = subcarpetas[0]
+    muestras = listar_muestras([str(raiz)], mapping)
     test = [m for m in muestras if va_a_test(m[0], fraccion_test, semilla)]
     en_test = {m[0] for m in test}
     return [m for m in muestras if m[0] not in en_test], test

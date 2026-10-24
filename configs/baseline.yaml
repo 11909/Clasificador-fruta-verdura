@@ -11,7 +11,9 @@ data:
   balancear_etiquetas: true
   max_por_etiqueta: null
   max_por_clase_test: null  # null = todo el conjunto de prueba
-  # Fotos del equipo (carpeta equipo/ del dataset combinado): ~30 % fijo a test, el resto a train.
+  # Fotos del equipo: carpeta de Google Drive con un zip por entrega (una subcarpeta por alimento).
+  # El notebook la descarga y la pone en equipo_dir; ~30 % fijo a test, el resto a train.
+  equipo_drive: https://drive.google.com/drive/folders/1l4Q_VRv__PdaO16_aKlgEwdX50k4FT3S   # carpeta, compartida como "cualquier persona con el enlace"
   equipo_dir: null
   fraccion_test_equipo: 0.3
   # Grupos de data/mapping.csv que se dejan fuera del entrenamiento y la prueba.

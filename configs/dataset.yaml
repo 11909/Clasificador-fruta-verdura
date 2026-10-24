@@ -26,9 +26,6 @@
 salida: /kaggle/working/dataset
 tamano_max: 256   # lado mayor de las imágenes guardadas (no se agrandan las pequeñas)
 seed: 42
-# Dataset combinado ya publicado (dueño/dataset). Al reconstruir, su carpeta equipo/ (las fotos que
-# sube el equipo) se copia a la versión nueva. La primera vez todavía no existe y se ignora.
-previo: 11909/frankenstein   # por confirmar con el nombre real en Kaggle
 
 fuentes:
   - nombre: fruits360

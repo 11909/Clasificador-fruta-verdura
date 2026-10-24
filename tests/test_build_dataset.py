@@ -4,7 +4,7 @@ import shutil
 import numpy as np
 from PIL import Image
 
-from src.build_dataset import construir, copiar_equipo, crear_plantilla, preparar_fuentes, resolver_clase
+from src.build_dataset import construir, crear_plantilla, preparar_fuentes, resolver_clase
 from src.mapping import cargar_mapping
 
 MAPPING = cargar_mapping()
@@ -136,22 +136,6 @@ def test_preparar_fuentes_vuelve_absolutas_las_rutas_y_omite_las_que_fallan(tmp_
     assert cfg["fuentes"][0]["splits"]["train"] == "Train"  # no modifica la config original
 
 
-def test_copiar_equipo_conserva_las_fotos_de_la_version_anterior(tmp_path):
-    anterior = tmp_path / "previo" / "equipo"
-    guardar(anterior / "oca" / "ana_001.jpg", 1)
-    guardar(anterior / "rabano" / "luis_001.jpg", 2)
-    cfg = {"salida": str(tmp_path / "out"), "previo": "dueno/frankenstein"}
-
-    assert copiar_equipo(cfg, lambda handle: str(tmp_path / "previo")) == 2
-    assert (tmp_path / "out" / "equipo" / "oca" / "ana_001.jpg").is_file()
-
-    def no_existe(handle):
-        raise FileNotFoundError("404")
-    cfg_nuevo = {"salida": str(tmp_path / "out2"), "previo": "dueno/frankenstein"}
-    assert copiar_equipo(cfg_nuevo, no_existe) == 0
-    assert (tmp_path / "out2" / "equipo" / "LEEME.txt").is_file()
-
-
 def test_dividir_equipo_es_estable(tmp_path):
     from src.dataset import dividir_equipo
     for i in range(30):
@@ -163,3 +147,20 @@ def test_dividir_equipo_es_estable(tmp_path):
     train2, test2 = dividir_equipo(str(tmp_path / "equipo"), 0.3, 42)
     assert {m[0] for m in test} <= {m[0] for m in test2}  # agregar fotos no mueve las anteriores
     assert dividir_equipo(str(tmp_path / "no-existe"), 0.3, 42) == ([], [])
+    # zip subido con carpeta envolvente
+    guardar(tmp_path / "envuelto" / "fotos" / "nopal" / "a.jpg", 7)
+    tr, te = dividir_equipo(str(tmp_path / "envuelto"), 0.3, 42)
+    assert [m[2] for m in tr + te] == ["nopal"]
+
+
+def test_descomprimir_zips_ignora_basura_de_mac(tmp_path):
+    import zipfile
+    from src.equipo import descomprimir_zips
+
+    with zipfile.ZipFile(tmp_path / "ana.zip", "w") as z:
+        z.writestr("zanahoria/ana_001.jpg", b"x")
+        z.writestr("__MACOSX/zanahoria/._ana_001.jpg", b"x")
+        z.writestr(".DS_Store", b"x")
+    (salida,) = descomprimir_zips(str(tmp_path))
+    assert sorted(p.relative_to(salida).as_posix() for p in (tmp_path / "ana").rglob("*")) == [
+        "zanahoria", "zanahoria/ana_001.jpg"]

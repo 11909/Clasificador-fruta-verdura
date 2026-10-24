@@ -119,31 +119,30 @@ Pongan sus fotos en cualquier sitio con enlace público y agreguen los enlaces a
 
 `src/build_dataset.py` junta varias fuentes en un solo dataset con estructura `train/<clase>/` y `test/<clase>/`. Las fuentes se describen en `configs/dataset.yaml`; el notebook `kaggle_build_dataset.ipynb` lo construye en Kaggle y explica cómo publicarlo como dataset privado.
 
-Por ahora el dataset se arma **solo con datasets públicos de Kaggle**: Fruits-360, Fresh and Rotten, PackEat y Vegetable Image Dataset (15 clases). Las fotos del equipo se suben después a su carpeta `equipo/`. Las rutas marcadas "por confirmar" en la config se revisan con `--explorar`.
+Por ahora el dataset se arma **solo con datasets públicos de Kaggle**: Fruits-360, Fresh and Rotten, PackEat y Vegetable Image Dataset (15 clases). Las fotos del equipo van aparte, en una carpeta de Google Drive. Las rutas marcadas "por confirmar" en la config se revisan con `--explorar`.
 
 **`data/mapping.csv` es la lista oficial de alimentos.** Tiene una fila por alimento con su nombre en español (`alimento`), su etiqueta y los nombres con que aparece en los datasets (`nombres_dataset`, separados por `|`; p. ej. `berenjena` ← `eggplant|aubergine|brinjal`). En el dataset combinado cada clase queda con su nombre en español, sin acentos (`limon amarillo`, `rabano`).
 
 ### Crear el dataset
 
 1. **Construir.** Abre `kaggle_build_dataset.ipynb` en Kaggle, activa Internet (los datasets se descargan solos con `kagglehub`, sin Add Input). La sección 1 muestra la estructura de cada fuente; si alguna ruta de `configs/dataset.yaml` no coincide, corrígela en la celda 2 (y luego en el repo). Después **Save Version → Save & Run All**.
-2. **Publicar.** En la versión guardada, **Output → New Dataset** (privado, compartido con el equipo con *Can edit*). Ese es el dataset que se adjunta en `kaggle_train.ipynb`. Pon su nombre (`dueño/dataset`) en `previo` de `configs/dataset.yaml`.
+2. **Publicar.** En la versión guardada, **Output → New Dataset** (privado, compartido con el equipo con *Can edit*). Ese es el dataset que se adjunta en `kaggle_train.ipynb`.
 3. **Actualizar.** Si cambia `data/mapping.csv` o la config, se vuelve a correr y se usa **Output → New Version** sobre el mismo dataset. Revisen `conteos.csv` para ver el balance.
 
 ### Fotos del equipo
 
-Van dentro del mismo dataset combinado, en `equipo/<alimento>/`, y se suben con **New Version** sin volver a correr el notebook:
+Viven en una carpeta compartida de Google Drive, no en Kaggle: cada integrante sube un zip por entrega con una subcarpeta por alimento. (El dataset combinado de Kaggle no sirve para esto porque los datasets creados desde el Output de un notebook no aceptan archivos subidos a mano.)
 
 ```
-dataset-combinado/
-  train/<alimento>/   ← de los datasets de Kaggle
-  test/<alimento>/
-  equipo/<alimento>/  ← fotos del equipo
+carpeta de Drive/
+  ana_2026-10-24.zip   -> zanahoria/ana_001.jpg, rabano/ana_002.jpg, ...
+  luis_2026-10-25.zip  -> ...
 ```
 
-- El entrenamiento (`data.equipo_dir`, que el notebook detecta solo) manda cada foto de `equipo/` a test con probabilidad `fraccion_test_equipo` (30 %) según su carpeta y nombre, así que agregar fotos no mueve las que ya estaban.
-- Al reconstruir el dataset, `copiar_equipo` copia la carpeta `equipo/` de la versión publicada (`previo` en `configs/dataset.yaml`), así que no se pierde.
+- El notebook de entrenamiento baja la carpeta con `gdown` (`data.equipo_drive` en `configs/baseline.yaml`, que debe estar compartida como "cualquier persona con el enlace"), descomprime cada zip (`src/equipo.py`) y manda cada foto a test con probabilidad `fraccion_test_equipo` (30 %) según su carpeta y nombre, así que agregar fotos no mueve las que ya estaban.
+- Si un zip trae una carpeta envolvente (`fotos/zanahoria/...`), se detecta sola; `__MACOSX` y archivos ocultos se ignoran.
 - Las carpetas pueden llevar acentos o guiones bajos (`limón_amarillo` = `limon amarillo`), y lo que sigue al nombre se ignora (`rabano_negro` cuenta como `rabano`). Si una carpeta no está en `data/mapping.csv`, el entrenamiento se detiene y la lista.
-- `python -m src.build_dataset --plantilla equipo` crea una carpeta vacía por cada alimento del CSV.
+- `python -m src.build_dataset --plantilla fotos` crea una carpeta vacía por cada alimento del CSV.
 
 ### Más adelante: fuentes fuera de Kaggle
 
