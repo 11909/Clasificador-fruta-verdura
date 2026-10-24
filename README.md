@@ -6,7 +6,7 @@ Recibe la foto de un alimento y dice si es **fruta** o **verdura** (criterio bot
 
 1. Crea una cuenta en [kaggle.com](https://www.kaggle.com).
 2. Verifica tu teléfono: tu foto → **Settings → Phone Verification**. Sin esto los notebooks no tienen Internet.
-3. Pide a Miguel Angel el enlace de la carpeta de Google Drive de fotos y el token `GITHUB_TOKEN` (por mensaje privado; nunca lo pegues en el código ni en el chat del grupo).
+3. Pide a Miguel Angel acceso al dataset combinado de Kaggle, el enlace de la carpeta de Google Drive de fotos y el token `GITHUB_TOKEN` (por mensaje privado; nunca lo pegues en el código ni en el chat del grupo).
 
 ## 2. Sube tus fotos (Google Drive)
 
