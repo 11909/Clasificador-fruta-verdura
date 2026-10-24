@@ -181,3 +181,14 @@ def test_faltantes_usa_kaggle_y_equipo():
     filas = faltantes(Counter({"zanahoria": 1000, "rabano": 100}), Counter({"oca": 15, "zanahoria": 90}),
                       150, 0.3, 80, plan)
     assert [f["faltan"] for f in filas] == [215 - 15, 0, 80]  # rábano: 50 faltantes / 0.7 = 72 < mínimo 80
+
+
+def test_tope_distinto_para_verduras():
+    from collections import Counter
+    from src.dataset import limitar_por_clase
+    from src.equipo import faltantes
+
+    muestras = [(f"m{i}", 0, "manzana") for i in range(10)] + [(f"z{i}", 1, "zanahoria") for i in range(10)]
+    assert Counter(m[2] for m in limitar_por_clase(muestras, 3, 0, maximo_verdura=6)) == {"manzana": 3, "zanahoria": 6}
+    plan = [{"persona": "A", "alimento": "oca"}, {"persona": "A", "alimento": "chile"}]
+    assert [f["faltan"] for f in faltantes(Counter(), Counter(), 150, 0.3, 80, plan, 240)] == [343, 215]
