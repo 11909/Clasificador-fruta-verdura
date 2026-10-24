@@ -153,14 +153,31 @@ def test_dividir_equipo_es_estable(tmp_path):
     assert [m[2] for m in tr + te] == ["nopal"]
 
 
-def test_descomprimir_zips_ignora_basura_de_mac(tmp_path):
+def test_descomprimir_zips_en_raiz_y_en_carpeta_de_alimento(tmp_path):
     import zipfile
     from src.equipo import descomprimir_zips
 
-    with zipfile.ZipFile(tmp_path / "ana.zip", "w") as z:
-        z.writestr("zanahoria/ana_001.jpg", b"x")
-        z.writestr("__MACOSX/zanahoria/._ana_001.jpg", b"x")
+    drive = tmp_path / "drive"
+    (drive / "zanahoria").mkdir(parents=True)
+    with zipfile.ZipFile(drive / "ana.zip", "w") as z:  # zip en la raíz con su árbol
+        z.writestr("nopal/ana_001.jpg", b"x")
+        z.writestr("__MACOSX/nopal/._ana_001.jpg", b"x")
         z.writestr(".DS_Store", b"x")
-    (salida,) = descomprimir_zips(str(tmp_path))
-    assert sorted(p.relative_to(salida).as_posix() for p in (tmp_path / "ana").rglob("*")) == [
-        "zanahoria", "zanahoria/ana_001.jpg"]
+    with zipfile.ZipFile(drive / "zanahoria" / "luis.zip", "w") as z:  # zip dentro del alimento
+        z.writestr("fotos/luis_001.jpg", b"x")
+        z.writestr("notas.txt", b"x")
+    (raiz_zip,) = descomprimir_zips(str(drive))
+    assert sorted(p.relative_to(raiz_zip).as_posix() for p in (tmp_path / "drive_zips" / "ana").rglob("*")) == [
+        "nopal", "nopal/ana_001.jpg"]
+    assert (drive / "zanahoria" / "luis_001.jpg").exists() and not (drive / "zanahoria" / "notas.txt").exists()
+
+
+def test_faltantes_usa_kaggle_y_equipo():
+    from collections import Counter
+    from src.equipo import faltantes
+
+    plan = [{"persona": "A", "alimento": "oca"}, {"persona": "A", "alimento": "zanahoria"},
+            {"persona": "B", "alimento": "rabano"}]
+    filas = faltantes(Counter({"zanahoria": 1000, "rabano": 100}), Counter({"oca": 15, "zanahoria": 90}),
+                      150, 0.3, 80, plan)
+    assert [f["faltan"] for f in filas] == [215 - 15, 0, 80]  # rábano: 50 faltantes / 0.7 = 72 < mínimo 80
