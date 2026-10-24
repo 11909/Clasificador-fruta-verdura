@@ -100,6 +100,22 @@ def balancear_por_etiqueta(muestras: list, maximo: int | None, semilla: int) -> 
     return elegidas
 
 
+def muestra_balanceada(muestras: list, por_etiqueta: int, fraccion_test: float, semilla: int) -> tuple[list, list]:
+    """Toma `por_etiqueta` imágenes de fruta y las mismas de verdura (repartidas entre clases) y las
+    divide en train y test: `fraccion_test` de cada clase va a test."""
+    rng = random.Random(semilla)
+    por_clase = defaultdict(list)
+    for m in balancear_por_etiqueta(muestras, por_etiqueta, semilla):
+        por_clase[m[2]].append(m)
+    train, test = [], []
+    for _, grupo in sorted(por_clase.items()):
+        rng.shuffle(grupo)
+        n_test = round(len(grupo) * fraccion_test)
+        test += grupo[:n_test]
+        train += grupo[n_test:]
+    return train, test
+
+
 def conteo(muestras: list) -> dict[str, int]:
     c = Counter(m[1] for m in muestras)
     return {ETIQUETAS[y]: c.get(y, 0) for y in range(len(ETIQUETAS))}

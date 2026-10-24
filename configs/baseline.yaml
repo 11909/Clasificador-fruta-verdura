@@ -11,6 +11,10 @@ data:
   # el mismo número de ambas (el de la etiqueta con menos imágenes, o max_por_etiqueta si es menor).
   balancear_etiquetas: true
   max_por_etiqueta: null
+  # Versión preliminar: N frutas + N verduras de todo lo disponible, divididas por clase con
+  # fraccion_test_muestra a test. null = usar train_dirs/test_dirs con los topes por clase.
+  muestra_por_etiqueta: null
+  fraccion_test_muestra: 0.2
   max_por_clase_test: null  # null = todo el conjunto de prueba
   # Fotos del equipo: carpeta de Google Drive con una subcarpeta por alimento (fotos sueltas o zips).
   # El notebook la descarga y la pone en equipo_dir; ~30 % fijo a test, el resto a train.
