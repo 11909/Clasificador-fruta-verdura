@@ -15,7 +15,8 @@ import yaml
 from sklearn.model_selection import (GridSearchCV, StratifiedGroupKFold, StratifiedKFold, cross_val_predict,
                                      cross_validate)
 
-from src.dataset import balancear_por_etiqueta, conteo, dividir_equipo, limitar_por_clase, listar_muestras
+from src.dataset import (balancear_por_etiqueta, conteo, dividir_equipo, limitar_por_clase, listar_muestras,
+                         muestra_balanceada)
 from src.evaluate import elegir_umbral, metricas, predecir_con_umbral
 from src.features import extraer_con_cache
 from src.modelo import guardar_modelo
@@ -43,6 +44,43 @@ def caracteristicas(muestras: list, cfg_feat: dict, cache_dir: Path, nombre: str
     return X
 
 
+def equipo(d: dict, excluir, semilla: int) -> tuple[list, list]:
+    """Fotos del equipo: una parte fija a test, el resto a train."""
+    dirs = d["equipo_dir"] if isinstance(d["equipo_dir"], list) else [d["equipo_dir"]]
+    e_train, e_test = [], []
+    for carpeta in dirs:
+        a, b = dividir_equipo(carpeta, d.get("fraccion_test_equipo", 0.3), semilla, excluir)
+        e_train, e_test = e_train + a, e_test + b
+    print(f"fotos del equipo: train {conteo(e_train)} | test {conteo(e_test)}")
+    return e_train, e_test
+
+
+def splits_normales(d: dict, excluir, semilla: int) -> tuple[list, list]:
+    """train/test del dataset combinado (con tope por clase) más las fotos del equipo."""
+    train = limitar_por_clase(listar_muestras(d["train_dirs"], excluir_grupos=excluir), d.get("max_por_clase"), semilla,
+                              d.get("max_por_clase_verdura"))
+    test = limitar_por_clase(listar_muestras(d["test_dirs"], excluir_grupos=excluir), d.get("max_por_clase_test"),
+                             semilla) if d.get("test_dirs") else []
+    if d.get("equipo_dir"):
+        e_train, e_test = equipo(d, excluir, semilla)
+        train, test = train + e_train, test + e_test
+    if d.get("balancear_etiquetas"):
+        # Mismo número de frutas que de verduras al entrenar; la prueba se deja como está
+        train = balancear_por_etiqueta(train, d.get("max_por_etiqueta"), semilla)
+    return train, test
+
+
+def muestra_preliminar(d: dict, excluir, semilla: int) -> tuple[list, list]:
+    """Junta todas las imágenes (train, test y equipo), toma `muestra_por_etiqueta` frutas y las
+    mismas verduras, y las divide por clase con `fraccion_test_muestra` a test."""
+    todas = listar_muestras(d["train_dirs"] + (d.get("test_dirs") or []), excluir_grupos=excluir)
+    if d.get("equipo_dir"):
+        e_train, e_test = equipo(d, excluir, semilla)
+        todas += e_train + e_test
+    print(f"muestra preliminar de {d['muestra_por_etiqueta']} por etiqueta, de {conteo(todas)} disponibles")
+    return muestra_balanceada(todas, d["muestra_por_etiqueta"], d.get("fraccion_test_muestra", 0.2), semilla)
+
+
 def main(config_path: str):
     cfg = yaml.safe_load(open(config_path, encoding="utf-8"))
     d, semilla = cfg["data"], cfg["seed"]
@@ -50,22 +88,10 @@ def main(config_path: str):
     salida.mkdir(parents=True, exist_ok=True)
 
     excluir = d.get("excluir_grupos") or []
-    train = limitar_por_clase(listar_muestras(d["train_dirs"], excluir_grupos=excluir), d.get("max_por_clase"), semilla,
-                              d.get("max_por_clase_verdura"))
-    test = limitar_por_clase(listar_muestras(d["test_dirs"], excluir_grupos=excluir), d.get("max_por_clase_test"),
-                             semilla) if d.get("test_dirs") else []
-    if d.get("equipo_dir"):
-        # Fotos del equipo dentro del dataset combinado: una parte fija a test, el resto a train
-        dirs = d["equipo_dir"] if isinstance(d["equipo_dir"], list) else [d["equipo_dir"]]
-        e_train, e_test = [], []
-        for carpeta in dirs:
-            a, b = dividir_equipo(carpeta, d.get("fraccion_test_equipo", 0.3), semilla, excluir)
-            e_train, e_test = e_train + a, e_test + b
-        print(f"fotos del equipo: train {conteo(e_train)} | test {conteo(e_test)}")
-        train, test = train + e_train, test + e_test
-    if d.get("balancear_etiquetas"):
-        # Mismo número de frutas que de verduras al entrenar; la prueba se deja como está
-        train = balancear_por_etiqueta(train, d.get("max_por_etiqueta"), semilla)
+    if d.get("muestra_por_etiqueta"):
+        train, test = muestra_preliminar(d, excluir, semilla)
+    else:
+        train, test = splits_normales(d, excluir, semilla)
     print(f"train {conteo(train)} | test {conteo(test)}")
 
     X = caracteristicas(train, cfg["features"], salida / "cache", "train")

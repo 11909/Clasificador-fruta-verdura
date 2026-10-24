@@ -192,3 +192,16 @@ def test_tope_distinto_para_verduras():
     assert Counter(m[2] for m in limitar_por_clase(muestras, 3, 0, maximo_verdura=6)) == {"manzana": 3, "zanahoria": 6}
     plan = [{"persona": "A", "alimento": "oca"}, {"persona": "A", "alimento": "chile"}]
     assert [f["faltan"] for f in faltantes(Counter(), Counter(), 150, 0.3, 80, plan, 240)] == [343, 215]
+
+
+def test_muestra_balanceada_80_20():
+    from collections import Counter
+    from src.dataset import muestra_balanceada
+
+    muestras = ([(f"m{i}", 0, "manzana") for i in range(50)] + [(f"p{i}", 0, "pera") for i in range(50)]
+                + [(f"z{i}", 1, "zanahoria") for i in range(30)])
+    train, test = muestra_balanceada(muestras, 20, 0.2, 0)
+    assert Counter(m[1] for m in train + test) == {0: 20, 1: 20}
+    assert Counter(m[1] for m in test) == {0: 4, 1: 4}
+    assert not {m[0] for m in train} & {m[0] for m in test}
+    assert Counter(m[2] for m in train + test)["manzana"] == 10  # reparte entre clases
