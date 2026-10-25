@@ -50,7 +50,8 @@ Usa varias búsquedas por alimento: en español, en inglés, con el nombre cient
    | `FRACCION_TEST_MUESTRA` | Parte que va a test en la versión preliminar. | `0.2` |
    | `MAX_POR_CLASE` / `MAX_POR_CLASE_VERDURA` | Imágenes por fruta / verdura en los splits normales. Más es mejor, pero más lento. | `150` / `180` |
    | `LIMPIEZA` | Quita fotos casi repetidas de Fruits-360 y deja máximo 100 de esa fuente por clase. No cambia el dataset de Kaggle. `None` = sin limpiar. | activada |
-   | `FEATURES` | Qué se mide de cada foto: color, color por zonas, forma (HOG), textura (LBP) y silueta. | 5 tipos |
+   | `FEATURES` | Qué se mide de cada foto: color, color por zonas, forma (HOG), textura (LBP) y silueta. `segmentar` separa antes el alimento del fondo (`"grabcut"`, `"saturacion"` o `None`). | 5 tipos, `grabcut` |
+   | `AJUSTAR_HIPERPARAMETROS` | Prueba las combinaciones `grid` de KNN, SVM y Random Forest validando por alimento. `False` = más rápido. | `True` |
    | `CV` | Cómo se mide el desempeño. `uno_fuera_grupo` es leave-one-out por alimento: deja fuera un alimento a la vez. `grupos` hace 5 vueltas y es más rápido. | `uno_fuera_grupo` |
    | `EXCLUIR_GRUPOS` | `["nueces_semillas"]` saca nueces y semillas. | `[]` |
    | `MODELOS` | Los modelos a comparar y sus parámetros de scikit-learn. Quita los que no quieras para que corra más rápido. | 7 modelos |

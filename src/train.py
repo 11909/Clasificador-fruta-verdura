@@ -145,12 +145,16 @@ def main(config_path: str):
 
     resultados, en_test = [], []
     for spec in cfg["models"]:
+        if not cfg.get("ajustar_hiperparametros", True):
+            spec = {k: v for k, v in spec.items() if k != "grid"}  # usa solo los params fijos
         modelo = crear_modelo(spec["name"], spec.get("params"), spec.get("pca"), semilla)
         inicio = time.time()
         if spec.get("grid"):
             busqueda = GridSearchCV(modelo, spec["grid"], cv=cv_grid, scoring="f1_macro", n_jobs=-1)
             busqueda.fit(X, y, groups=grupos)
             spec = {**spec, "mejores_params": busqueda.best_params_}
+            print(f"{spec['name']}: mejores hiperparámetros {busqueda.best_params_} "
+                  f"(f1_macro {busqueda.best_score_:.4f} en la búsqueda)")
             modelo = busqueda.best_estimator_
         # Todas las métricas con la misma validación, también para los modelos con grid
         puntajes = evaluar_cv(modelo, X, y, grupos, cv, deja_uno)

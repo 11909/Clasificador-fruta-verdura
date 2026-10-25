@@ -39,6 +39,8 @@ features:
   # color, hog, lbp (los originales), color_espacial, hog_fino, lbp_multi, forma; quita alguno para comparar su aporte
   tipos: [color, color_espacial, hog_fino, lbp_multi, forma]
   bins_color: 16
+  # Separa el alimento del fondo antes de medir: grabcut (OpenCV), saturacion o null (imagen completa)
+  segmentar: grabcut
 
 cv:
   # uno_fuera_grupo (leave-one-out por alimento), grupos, estratificada o uno_fuera
@@ -51,6 +53,9 @@ seed: 42
 # Busca con validación cruzada el umbral de probabilidad de verdura que mejor separa ambas
 # etiquetas (accuracy balanceada) y lo guarda con el modelo. false = umbral 0.5.
 ajustar_umbral: true
+
+# false = ignora los "grid" de los modelos y usa solo sus params fijos (más rápido)
+ajustar_hiperparametros: true
 
 # Modelos a comparar con validación cruzada. Se reentrena el de mayor f1_macro.
 # Opciones: logistic_regression, svm, knn, naive_bayes, decision_tree, random_forest,
