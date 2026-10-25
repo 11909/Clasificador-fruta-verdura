@@ -12,27 +12,56 @@ from pathlib import Path
 
 import numpy as np
 import yaml
-from sklearn.model_selection import (GridSearchCV, StratifiedGroupKFold, StratifiedKFold, cross_val_predict,
-                                     cross_validate)
+from sklearn.metrics import f1_score, make_scorer, precision_score, recall_score
+from sklearn.model_selection import (GridSearchCV, LeaveOneGroupOut, LeaveOneOut, StratifiedGroupKFold,
+                                     StratifiedKFold, cross_val_predict, cross_validate)
 
 from src.dataset import (balancear_por_etiqueta, conteo, dividir_equipo, limitar_por_clase, listar_muestras,
                          muestra_balanceada)
 from src.evaluate import elegir_umbral, metricas, predecir_con_umbral
 from src.features import extraer_con_cache
+from src.limpieza import limpiar
+from src.mapping import ETIQUETAS
 from src.modelo import guardar_modelo
 from src.models import crear_modelo
 
-METRICAS_CV = ["accuracy", "balanced_accuracy", "f1_macro"]
+# Métricas por modelo, en el orden de las tablas: globales y luego por clase (fruta, verdura)
+ESCORES = {"accuracy": "accuracy", "balanced_accuracy": "balanced_accuracy",
+           "precision_macro": make_scorer(precision_score, average="macro", zero_division=0),
+           "recall_macro": "recall_macro", "f1_macro": "f1_macro",
+           **{f"{nombre}_{e}": make_scorer(fn, pos_label=i, zero_division=0)
+              for nombre, fn in (("precision", precision_score), ("recall", recall_score), ("f1", f1_score))
+              for i, e in enumerate(ETIQUETAS)}}
+METRICAS_CV = list(ESCORES)
+
+
+CV_DEJA_UNO = ("uno_fuera_grupo", "uno_fuera")
 
 
 def crear_cv(cfg_cv: dict, semilla: int):
     """"grupos": ninguna clase (variedad) aparece a la vez en entrenamiento y validación, lo que evita
-    que fotos casi idénticas de la misma pieza inflen el resultado. "estratificada": división aleatoria."""
+    que fotos casi idénticas de la misma pieza inflen el resultado. "estratificada": división aleatoria.
+    "uno_fuera_grupo": leave-one-out por alimento, cada vuelta valida con una clase que el modelo no vio.
+    "uno_fuera": leave-one-out clásico, una imagen por vuelta (tantos entrenamientos como imágenes)."""
     if cfg_cv["tipo"] == "grupos":
         return StratifiedGroupKFold(n_splits=cfg_cv["folds"], shuffle=True, random_state=semilla)
     if cfg_cv["tipo"] == "estratificada":
         return StratifiedKFold(n_splits=cfg_cv["folds"], shuffle=True, random_state=semilla)
+    if cfg_cv["tipo"] == "uno_fuera_grupo":
+        return LeaveOneGroupOut()
+    if cfg_cv["tipo"] == "uno_fuera":
+        return LeaveOneOut()
     raise ValueError(f"cv.tipo desconocido: {cfg_cv['tipo']}")
+
+
+def evaluar_cv(modelo, X, y, grupos, cv, deja_uno: bool) -> dict:
+    """Métricas de validación cruzada. Con leave-one-out cada vuelta tiene una sola clase (o una sola
+    imagen), así que se juntan las predicciones de todas las vueltas y se miden una vez."""
+    if deja_uno:
+        res = metricas(y, cross_val_predict(modelo, X, y, groups=grupos, cv=cv, n_jobs=-1))
+        return {**{m: res[m] for m in METRICAS_CV}, "f1_macro_std": 0.0}
+    cvr = cross_validate(modelo, X, y, groups=grupos, cv=cv, scoring=ESCORES, n_jobs=-1)
+    return {**{m: cvr[f"test_{m}"].mean() for m in METRICAS_CV}, "f1_macro_std": cvr["test_f1_macro"].std()}
 
 
 def caracteristicas(muestras: list, cfg_feat: dict, cache_dir: Path, nombre: str) -> np.ndarray:
@@ -55,11 +84,17 @@ def equipo(d: dict, excluir, semilla: int) -> tuple[list, list]:
     return e_train, e_test
 
 
+def kaggle(dirs: list, d: dict, excluir, semilla: int) -> list:
+    """Imágenes del dataset combinado, con la limpieza de `data.limpieza` (null = sin limpiar)."""
+    muestras = listar_muestras(dirs, excluir_grupos=excluir)
+    return limpiar(muestras, semilla=semilla, **d["limpieza"]) if d.get("limpieza") else muestras
+
+
 def splits_normales(d: dict, excluir, semilla: int) -> tuple[list, list]:
     """train/test del dataset combinado (con tope por clase) más las fotos del equipo."""
-    train = limitar_por_clase(listar_muestras(d["train_dirs"], excluir_grupos=excluir), d.get("max_por_clase"), semilla,
+    train = limitar_por_clase(kaggle(d["train_dirs"], d, excluir, semilla), d.get("max_por_clase"), semilla,
                               d.get("max_por_clase_verdura"))
-    test = limitar_por_clase(listar_muestras(d["test_dirs"], excluir_grupos=excluir), d.get("max_por_clase_test"),
+    test = limitar_por_clase(kaggle(d["test_dirs"], d, excluir, semilla), d.get("max_por_clase_test"),
                              semilla) if d.get("test_dirs") else []
     if d.get("equipo_dir"):
         e_train, e_test = equipo(d, excluir, semilla)
@@ -73,7 +108,7 @@ def splits_normales(d: dict, excluir, semilla: int) -> tuple[list, list]:
 def muestra_preliminar(d: dict, excluir, semilla: int) -> tuple[list, list]:
     """Junta todas las imágenes (train, test y equipo), toma `muestra_por_etiqueta` frutas y las
     mismas verduras, y las divide por clase con `fraccion_test_muestra` a test."""
-    todas = listar_muestras(d["train_dirs"] + (d.get("test_dirs") or []), excluir_grupos=excluir)
+    todas = kaggle(d["train_dirs"] + (d.get("test_dirs") or []), d, excluir, semilla)
     if d.get("equipo_dir"):
         e_train, e_test = equipo(d, excluir, semilla)
         todas += e_train + e_test
@@ -98,33 +133,47 @@ def main(config_path: str):
     y = np.array([m[1] for m in train])
     grupos = np.array([m[2] for m in train])
     cv = crear_cv(cfg["cv"], semilla)
+    deja_uno = cfg["cv"]["tipo"] in CV_DEJA_UNO
+    # GridSearchCV promedia un puntaje por vuelta, que no tiene sentido con una clase por vuelta:
+    # la búsqueda usa 5 vueltas por grupos y el modelo elegido se mide después con leave-one-out
+    cv_grid = StratifiedGroupKFold(n_splits=cfg["cv"].get("folds", 5), shuffle=True, random_state=semilla) \
+        if deja_uno else cv
 
-    resultados = []
+    X_test = caracteristicas(test, cfg["features"], salida / "cache", "test") if test else None
+    y_test = [m[1] for m in test]
+
+    resultados, en_test = [], []
     for spec in cfg["models"]:
         modelo = crear_modelo(spec["name"], spec.get("params"), spec.get("pca"), semilla)
         inicio = time.time()
         if spec.get("grid"):
-            # Búsqueda de hiperparámetros con la misma validación cruzada
-            busqueda = GridSearchCV(modelo, spec["grid"], cv=cv, scoring="f1_macro", n_jobs=-1)
+            busqueda = GridSearchCV(modelo, spec["grid"], cv=cv_grid, scoring="f1_macro", n_jobs=-1)
             busqueda.fit(X, y, groups=grupos)
-            fila_mejor = busqueda.best_index_
-            puntajes = {"f1_macro": busqueda.cv_results_["mean_test_score"][fila_mejor],
-                        "f1_macro_std": busqueda.cv_results_["std_test_score"][fila_mejor]}
             spec = {**spec, "mejores_params": busqueda.best_params_}
-        else:
-            cvr = cross_validate(modelo, X, y, groups=grupos, cv=cv, scoring=METRICAS_CV, n_jobs=-1)
-            puntajes = {m: cvr[f"test_{m}"].mean() for m in METRICAS_CV}
-            puntajes["f1_macro_std"] = cvr["test_f1_macro"].std()
+            modelo = busqueda.best_estimator_
+        # Todas las métricas con la misma validación, también para los modelos con grid
+        puntajes = evaluar_cv(modelo, X, y, grupos, cv, deja_uno)
         fila = {"modelo": spec["name"], **{k: round(float(v), 4) for k, v in puntajes.items()},
                 "segundos": round(time.time() - inicio, 1), "spec": spec}
         print(json.dumps(fila, default=str))
         resultados.append(fila)
+        if test:
+            # Cada modelo entrenado con todo train y medido en test con umbral 0.5, para compararlos
+            res = metricas(y_test, modelo.fit(X, y).predict(X_test))
+            en_test.append({"modelo": spec["name"], **{k: round(v, 4) if isinstance(v, float) else v
+                                                       for k, v in res.items()}})
+            print("test", json.dumps(en_test[-1]))
 
+    campos = ["modelo", *METRICAS_CV, "f1_macro_std", "segundos", "spec"]
     with open(salida / "resultados_cv.csv", "w", newline="", encoding="utf-8") as f:
-        campos = ["modelo", "accuracy", "balanced_accuracy", "f1_macro", "f1_macro_std", "segundos", "spec"]
         writer = csv.DictWriter(f, fieldnames=campos, extrasaction="ignore")
         writer.writeheader()
         writer.writerows({**r, "spec": json.dumps(r["spec"], default=str)} for r in resultados)
+    if en_test:
+        with open(salida / "resultados_test.csv", "w", newline="", encoding="utf-8") as f:
+            writer = csv.DictWriter(f, fieldnames=["modelo", *METRICAS_CV, "matriz_confusion"])
+            writer.writeheader()
+            writer.writerows({**r, "matriz_confusion": json.dumps(r["matriz_confusion"])} for r in en_test)
 
     mejor = max(resultados, key=lambda r: r["f1_macro"])
     spec = mejor["spec"]
@@ -144,10 +193,9 @@ def main(config_path: str):
     guardar_modelo(modelo, cfg["features"], spec, salida / "modelo.joblib", umbral=umbral)
 
     if test:
-        X_test = caracteristicas(test, cfg["features"], salida / "cache", "test")
         predichos = (predecir_con_umbral(modelo.predict_proba(X_test), umbral)
                      if hasattr(modelo, "predict_proba") else modelo.predict(X_test))
-        resultado = metricas([m[1] for m in test], predichos)
+        resultado = metricas(y_test, predichos)
         print("test", json.dumps(resultado))
         json.dump({"modelo": spec["name"], "umbral_verdura": umbral, **resultado}, open(salida / "test_metrics.json", "w"), indent=2)
 

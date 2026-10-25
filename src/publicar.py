@@ -25,6 +25,7 @@ REPO = "11909/Clasificador-fruta-verdura"
 API = "https://api.github.com"
 METRICA = "balanced_accuracy"
 ARCHIVOS = ("modelo.joblib", "test_metrics.json", "resultados_cv.csv")
+OPCIONALES = ("resultados_test.csv", "comparacion_modelos.png", "metricas_modelos.png", "matrices_modelos.png")  # se suben si existen
 
 
 class NoEncontrado(RuntimeError):
@@ -113,7 +114,7 @@ def publicar(salida: str | os.PathLike, token: str, repo: str = REPO, forzar: bo
     release = _pedir("POST", f"{API}/repos/{repo}/releases", token, datos)
     try:
         subida = release["upload_url"].split("{")[0]
-        for nombre in ARCHIVOS:
+        for nombre in ARCHIVOS + tuple(a for a in OPCIONALES if (salida / a).exists()):
             print(f"subiendo {nombre}...")
             _pedir("POST", f"{subida}?name={nombre}", token, (salida / nombre).read_bytes(),
                    tipo="application/octet-stream")

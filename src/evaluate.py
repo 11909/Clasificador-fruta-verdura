@@ -1,17 +1,23 @@
 import numpy as np
-from sklearn.metrics import accuracy_score, balanced_accuracy_score, confusion_matrix, f1_score
+from sklearn.metrics import (accuracy_score, balanced_accuracy_score, confusion_matrix,
+                             precision_recall_fscore_support)
 
 from src.mapping import ETIQUETAS
 
 
 def metricas(reales, predichos) -> dict:
-    """Accuracy, accuracy balanceada (promedio del acierto en fruta y en verdura), F1 por clase y macro, y matriz de confusión (filas = real, columnas = predicho)."""
+    """Accuracy, accuracy balanceada (promedio del acierto en fruta y en verdura), precision, recall y F1
+    por clase y macro, y matriz de confusión (filas = real, columnas = predicho)."""
     etiquetas = list(range(len(ETIQUETAS)))
-    f1 = f1_score(reales, predichos, average=None, labels=etiquetas, zero_division=0)
+    precision, recall, f1, _ = precision_recall_fscore_support(reales, predichos, labels=etiquetas, zero_division=0)
     return {
         "accuracy": float(accuracy_score(reales, predichos)),
         "balanced_accuracy": float(balanced_accuracy_score(reales, predichos)),
+        "precision_macro": float(precision.mean()),
+        "recall_macro": float(recall.mean()),
         "f1_macro": float(f1.mean()),
+        **{f"precision_{e}": float(v) for e, v in zip(ETIQUETAS, precision)},
+        **{f"recall_{e}": float(v) for e, v in zip(ETIQUETAS, recall)},
         **{f"f1_{e}": float(v) for e, v in zip(ETIQUETAS, f1)},
         "matriz_confusion": confusion_matrix(reales, predichos, labels=etiquetas).tolist(),
     }

@@ -38,7 +38,7 @@ Las imágenes y los modelos **no se suben al repo** (ver `.gitignore`); los mode
 src/
   mapping.py        # clase -> fruta/verdura/excluir, a partir de data/mapping.csv
   dataset.py        # lectura de carpetas raiz/clase/imagen y muestreo por clase
-  features.py       # extracción de características: color (HSV), forma (HOG), textura (LBP)
+  features.py       # extracción de características: color (HSV, global y por zonas), forma (HOG), textura (LBP) y silueta
   models.py         # catálogo de modelos de scikit-learn, incluidos voting y stacking
   train.py          # validación cruzada de todos los modelos, reentrena el mejor y evalúa en test
   evaluate.py       # accuracy, F1 por clase y matriz de confusión
@@ -66,7 +66,7 @@ tests/
 3. Activa **Settings → Internet** (Kaggle pide verificar tu teléfono). No hace falta GPU.
 4. Usa **Save Version → Save & Run All** para que corra sin la pestaña abierta y las salidas queden guardadas.
 
-Al terminar, en `outputs/` quedan `resultados_cv.csv` (comparación de modelos, con los segundos que tardó cada uno), `test_metrics.json` (calificación final en Test) y `modelo.joblib` (el modelo elegido). La última celda lo prueba con `entradas/ejemplos.txt`; si te convence, [publícalo](#publicar-el-modelo).
+Al terminar, en `outputs/` quedan `resultados_cv.csv` y `resultados_test.csv` (accuracy, precision, recall y F1 de cada modelo en validación cruzada y en test, con los segundos que tardó cada uno), `metricas_modelos.png` y `matrices_modelos.png` (las mismas métricas en gráficas), `test_metrics.json` (calificación final en Test) y `modelo.joblib` (el modelo elegido). La última celda lo prueba con `entradas/ejemplos.txt`; si te convence, [publícalo](#publicar-el-modelo).
 
 ## Predecir con el modelo ya entrenado (sin volver a entrenar)
 
@@ -94,7 +94,7 @@ clf.clasificar("https://drive.google.com/file/d/<ID>/view") # {'etiqueta': 'frut
 
 ### Publicar el modelo
 
-Es automático: al final de `notebooks/kaggle_train.ipynb` hay una celda que crea un Release nuevo (etiqueta `modelo-AAAAMMDD-HHMMSS`) con `modelo.joblib`, `test_metrics.json` y `resultados_cv.csv`. Desde ese momento, todo lo de arriba usa ese modelo; los Releases anteriores quedan como historial. Basta con **Run All** (o **Save Version → Save & Run All**).
+Es automático: al final de `notebooks/kaggle_train.ipynb` hay una celda que crea un Release nuevo (etiqueta `modelo-AAAAMMDD-HHMMSS`) con `modelo.joblib`, `test_metrics.json`, `resultados_cv.csv`, `resultados_test.csv` y las gráficas. Desde ese momento, todo lo de arriba usa ese modelo; los Releases anteriores quedan como historial. Basta con **Run All** (o **Save Version → Save & Run All**).
 
 - **Solo publica si mejora:** compara la accuracy balanceada de test con la del Release más reciente. Si no la supera, no publica y lo dice. Con `FORZAR = True` en esa celda publica de todas formas, por ejemplo al cambiar de dataset de prueba (las métricas dejan de ser comparables). Con `PUBLICAR = False` solo entrena.
 - **Sin token no publica**, pero el notebook termina bien.
@@ -175,11 +175,22 @@ El dataset combinado mezcla licencias (Fruits-360 es CC BY-SA 4.0): manténganlo
 
 ## Modelos y validación
 
-En `configs/baseline.yaml` se listan los modelos a comparar. Cada uno se evalúa con validación cruzada de 5 folds, y el de mayor F1 macro se reentrena con todo el conjunto de entrenamiento y se evalúa en Test.
+En `configs/baseline.yaml` se listan los modelos a comparar. Cada uno se evalúa con la validación cruzada elegida (ver abajo), y el de mayor F1 macro se reentrena con todo el conjunto de entrenamiento y se evalúa en Test.
 
 - **Modelos disponibles:** `logistic_regression`, `svm`, `knn`, `naive_bayes`, `decision_tree`, `random_forest`, `gradient_boosting`, y las combinaciones `voting` y `stacking`.
-- **Validación:** `cv.tipo: grupos` usa `StratifiedGroupKFold`, de modo que una misma variedad nunca está a la vez en entrenamiento y validación. `estratificada` usa `StratifiedKFold`.
-- **Ajuste de hiperparámetros:** agrega `grid` a un modelo para usar `GridSearchCV` con la misma validación.
+- **Validación:**
+  - `uno_fuera_grupo` (por defecto) usa `LeaveOneGroupOut`: cada vuelta deja fuera un alimento completo y lo predice con un modelo que nunca lo vio. Como cada vuelta tiene un solo alimento, las predicciones de todas las vueltas se juntan y las métricas se calculan una vez (por eso `f1_macro_std` sale 0).
+  - `grupos` usa `StratifiedGroupKFold` con 5 vueltas, de modo que una misma variedad nunca está a la vez en entrenamiento y validación. Mide lo mismo que la anterior, pero más rápido.
+  - `estratificada` usa `StratifiedKFold`. Sale más alto porque valida con alimentos que el modelo ya vio.
+  - `uno_fuera` usa `LeaveOneOut`, una imagen por vuelta. Entrena el modelo tantas veces como imágenes haya, así que solo sirve con muestras chicas (`MUESTRA_POR_ETIQUETA` de 300 o menos). Además, fotos casi iguales de la misma pieza quedan en entrenamiento y validación, y el resultado sale inflado.
+- **Ajuste de hiperparámetros:** agrega `grid` a un modelo para usar `GridSearchCV` con la misma validación. Con `uno_fuera_grupo` o `uno_fuera` la búsqueda usa 5 vueltas por grupos y el mejor modelo se mide después con leave-one-out.
+- **Características** (`features.tipos`):
+  - `color`: histograma HSV de toda la imagen, más media y desviación.
+  - `color_espacial`: media y desviación HSV en una cuadrícula de 3x3, más un histograma tono-saturación del centro, donde suele estar el alimento.
+  - `hog` / `hog_fino`: forma y bordes; `hog_fino` usa celdas de 8 px en lugar de 16.
+  - `lbp` / `lbp_multi`: textura; `lbp_multi` la mide a 3 escalas (radios 1, 2 y 3).
+  - `forma`: separa el alimento del fondo por saturación y mide su área, redondez, alargamiento, solidez y excentricidad.
+  - Los modelos publicados antes guardan sus propios tipos, así que siguen funcionando.
 - **Reducción de dimensiones:** `pca` aplica PCA antes del modelo.
 
 ## Criterio de etiquetas
@@ -224,5 +235,6 @@ python -m src.train --config configs/baseline.yaml   # entrenar local: ajusta la
 
 - **Fuga de datos:** Fruits-360 tiene muchas fotos casi idénticas de la misma pieza. Por eso la validación cruzada agrupa por variedad y la evaluación final usa la partición Test original.
 - **Fondo blanco:** con solo Fruits-360 el modelo puede aprender el fondo. Prueben con fotos reales tomadas por el equipo.
+- **Ruido de Fruits-360:** son cuadros de video de una pieza girando sobre fondo blanco, cientos por variedad. Al cargar el dataset, `src/limpieza.py` calcula un hash perceptual (dHash de 64 bits) de cada foto de Fruits-360, quita las que difieren en 6 bits o menos de otra de su clase y deja como máximo 100 por clase (`data.limpieza`). Opcionalmente descarta las fotos de fondo blanco liso de cualquier fuente. El dataset de Kaggle no cambia.
 - **Desbalance:** Fruits-360 tiene ~15 imágenes de fruta por cada una de verdura. Por eso se entrena con el mismo número de ambas (`balancear_etiquetas`), los modelos usan `class_weight="balanced"` donde aplica, se ajusta el umbral de verdura con validación cruzada (`ajustar_umbral`) y se reporta accuracy balanceada y F1, no solo accuracy.
 - **Secretos:** las API keys van en Kaggle Secrets, nunca en el código.

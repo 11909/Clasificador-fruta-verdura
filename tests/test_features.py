@@ -31,3 +31,26 @@ def test_todos_los_modelos_entrenan():
     combinado = {"estimadores": {"logistic_regression": {}, "random_forest": {"n_estimators": 10}}}
     for nombre in ["voting", "stacking"]:
         assert crear_modelo(nombre, combinado, pca=5).fit(X, y).predict_proba(X).shape == (60, 2)
+
+
+def test_caracteristicas_nuevas():
+    tipos = ["color", "color_espacial", "hog_fino", "lbp_multi", "forma"]
+    a = extraer(imagen_aleatoria(0), tamano=64, tipos=tipos)
+    b = extraer(imagen_aleatoria(1).resize((150, 80)), tamano=64, tipos=tipos)
+    assert a.shape == b.shape and np.isfinite(a).all()
+    # Una imagen lisa no tiene objeto que separar del fondo: la forma queda en ceros
+    lisa = extraer(Image.new("RGB", (50, 50), (120, 60, 30)), tamano=64, tipos=["forma"])
+    assert lisa.shape == (7,) and not lisa.any()
+
+
+def test_validacion_deja_uno_fuera():
+    from src.train import crear_cv, evaluar_cv
+    rng = np.random.default_rng(0)
+    X = np.vstack([rng.normal(0, 1, (40, 4)), rng.normal(3, 1, (40, 4))])
+    y = np.array([0] * 40 + [1] * 40)
+    grupos = np.repeat(np.arange(8), 10)  # 4 clases de fruta y 4 de verdura
+    cv = crear_cv({"tipo": "uno_fuera_grupo"}, 0)
+    assert cv.get_n_splits(X, y, grupos) == 8
+    res = evaluar_cv(crear_modelo("logistic_regression"), X, y, grupos, cv, deja_uno=True)
+    assert res["balanced_accuracy"] > 0.9 and res["f1_macro_std"] == 0
+    assert crear_cv({"tipo": "uno_fuera"}, 0).get_n_splits(X) == 80
