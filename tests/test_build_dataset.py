@@ -221,3 +221,18 @@ def test_muestra_balanceada_usa_todas_las_fotos_del_equipo():
     # Si el equipo pasa de por_etiqueta, la fruta se completa hasta igualarlo
     train, test = muestra_balanceada(kaggle, 20, 0.2, 0, (e_train, e_test))
     assert Counter(m[1] for m in train + test) == {0: 30, 1: 30}
+
+
+def test_descargar_drive_sigue_con_lo_que_bajo(tmp_path, monkeypatch):
+    import gdown
+    from gdown.exceptions import DownloadError
+    from PIL import Image
+    from src.equipo import descargar_drive
+
+    def bajar_a_medias(url, output, **kwargs):
+        (tmp_path / "eq" / "kale").mkdir(parents=True)
+        Image.new("RGB", (20, 20)).save(tmp_path / "eq" / "kale" / "a.jpg")
+        raise DownloadError("Failed to download the following files:\n- eq/kale/b.jpg")
+
+    monkeypatch.setattr(gdown, "download_folder", bajar_a_medias)
+    assert descargar_drive("https://drive.google.com/x", str(tmp_path / "eq")) == [str(tmp_path / "eq")]
