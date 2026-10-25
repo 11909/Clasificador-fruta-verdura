@@ -36,7 +36,7 @@ Usa varias búsquedas por alimento: en español, en inglés, con el nombre cient
 
 **Antes, una sola vez:** que Miguel Angel te haya dado acceso al dataset `mendezrosalesmiguel/frankeinstein` y el token `GITHUB_TOKEN` (paso 1).
 
-1. **Abre el notebook:** [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://www.kaggle.com/kernels/welcome?src=https://github.com/11909/Clasificador-fruta-verdura/blob/main/notebooks/kaggle_train.ipynb). Kaggle crea una copia en tu cuenta con la versión más reciente del repo(pucharle al boton cada que se actualiza el repo). Si ya tenías una copia vieja, abre una nueva desde este botón.
+1. **Abre el notebook:** [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://www.kaggle.com/kernels/welcome?src=https://github.com/11909/Clasificador-fruta-verdura/blob/main/notebooks/kaggle_train.ipynb). Kaggle crea una copia en tu cuenta. Usa este botón solo la primera vez, o cuando te avisen que cambiaron las celdas del notebook (ver **Corridas siguientes** abajo).
 2. **Configura la sesión** en el panel derecho (**Settings**):
    - **Internet: On.** Es obligatorio: el notebook clona el repo y descarga el dataset y las fotos de Drive.
    - **Accelerator: None.** No hace falta GPU, porque los modelos corren en CPU.
@@ -65,6 +65,8 @@ Usa varias búsquedas por alimento: en español, en inglés, con el nombre cient
    - `modelo.joblib`: el modelo entrenado.
    - `faltantes.txt`: las fotos que aún le faltan al equipo.
 7. **Publicación:** si el modelo nuevo supera en accuracy balanceada al publicado, la última celda lo sube solo como Release de GitHub, y desde ese momento lo usa el paso 4. Para publicar aunque no mejore, pon `FORZAR = True` en esa celda. Para no publicar, pon `PUBLICAR = False`.
+
+**Corridas siguientes:** no abras una copia nueva. Entra a tu notebook desde tu perfil → **Code** → **Edit**. Ahí ya están adjuntos el dataset combinado y el secreto `GITHUB_TOKEN`, y la primera celda baja sola el código más reciente del repo. Solo ajusta Parámetros si quieres y dale **Save Version → Save & Run All**.
 
 ## 4. Clasifica fotos
 

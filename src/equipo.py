@@ -49,16 +49,33 @@ def descomprimir_zips(carpeta: str, destino_raiz: str | None = None) -> list[str
 
 def descargar_drive(url: str, destino: str = "/kaggle/working/fotos_equipo") -> list[str]:
     """Baja la carpeta de Drive `url` (compartida como "cualquier persona con el enlace") y
-    devuelve las raíces con carpetas de alimentos: la propia carpeta y una por zip de la raíz."""
-    import gdown
+    devuelve las raíces con carpetas de alimentos: la propia carpeta y una por zip de la raíz.
 
-    gdown.download_folder(url, output=destino, quiet=True)
+    Si algunos archivos no bajan (Drive limita las descargas cuando son miles), sigue con los que
+    sí bajaron en lugar de descartar todo; `resume` salta los que ya estaban de un intento previo."""
+    import inspect
+
+    import gdown
+    from gdown.exceptions import DownloadError
+
+    opciones = {"retries": 3} if "retries" in inspect.signature(gdown.download_folder).parameters else {}
+    try:
+        gdown.download_folder(url, output=destino, quiet=True, resume=True, **opciones)
+    except DownloadError as e:
+        if not Path(destino).is_dir():
+            raise
+        fallidos = str(e).count("\n- ")
+        print(f"Aviso: {fallidos} archivos de Drive no se pudieron bajar; sigo con los que sí bajaron. "
+              "Vuelve a correr esta celda para reintentar solo los que faltan.")
     for sub in sorted(p for p in Path(destino).iterdir() if p.is_dir()):
         n = sum(1 for p in sub.iterdir() if p.is_file())
         if n == 50:
             print(f"Aviso: {sub.name}/ trae justo 50 archivos; Drive podría haber listado solo 50. "
                   "Si hay más, súbanlos en zips dentro de la carpeta.")
-    return [destino, *descomprimir_zips(destino)]
+    raices = [destino, *descomprimir_zips(destino)]
+    fotos = sum(1 for r in raices for p in Path(r).rglob("*") if p.suffix.lower() in EXTENSIONES)
+    print(f"Drive: {fotos} fotos bajadas")
+    return raices
 
 
 def leer_plan(path: Path = PLAN_PATH) -> list[dict]:
