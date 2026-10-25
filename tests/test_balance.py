@@ -37,3 +37,11 @@ def test_clasificador_usa_umbral(ruta_modelo, tmp_path):
     paquete = cargar_modelo(ruta_modelo)
     assert Clasificador(paquete).clasificar(str(foto))["etiqueta"] == "fruta"
     assert Clasificador({**paquete, "umbral": 0.0}).clasificar(str(foto))["etiqueta"] == "verdura"
+
+
+def test_metricas_traen_precision_y_recall_por_clase():
+    from src.evaluate import metricas
+    res = metricas([0, 0, 0, 1, 1], [0, 0, 1, 1, 0])
+    assert res["precision_fruta"] == 2 / 3 and res["recall_fruta"] == 2 / 3
+    assert res["precision_verdura"] == 0.5 and res["recall_verdura"] == 0.5
+    assert res["recall_macro"] == res["balanced_accuracy"]

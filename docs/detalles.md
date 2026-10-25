@@ -66,7 +66,7 @@ tests/
 3. Activa **Settings → Internet** (Kaggle pide verificar tu teléfono). No hace falta GPU.
 4. Usa **Save Version → Save & Run All** para que corra sin la pestaña abierta y las salidas queden guardadas.
 
-Al terminar, en `outputs/` quedan `resultados_cv.csv` (comparación de modelos, con los segundos que tardó cada uno), `test_metrics.json` (calificación final en Test) y `modelo.joblib` (el modelo elegido). La última celda lo prueba con `entradas/ejemplos.txt`; si te convence, [publícalo](#publicar-el-modelo).
+Al terminar, en `outputs/` quedan `resultados_cv.csv` y `resultados_test.csv` (accuracy, precision, recall y F1 de cada modelo en validación cruzada y en test, con los segundos que tardó cada uno), `metricas_modelos.png` y `matrices_modelos.png` (las mismas métricas en gráficas), `test_metrics.json` (calificación final en Test) y `modelo.joblib` (el modelo elegido). La última celda lo prueba con `entradas/ejemplos.txt`; si te convence, [publícalo](#publicar-el-modelo).
 
 ## Predecir con el modelo ya entrenado (sin volver a entrenar)
 
@@ -94,7 +94,7 @@ clf.clasificar("https://drive.google.com/file/d/<ID>/view") # {'etiqueta': 'frut
 
 ### Publicar el modelo
 
-Es automático: al final de `notebooks/kaggle_train.ipynb` hay una celda que crea un Release nuevo (etiqueta `modelo-AAAAMMDD-HHMMSS`) con `modelo.joblib`, `test_metrics.json` y `resultados_cv.csv`. Desde ese momento, todo lo de arriba usa ese modelo; los Releases anteriores quedan como historial. Basta con **Run All** (o **Save Version → Save & Run All**).
+Es automático: al final de `notebooks/kaggle_train.ipynb` hay una celda que crea un Release nuevo (etiqueta `modelo-AAAAMMDD-HHMMSS`) con `modelo.joblib`, `test_metrics.json`, `resultados_cv.csv`, `resultados_test.csv` y las gráficas. Desde ese momento, todo lo de arriba usa ese modelo; los Releases anteriores quedan como historial. Basta con **Run All** (o **Save Version → Save & Run All**).
 
 - **Solo publica si mejora:** compara la accuracy balanceada de test con la del Release más reciente. Si no la supera, no publica y lo dice. Con `FORZAR = True` en esa celda publica de todas formas, por ejemplo al cambiar de dataset de prueba (las métricas dejan de ser comparables). Con `PUBLICAR = False` solo entrena.
 - **Sin token no publica**, pero el notebook termina bien.
