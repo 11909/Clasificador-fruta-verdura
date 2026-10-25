@@ -40,7 +40,7 @@ Usa varias búsquedas por alimento: en español, en inglés, con el nombre cient
 2. **Configura la sesión** en el panel derecho (**Settings**):
    - **Internet: On.** Es obligatorio: el notebook clona el repo y descarga el dataset y las fotos de Drive.
    - **Accelerator: None.** No hace falta GPU, porque los modelos corren en CPU.
-   - No hace falta **Add Input**.
+   - **Add Input → Datasets →** busca `mendezrosalesmiguel/frankeinstein` y agrégalo. Es obligatorio para **Save & Run All**: en una versión guardada Kaggle no deja descargar datasets que no estén adjuntos.
 3. **Agrega el token:** **Add-ons → Secrets → Add a new secret**, con nombre `GITHUB_TOKEN` y el token como valor. Activa la casilla junto al secreto. Sin token entrena igual, pero no publica el modelo.
 4. **Ajusta la celda Parámetros** (opcional). Lo principal:
 
@@ -76,7 +76,7 @@ Abre [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](ht
 |---|---|
 | No aparece **Internet** | Verifica tu teléfono (paso 1). |
 | "No se pudo clonar el repo" | Activa **Settings → Internet**. |
-| "No encontré las carpetas de imágenes" | Activa **Settings → Internet** y pide a Miguel Angel acceso al dataset combinado. |
+| "No encontré las carpetas de imágenes" o "New Datasets cannot be attached in non-interactive sessions" | Adjunta el dataset combinado con **Add Input** (paso 3.2) y activa **Settings → Internet**. Si no aparece, pide a Miguel Angel acceso. |
 | `No module named 'src'` | Kaggle reinició la sesión: corre desde la primera celda. |
 | "No encontré el secreto GITHUB_TOKEN" | Agrégalo y activa la casilla (paso 3.3). |
 | "AVISO: no pude bajar la carpeta de Drive" | El notebook sigue sin las fotos del equipo. Revisa que la carpeta esté compartida como *Cualquier persona con el enlace*, o espera un rato si Drive dice que hubo demasiados accesos. |

@@ -62,7 +62,7 @@ tests/
 ## Entrenar en Kaggle
 
 1. Abre [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://www.kaggle.com/kernels/welcome?src=https://github.com/11909/Clasificador-fruta-verdura/blob/main/notebooks/kaggle_train.ipynb). Se crea una copia del notebook en tu cuenta, tomada de la versión actual de `main`. Los cambios de código van al repo, no al notebook.
-2. No hace falta **Add Input**: el notebook descarga el dataset combinado con `kagglehub` (`FRANKENSTEIN` en la celda Parámetros). Si adjuntas uno con Add Input, usa ese.
+2. Adjunta el dataset combinado con **Add Input** (`mendezrosalesmiguel/frankeinstein`). En una sesión interactiva el notebook lo puede descargar solo con `kagglehub` si falta, pero en **Save & Run All** Kaggle no deja descargar datasets que no estén adjuntos.
 3. Activa **Settings → Internet** (Kaggle pide verificar tu teléfono). No hace falta GPU.
 4. Usa **Save Version → Save & Run All** para que corra sin la pestaña abierta y las salidas queden guardadas.
 
