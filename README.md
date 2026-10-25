@@ -46,7 +46,7 @@ Usa varias búsquedas por alimento: en español, en inglés, con el nombre cient
 
    | Parámetro | Qué hace | Valor por defecto |
    |---|---|---|
-   | `MUESTRA_POR_ETIQUETA` | Versión preliminar: toma N frutas + N verduras de todo lo disponible y las divide 80/20. `None` = usar los splits normales (cuando ya haya fotos del equipo). | `5000` |
+   | `MUESTRA_POR_ETIQUETA` | Toma N frutas + N verduras: todas las fotos del equipo (Drive) y el resto del dataset combinado, dividido 80/20. `None` = usar los splits del dataset combinado con los topes por clase, también con todas las fotos del equipo. | `5000` |
    | `FRACCION_TEST_MUESTRA` | Parte que va a test en la versión preliminar. | `0.2` |
    | `MAX_POR_CLASE` / `MAX_POR_CLASE_VERDURA` | Imágenes por fruta / verdura en los splits normales. Más es mejor, pero más lento. | `150` / `180` |
    | `LIMPIEZA` | Quita fotos casi repetidas de Fruits-360 y deja máximo 100 de esa fuente por clase. No cambia el dataset de Kaggle. `None` = sin limpiar. | activada |
