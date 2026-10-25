@@ -179,17 +179,20 @@ En `configs/baseline.yaml` se listan los modelos a comparar. Cada uno se evalúa
 
 - **Modelos disponibles:** `logistic_regression`, `svm`, `knn`, `naive_bayes`, `decision_tree`, `random_forest`, `gradient_boosting`, y las combinaciones `voting` y `stacking`.
 - **Validación:**
-  - `uno_fuera_grupo` (por defecto) usa `LeaveOneGroupOut`: cada vuelta deja fuera un alimento completo y lo predice con un modelo que nunca lo vio. Como cada vuelta tiene un solo alimento, las predicciones de todas las vueltas se juntan y las métricas se calculan una vez (por eso `f1_macro_std` sale 0).
+  - `anidada` (por defecto): validación cruzada anidada. Las vueltas externas (`folds`, 5) separan por alimento y sirven para comparar los modelos; en cada una, los modelos con `grid` eligen sus hiperparámetros con otras vueltas internas por alimento (`folds_internos`, 3) usando solo la parte de entrenamiento de esa vuelta. Así la métrica externa no está inflada por la búsqueda. Se reporta promedio ± desviación de cada métrica entre vueltas, y los hiperparámetros elegidos en cada vuelta. El modelo final repite la búsqueda con todo el entrenamiento.
+  - `uno_fuera_grupo` usa `LeaveOneGroupOut`: cada vuelta deja fuera un alimento completo y lo predice con un modelo que nunca lo vio. Como cada vuelta tiene un solo alimento, las predicciones de todas las vueltas se juntan y las métricas se calculan una vez (por eso `f1_macro_std` sale 0).
   - `grupos` usa `StratifiedGroupKFold` con 5 vueltas, de modo que una misma variedad nunca está a la vez en entrenamiento y validación. Mide lo mismo que la anterior, pero más rápido.
   - `estratificada` usa `StratifiedKFold`. Sale más alto porque valida con alimentos que el modelo ya vio.
   - `uno_fuera` usa `LeaveOneOut`, una imagen por vuelta. Entrena el modelo tantas veces como imágenes haya, así que solo sirve con muestras chicas (`MUESTRA_POR_ETIQUETA` de 300 o menos). Además, fotos casi iguales de la misma pieza quedan en entrenamiento y validación, y el resultado sale inflado.
-- **Ajuste de hiperparámetros:** agrega `grid` a un modelo para usar `GridSearchCV` con la misma validación. Con `uno_fuera_grupo` o `uno_fuera` la búsqueda usa 5 vueltas por grupos y el mejor modelo se mide después con leave-one-out.
+- **Intervalos en test:** con `bootstrap` (por defecto 1000) se remuestrean alimentos completos del conjunto de prueba y se reporta el intervalo del 95 % de cada métrica (`_ic_bajo`, `_ic_alto` en `resultados_test.csv`).
+- **Ajuste de hiperparámetros:** agrega `grid` a un modelo para usar `GridSearchCV` con la misma validación. El notebook trae grids para KNN (`n_neighbors`, `weights`), SVM (`C`, `gamma`) y Random Forest (`max_depth`, `min_samples_leaf`); `ajustar_hiperparametros: false` los ignora. Con `uno_fuera_grupo` o `uno_fuera` la búsqueda usa 5 vueltas por grupos y el mejor modelo se mide después con leave-one-out.
 - **Características** (`features.tipos`):
   - `color`: histograma HSV de toda la imagen, más media y desviación.
   - `color_espacial`: media y desviación HSV en una cuadrícula de 3x3, más un histograma tono-saturación del centro, donde suele estar el alimento.
   - `hog` / `hog_fino`: forma y bordes; `hog_fino` usa celdas de 8 px en lugar de 16.
   - `lbp` / `lbp_multi`: textura; `lbp_multi` la mide a 3 escalas (radios 1, 2 y 3).
   - `forma`: separa el alimento del fondo por saturación y mide su área, redondez, alargamiento, solidez y excentricidad.
+  - `segmentar` separa el alimento del fondo antes de medir. `saturacion` toma los píxeles más saturados (Otsu); `grabcut` parte de esa máscara y la refina con GrabCut de OpenCV, tomando el borde de la imagen como fondo. Se queda la región más grande; el color se mide solo sobre ella, el fondo se pinta de gris liso antes de HOG y LBP, y `forma` usa esa misma máscara. Si la máscara sale casi vacía o casi completa, se usa la imagen entera.
   - Los modelos publicados antes guardan sus propios tipos, así que siguen funcionando.
 - **Reducción de dimensiones:** `pca` aplica PCA antes del modelo.
 

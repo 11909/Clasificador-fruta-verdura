@@ -18,7 +18,7 @@ from sklearn.model_selection import (GridSearchCV, LeaveOneGroupOut, LeaveOneOut
 
 from src.dataset import (balancear_por_etiqueta, conteo, dividir_equipo, limitar_por_clase, listar_muestras,
                          muestra_balanceada)
-from src.evaluate import elegir_umbral, metricas, predecir_con_umbral
+from src.evaluate import elegir_umbral, intervalos_bootstrap, metricas, predecir_con_umbral
 from src.features import extraer_con_cache
 from src.limpieza import limpiar
 from src.mapping import ETIQUETAS
@@ -42,8 +42,10 @@ def crear_cv(cfg_cv: dict, semilla: int):
     """"grupos": ninguna clase (variedad) aparece a la vez en entrenamiento y validación, lo que evita
     que fotos casi idénticas de la misma pieza inflen el resultado. "estratificada": división aleatoria.
     "uno_fuera_grupo": leave-one-out por alimento, cada vuelta valida con una clase que el modelo no vio.
-    "uno_fuera": leave-one-out clásico, una imagen por vuelta (tantos entrenamientos como imágenes)."""
-    if cfg_cv["tipo"] == "grupos":
+    "uno_fuera": leave-one-out clásico, una imagen por vuelta (tantos entrenamientos como imágenes).
+    "anidada": `folds` vueltas por alimento para comparar modelos; dentro de cada una, la búsqueda de
+    hiperparámetros usa otras `folds_internos` vueltas por alimento solo con los datos de entrenamiento."""
+    if cfg_cv["tipo"] in ("grupos", "anidada"):
         return StratifiedGroupKFold(n_splits=cfg_cv["folds"], shuffle=True, random_state=semilla)
     if cfg_cv["tipo"] == "estratificada":
         return StratifiedKFold(n_splits=cfg_cv["folds"], shuffle=True, random_state=semilla)
@@ -54,14 +56,18 @@ def crear_cv(cfg_cv: dict, semilla: int):
     raise ValueError(f"cv.tipo desconocido: {cfg_cv['tipo']}")
 
 
-def evaluar_cv(modelo, X, y, grupos, cv, deja_uno: bool) -> dict:
-    """Métricas de validación cruzada. Con leave-one-out cada vuelta tiene una sola clase (o una sola
-    imagen), así que se juntan las predicciones de todas las vueltas y se miden una vez."""
+def evaluar_cv(modelo, X, y, grupos, cv, deja_uno: bool, params: dict | None = None) -> tuple[dict, dict]:
+    """Métricas de validación cruzada (promedio y desviación entre vueltas) y lo que devolvió
+    cross_validate. Con leave-one-out cada vuelta tiene una sola clase (o una sola imagen), así que se
+    juntan las predicciones de todas las vueltas y se miden una vez (desviación 0).
+    `params` va al fit de cada vuelta (p. ej. los grupos de la búsqueda interna en la validación anidada)."""
     if deja_uno:
         res = metricas(y, cross_val_predict(modelo, X, y, groups=grupos, cv=cv, n_jobs=-1))
-        return {**{m: res[m] for m in METRICAS_CV}, "f1_macro_std": 0.0}
-    cvr = cross_validate(modelo, X, y, groups=grupos, cv=cv, scoring=ESCORES, n_jobs=-1)
-    return {**{m: cvr[f"test_{m}"].mean() for m in METRICAS_CV}, "f1_macro_std": cvr["test_f1_macro"].std()}
+        return {**{m: res[m] for m in METRICAS_CV}, **{f"{m}_std": 0.0 for m in METRICAS_CV}}, {}
+    cvr = cross_validate(modelo, X, y, groups=grupos, cv=cv, scoring=ESCORES, n_jobs=-1, params=params,
+                         return_estimator=params is not None)
+    return ({**{m: cvr[f"test_{m}"].mean() for m in METRICAS_CV},
+             **{f"{m}_std": cvr[f"test_{m}"].std() for m in METRICAS_CV}}, cvr)
 
 
 def caracteristicas(muestras: list, cfg_feat: dict, cache_dir: Path, nombre: str) -> np.ndarray:
@@ -139,40 +145,68 @@ def main(config_path: str):
     # la búsqueda usa 5 vueltas por grupos y el modelo elegido se mide después con leave-one-out
     cv_grid = StratifiedGroupKFold(n_splits=cfg["cv"].get("folds", 5), shuffle=True, random_state=semilla) \
         if deja_uno else cv
+    anidada = cfg["cv"]["tipo"] == "anidada"
+    if anidada:
+        # La búsqueda de hiperparámetros va dentro de cada vuelta externa, con sus propias vueltas por alimento
+        cv_grid = StratifiedGroupKFold(n_splits=cfg["cv"].get("folds_internos", 3), shuffle=True,
+                                       random_state=semilla)
 
     X_test = caracteristicas(test, cfg["features"], salida / "cache", "test") if test else None
     y_test = [m[1] for m in test]
+    grupos_test = [m[2] for m in test]
 
     resultados, en_test = [], []
     for spec in cfg["models"]:
+        if not cfg.get("ajustar_hiperparametros", True):
+            spec = {k: v for k, v in spec.items() if k != "grid"}  # usa solo los params fijos
         modelo = crear_modelo(spec["name"], spec.get("params"), spec.get("pca"), semilla)
         inicio = time.time()
-        if spec.get("grid"):
+        if spec.get("grid") and anidada:
+            # Validación anidada: cada vuelta externa busca sus hiperparámetros solo con su parte de
+            # entrenamiento, así la métrica de la vuelta externa no está inflada por la búsqueda
+            interna = GridSearchCV(modelo, spec["grid"], cv=cv_grid, scoring="f1_macro", n_jobs=1)
+            puntajes, cvr = evaluar_cv(interna, X, y, grupos, cv, False, params={"groups": grupos})
+            print(f"{spec['name']}: hiperparámetros elegidos en cada vuelta externa: "
+                  f"{[e.best_params_ for e in cvr['estimator']]}")
+            # Para el modelo final, la misma búsqueda con todo el entrenamiento
             busqueda = GridSearchCV(modelo, spec["grid"], cv=cv_grid, scoring="f1_macro", n_jobs=-1)
             busqueda.fit(X, y, groups=grupos)
             spec = {**spec, "mejores_params": busqueda.best_params_}
             modelo = busqueda.best_estimator_
-        # Todas las métricas con la misma validación, también para los modelos con grid
-        puntajes = evaluar_cv(modelo, X, y, grupos, cv, deja_uno)
+            print(f"{spec['name']}: hiperparámetros finales {busqueda.best_params_}")
+        else:
+            if spec.get("grid"):
+                busqueda = GridSearchCV(modelo, spec["grid"], cv=cv_grid, scoring="f1_macro", n_jobs=-1)
+                busqueda.fit(X, y, groups=grupos)
+                spec = {**spec, "mejores_params": busqueda.best_params_}
+                print(f"{spec['name']}: mejores hiperparámetros {busqueda.best_params_} "
+                      f"(f1_macro {busqueda.best_score_:.4f} en la búsqueda)")
+                modelo = busqueda.best_estimator_
+            # Todas las métricas con la misma validación, también para los modelos con grid
+            puntajes, _ = evaluar_cv(modelo, X, y, grupos, cv, deja_uno)
         fila = {"modelo": spec["name"], **{k: round(float(v), 4) for k, v in puntajes.items()},
                 "segundos": round(time.time() - inicio, 1), "spec": spec}
         print(json.dumps(fila, default=str))
         resultados.append(fila)
         if test:
             # Cada modelo entrenado con todo train y medido en test con umbral 0.5, para compararlos
-            res = metricas(y_test, modelo.fit(X, y).predict(X_test))
+            predichos_test = modelo.fit(X, y).predict(X_test)
+            res = metricas(y_test, predichos_test)
+            if cfg.get("bootstrap"):
+                res.update(intervalos_bootstrap(y_test, predichos_test, grupos_test, cfg["bootstrap"], semilla))
             en_test.append({"modelo": spec["name"], **{k: round(v, 4) if isinstance(v, float) else v
                                                        for k, v in res.items()}})
             print("test", json.dumps(en_test[-1]))
 
-    campos = ["modelo", *METRICAS_CV, "f1_macro_std", "segundos", "spec"]
+    campos = ["modelo", *METRICAS_CV, *(f"{m}_std" for m in METRICAS_CV), "segundos", "spec"]
     with open(salida / "resultados_cv.csv", "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=campos, extrasaction="ignore")
         writer.writeheader()
         writer.writerows({**r, "spec": json.dumps(r["spec"], default=str)} for r in resultados)
     if en_test:
         with open(salida / "resultados_test.csv", "w", newline="", encoding="utf-8") as f:
-            writer = csv.DictWriter(f, fieldnames=["modelo", *METRICAS_CV, "matriz_confusion"])
+            intervalos = [k for k in en_test[0] if "_ic_" in k]
+            writer = csv.DictWriter(f, fieldnames=["modelo", *METRICAS_CV, *intervalos, "matriz_confusion"])
             writer.writeheader()
             writer.writerows({**r, "matriz_confusion": json.dumps(r["matriz_confusion"])} for r in en_test)
 

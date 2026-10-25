@@ -51,6 +51,38 @@ def test_validacion_deja_uno_fuera():
     grupos = np.repeat(np.arange(8), 10)  # 4 clases de fruta y 4 de verdura
     cv = crear_cv({"tipo": "uno_fuera_grupo"}, 0)
     assert cv.get_n_splits(X, y, grupos) == 8
-    res = evaluar_cv(crear_modelo("logistic_regression"), X, y, grupos, cv, deja_uno=True)
+    res, _ = evaluar_cv(crear_modelo("logistic_regression"), X, y, grupos, cv, deja_uno=True)
     assert res["balanced_accuracy"] > 0.9 and res["f1_macro_std"] == 0
     assert crear_cv({"tipo": "uno_fuera"}, 0).get_n_splits(X) == 80
+
+
+def test_segmentar_separa_el_alimento_del_fondo():
+    from PIL import ImageDraw
+    from src.features import mascara
+    im = Image.new("RGB", (120, 120), (240, 240, 235))
+    ImageDraw.Draw(im).ellipse([30, 25, 95, 100], fill=(200, 40, 30))
+    rgb = np.asarray(im.resize((64, 64)), dtype=np.float32) / 255
+    tipos = ["color", "color_espacial", "hog_fino", "lbp_multi", "forma"]
+    import importlib.util
+    metodos = ["saturacion"] + (["grabcut"] if importlib.util.find_spec("cv2") else [])
+    for metodo in metodos:
+        assert abs(mascara(rgb, metodo).mean() - 0.27) < 0.03  # área de la elipse
+        v = extraer(im, tipos=tipos, segmentar=metodo)
+        assert v.shape == extraer(im, tipos=tipos).shape and np.isfinite(v).all()
+    # Sin objeto que separar se usa la imagen completa
+    assert mascara(np.full((64, 64, 3), 0.5, np.float32), metodos[-1]) is None
+
+
+def test_validacion_anidada_busca_hiperparametros_dentro_de_cada_vuelta():
+    from sklearn.model_selection import GridSearchCV, StratifiedGroupKFold
+    from src.train import crear_cv, evaluar_cv
+    rng = np.random.default_rng(0)
+    X = np.vstack([rng.normal(0, 1, (60, 4)), rng.normal(2, 1, (60, 4))])
+    y = np.array([0] * 60 + [1] * 60)
+    grupos = np.repeat(np.arange(12), 10)
+    externa = crear_cv({"tipo": "anidada", "folds": 3}, 0)
+    interna = GridSearchCV(crear_modelo("knn"), {"kneighborsclassifier__n_neighbors": [3, 9]},
+                           cv=StratifiedGroupKFold(n_splits=2), scoring="f1_macro")
+    res, cvr = evaluar_cv(interna, X, y, grupos, externa, False, params={"groups": grupos})
+    assert len(cvr["estimator"]) == 3 and all(hasattr(e, "best_params_") for e in cvr["estimator"])
+    assert res["balanced_accuracy"] > 0.8 and "f1_macro_std" in res

@@ -36,3 +36,27 @@ def elegir_umbral(reales, probabilidades) -> float:
     # Entre empates se queda con el más cercano a 0.5
     mejor = max(puntajes)
     return float(min((u for u, s in zip(candidatos, puntajes) if s >= mejor - 1e-9), key=lambda u: abs(u - 0.5)))
+
+
+def intervalos_bootstrap(reales, predichos, grupos, repeticiones: int = 1000, semilla: int = 42,
+                         nivel: float = 0.95) -> dict:
+    """Intervalo de confianza de accuracy, accuracy balanceada, precision, recall y F1 (macro) en test,
+    remuestreando alimentos completos con reemplazo: así refleja qué tanto cambiaría el resultado con
+    otros alimentos, no solo con otras fotos de los mismos."""
+    reales, predichos, grupos = map(np.asarray, (reales, predichos, grupos))
+    nombres = np.unique(grupos)
+    # Matriz de confusión 2x2 de cada alimento; un remuestreo es la suma de las de los alimentos elegidos
+    por_grupo = np.zeros((len(nombres), 2, 2))
+    np.add.at(por_grupo, (np.searchsorted(nombres, grupos), reales, predichos), 1)
+    rng = np.random.default_rng(semilla)
+    m = por_grupo[rng.integers(0, len(nombres), (repeticiones, len(nombres)))].sum(axis=1)
+    aciertos = m[:, [0, 1], [0, 1]]
+    with np.errstate(divide="ignore", invalid="ignore"):
+        recall = np.nan_to_num(aciertos / m.sum(axis=2))
+        precision = np.nan_to_num(aciertos / m.sum(axis=1))
+        f1 = np.nan_to_num(2 * precision * recall / (precision + recall))
+    valores = {"accuracy": aciertos.sum(1) / m.sum((1, 2)), "balanced_accuracy": recall.mean(1),
+               "precision_macro": precision.mean(1), "recall_macro": recall.mean(1), "f1_macro": f1.mean(1)}
+    cola = (1 - nivel) / 2 * 100
+    return {f"{k}_ic_{lado}": float(np.percentile(v, q)) for k, v in valores.items()
+            for lado, q in (("bajo", cola), ("alto", 100 - cola))}

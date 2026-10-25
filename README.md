@@ -50,12 +50,14 @@ Usa varias búsquedas por alimento: en español, en inglés, con el nombre cient
    | `FRACCION_TEST_MUESTRA` | Parte que va a test en la versión preliminar. | `0.2` |
    | `MAX_POR_CLASE` / `MAX_POR_CLASE_VERDURA` | Imágenes por fruta / verdura en los splits normales. Más es mejor, pero más lento. | `150` / `180` |
    | `LIMPIEZA` | Quita fotos casi repetidas de Fruits-360 y deja máximo 100 de esa fuente por clase. No cambia el dataset de Kaggle. `None` = sin limpiar. | activada |
-   | `FEATURES` | Qué se mide de cada foto: color, color por zonas, forma (HOG), textura (LBP) y silueta. | 5 tipos |
-   | `CV` | Cómo se mide el desempeño. `uno_fuera_grupo` es leave-one-out por alimento: deja fuera un alimento a la vez. `grupos` hace 5 vueltas y es más rápido. | `uno_fuera_grupo` |
+   | `FEATURES` | Qué se mide de cada foto: color, color por zonas, forma (HOG), textura (LBP) y silueta. `segmentar` separa antes el alimento del fondo (`"grabcut"`, `"saturacion"` o `None`). | 5 tipos, `grabcut` |
+   | `AJUSTAR_HIPERPARAMETROS` | Prueba las combinaciones `grid` de KNN, SVM y Random Forest validando por alimento. `False` = más rápido. | `True` |
+   | `CV` | Cómo se mide el desempeño. `anidada`: 5 vueltas por alimento para comparar modelos y, dentro de cada una, 3 vueltas para elegir hiperparámetros; da promedio ± desviación. `uno_fuera_grupo`: leave-one-out por alimento. `grupos`: 5 vueltas, más rápido. | `anidada` |
+   | `BOOTSTRAP` | Repeticiones para el intervalo de confianza del 95 % en test, remuestreando alimentos. `0` = no calcular. | `1000` |
    | `EXCLUIR_GRUPOS` | `["nueces_semillas"]` saca nueces y semillas. | `[]` |
    | `MODELOS` | Los modelos a comparar y sus parámetros de scikit-learn. Quita los que no quieras para que corra más rápido. | 7 modelos |
 
-5. **Córrelo:** **Save Version → Save & Run All → Save**. Corre aunque cierres la pestaña. Kaggle permite hasta 12 horas por corrida, y con los valores por defecto tarda varias horas (el leave-one-out entrena cada modelo ~140 veces). Para probar rápido, usa **Run All** con un `MUESTRA_POR_ETIQUETA` chico, como `500`, y `CV = {"tipo": "grupos", "folds": 5}`.
+5. **Córrelo:** **Save Version → Save & Run All → Save**. Corre aunque cierres la pestaña. Kaggle permite hasta 12 horas por corrida, y con los valores por defecto tarda unas horas. Para probar rápido, usa **Run All** con un `MUESTRA_POR_ETIQUETA` chico, como `500`, y `CV = {"tipo": "grupos", "folds": 5}`.
 6. **Revisa los resultados:** abre la versión guardada (desde tu perfil → **Code**) y ve a la pestaña **Output**. Ahí están:
    - `comparacion_modelos.png`: gráficas con las métricas de cada modelo, el tiempo y la matriz de confusión.
    - `metricas_modelos.png`: gráficas de barras que comparan accuracy, precision, recall y F1-score de cada modelo, en validación cruzada y en test.
