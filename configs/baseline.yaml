@@ -43,10 +43,15 @@ features:
   segmentar: grabcut
 
 cv:
+  # anidada (5 vueltas por alimento para comparar modelos y 3 internas para elegir hiperparámetros),
   # uno_fuera_grupo (leave-one-out por alimento), grupos, estratificada o uno_fuera
   # (leave-one-out por imagen, solo para muestras chicas)
-  tipo: uno_fuera_grupo
-  folds: 5                  # para grupos, estratificada y la búsqueda de grid
+  tipo: anidada
+  folds: 5                  # vueltas de grupos, estratificada, anidada (externas) y búsqueda de grid
+  folds_internos: 3         # solo anidada
+
+# Intervalo de confianza del 95 % en test remuestreando alimentos (repeticiones; 0 = no calcular)
+bootstrap: 1000
 
 seed: 42
 

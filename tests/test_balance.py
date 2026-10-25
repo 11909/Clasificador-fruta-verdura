@@ -45,3 +45,15 @@ def test_metricas_traen_precision_y_recall_por_clase():
     assert res["precision_fruta"] == 2 / 3 and res["recall_fruta"] == 2 / 3
     assert res["precision_verdura"] == 0.5 and res["recall_verdura"] == 0.5
     assert res["recall_macro"] == res["balanced_accuracy"]
+
+
+def test_intervalos_bootstrap_por_alimento():
+    from src.evaluate import intervalos_bootstrap
+    reales = [0] * 20 + [1] * 20
+    predichos = [0] * 18 + [1] * 2 + [1] * 15 + [0] * 5
+    grupos = [f"g{i // 5}" for i in range(40)]  # 8 alimentos de 5 fotos
+    ic = intervalos_bootstrap(reales, predichos, grupos, 500, 0)
+    assert ic["accuracy_ic_bajo"] <= 33 / 40 <= ic["accuracy_ic_alto"]
+    assert 0 <= ic["f1_macro_ic_bajo"] <= ic["f1_macro_ic_alto"] <= 1
+    # Sin errores el intervalo es exacto
+    assert intervalos_bootstrap(reales, reales, grupos, 100, 0)["f1_macro_ic_bajo"] == 1.0
