@@ -235,5 +235,6 @@ python -m src.train --config configs/baseline.yaml   # entrenar local: ajusta la
 
 - **Fuga de datos:** Fruits-360 tiene muchas fotos casi idénticas de la misma pieza. Por eso la validación cruzada agrupa por variedad y la evaluación final usa la partición Test original.
 - **Fondo blanco:** con solo Fruits-360 el modelo puede aprender el fondo. Prueben con fotos reales tomadas por el equipo.
+- **Ruido de Fruits-360:** son cuadros de video de una pieza girando sobre fondo blanco, cientos por variedad. Al cargar el dataset, `src/limpieza.py` calcula un hash perceptual (dHash de 64 bits) de cada foto de Fruits-360, quita las que difieren en 6 bits o menos de otra de su clase y deja como máximo 100 por clase (`data.limpieza`). Opcionalmente descarta las fotos de fondo blanco liso de cualquier fuente. El dataset de Kaggle no cambia.
 - **Desbalance:** Fruits-360 tiene ~15 imágenes de fruta por cada una de verdura. Por eso se entrena con el mismo número de ambas (`balancear_etiquetas`), los modelos usan `class_weight="balanced"` donde aplica, se ajusta el umbral de verdura con validación cruzada (`ajustar_umbral`) y se reporta accuracy balanceada y F1, no solo accuracy.
 - **Secretos:** las API keys van en Kaggle Secrets, nunca en el código.

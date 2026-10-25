@@ -19,6 +19,7 @@ from src.dataset import (balancear_por_etiqueta, conteo, dividir_equipo, limitar
                          muestra_balanceada)
 from src.evaluate import elegir_umbral, metricas, predecir_con_umbral
 from src.features import extraer_con_cache
+from src.limpieza import limpiar
 from src.modelo import guardar_modelo
 from src.models import crear_modelo
 
@@ -74,11 +75,17 @@ def equipo(d: dict, excluir, semilla: int) -> tuple[list, list]:
     return e_train, e_test
 
 
+def kaggle(dirs: list, d: dict, excluir, semilla: int) -> list:
+    """Imágenes del dataset combinado, con la limpieza de `data.limpieza` (null = sin limpiar)."""
+    muestras = listar_muestras(dirs, excluir_grupos=excluir)
+    return limpiar(muestras, semilla=semilla, **d["limpieza"]) if d.get("limpieza") else muestras
+
+
 def splits_normales(d: dict, excluir, semilla: int) -> tuple[list, list]:
     """train/test del dataset combinado (con tope por clase) más las fotos del equipo."""
-    train = limitar_por_clase(listar_muestras(d["train_dirs"], excluir_grupos=excluir), d.get("max_por_clase"), semilla,
+    train = limitar_por_clase(kaggle(d["train_dirs"], d, excluir, semilla), d.get("max_por_clase"), semilla,
                               d.get("max_por_clase_verdura"))
-    test = limitar_por_clase(listar_muestras(d["test_dirs"], excluir_grupos=excluir), d.get("max_por_clase_test"),
+    test = limitar_por_clase(kaggle(d["test_dirs"], d, excluir, semilla), d.get("max_por_clase_test"),
                              semilla) if d.get("test_dirs") else []
     if d.get("equipo_dir"):
         e_train, e_test = equipo(d, excluir, semilla)
@@ -92,7 +99,7 @@ def splits_normales(d: dict, excluir, semilla: int) -> tuple[list, list]:
 def muestra_preliminar(d: dict, excluir, semilla: int) -> tuple[list, list]:
     """Junta todas las imágenes (train, test y equipo), toma `muestra_por_etiqueta` frutas y las
     mismas verduras, y las divide por clase con `fraccion_test_muestra` a test."""
-    todas = listar_muestras(d["train_dirs"] + (d.get("test_dirs") or []), excluir_grupos=excluir)
+    todas = kaggle(d["train_dirs"] + (d.get("test_dirs") or []), d, excluir, semilla)
     if d.get("equipo_dir"):
         e_train, e_test = equipo(d, excluir, semilla)
         todas += e_train + e_test

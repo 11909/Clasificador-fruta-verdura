@@ -16,6 +16,14 @@ data:
   muestra_por_etiqueta: null
   fraccion_test_muestra: 0.2
   max_por_clase_test: null  # null = todo el conjunto de prueba
+  # Limpieza al cargar el dataset combinado (no cambia el dataset de Kaggle). null = sin limpiar.
+  # umbral_duplicado: quita fotos de Fruits-360 casi iguales a otra de su clase (bits de diferencia del hash).
+  # tope_fruits360: máximo de fotos de Fruits-360 por clase. quitar_fondo_blanco: descarta fotos de estudio
+  # de cualquier fuente (saca todo Fruits-360, que siempre tiene fondo blanco).
+  limpieza:
+    umbral_duplicado: 6
+    tope_fruits360: 100
+    quitar_fondo_blanco: false
   # Fotos del equipo: carpeta de Google Drive con una subcarpeta por alimento (fotos sueltas o zips).
   # El notebook la descarga y la pone en equipo_dir; ~30 % fijo a test, el resto a train.
   # En Kaggle, el enlace y los demás parámetros se cambian en la celda Parámetros del notebook.
