@@ -12,8 +12,8 @@ from pathlib import Path
 
 import numpy as np
 import yaml
-from sklearn.model_selection import (GridSearchCV, StratifiedGroupKFold, StratifiedKFold, cross_val_predict,
-                                     cross_validate)
+from sklearn.model_selection import (GridSearchCV, LeaveOneGroupOut, LeaveOneOut, StratifiedGroupKFold,
+                                     StratifiedKFold, cross_val_predict, cross_validate)
 
 from src.dataset import (balancear_por_etiqueta, conteo, dividir_equipo, limitar_por_clase, listar_muestras,
                          muestra_balanceada)
@@ -25,14 +25,33 @@ from src.models import crear_modelo
 METRICAS_CV = ["accuracy", "balanced_accuracy", "f1_macro"]
 
 
+CV_DEJA_UNO = ("uno_fuera_grupo", "uno_fuera")
+
+
 def crear_cv(cfg_cv: dict, semilla: int):
     """"grupos": ninguna clase (variedad) aparece a la vez en entrenamiento y validación, lo que evita
-    que fotos casi idénticas de la misma pieza inflen el resultado. "estratificada": división aleatoria."""
+    que fotos casi idénticas de la misma pieza inflen el resultado. "estratificada": división aleatoria.
+    "uno_fuera_grupo": leave-one-out por alimento, cada vuelta valida con una clase que el modelo no vio.
+    "uno_fuera": leave-one-out clásico, una imagen por vuelta (tantos entrenamientos como imágenes)."""
     if cfg_cv["tipo"] == "grupos":
         return StratifiedGroupKFold(n_splits=cfg_cv["folds"], shuffle=True, random_state=semilla)
     if cfg_cv["tipo"] == "estratificada":
         return StratifiedKFold(n_splits=cfg_cv["folds"], shuffle=True, random_state=semilla)
+    if cfg_cv["tipo"] == "uno_fuera_grupo":
+        return LeaveOneGroupOut()
+    if cfg_cv["tipo"] == "uno_fuera":
+        return LeaveOneOut()
     raise ValueError(f"cv.tipo desconocido: {cfg_cv['tipo']}")
+
+
+def evaluar_cv(modelo, X, y, grupos, cv, deja_uno: bool) -> dict:
+    """Métricas de validación cruzada. Con leave-one-out cada vuelta tiene una sola clase (o una sola
+    imagen), así que se juntan las predicciones de todas las vueltas y se miden una vez."""
+    if deja_uno:
+        res = metricas(y, cross_val_predict(modelo, X, y, groups=grupos, cv=cv, n_jobs=-1))
+        return {**{m: res[m] for m in METRICAS_CV}, "f1_macro_std": 0.0}
+    cvr = cross_validate(modelo, X, y, groups=grupos, cv=cv, scoring=METRICAS_CV, n_jobs=-1)
+    return {**{m: cvr[f"test_{m}"].mean() for m in METRICAS_CV}, "f1_macro_std": cvr["test_f1_macro"].std()}
 
 
 def caracteristicas(muestras: list, cfg_feat: dict, cache_dir: Path, nombre: str) -> np.ndarray:
@@ -98,23 +117,28 @@ def main(config_path: str):
     y = np.array([m[1] for m in train])
     grupos = np.array([m[2] for m in train])
     cv = crear_cv(cfg["cv"], semilla)
+    deja_uno = cfg["cv"]["tipo"] in CV_DEJA_UNO
+    # GridSearchCV promedia un puntaje por vuelta, que no tiene sentido con una clase por vuelta:
+    # la búsqueda usa 5 vueltas por grupos y el modelo elegido se mide después con leave-one-out
+    cv_grid = StratifiedGroupKFold(n_splits=cfg["cv"].get("folds", 5), shuffle=True, random_state=semilla) \
+        if deja_uno else cv
 
     resultados = []
     for spec in cfg["models"]:
         modelo = crear_modelo(spec["name"], spec.get("params"), spec.get("pca"), semilla)
         inicio = time.time()
         if spec.get("grid"):
-            # Búsqueda de hiperparámetros con la misma validación cruzada
-            busqueda = GridSearchCV(modelo, spec["grid"], cv=cv, scoring="f1_macro", n_jobs=-1)
+            busqueda = GridSearchCV(modelo, spec["grid"], cv=cv_grid, scoring="f1_macro", n_jobs=-1)
             busqueda.fit(X, y, groups=grupos)
-            fila_mejor = busqueda.best_index_
-            puntajes = {"f1_macro": busqueda.cv_results_["mean_test_score"][fila_mejor],
-                        "f1_macro_std": busqueda.cv_results_["std_test_score"][fila_mejor]}
             spec = {**spec, "mejores_params": busqueda.best_params_}
+            if deja_uno:
+                puntajes = evaluar_cv(busqueda.best_estimator_, X, y, grupos, cv, deja_uno)
+            else:
+                fila_mejor = busqueda.best_index_
+                puntajes = {"f1_macro": busqueda.cv_results_["mean_test_score"][fila_mejor],
+                            "f1_macro_std": busqueda.cv_results_["std_test_score"][fila_mejor]}
         else:
-            cvr = cross_validate(modelo, X, y, groups=grupos, cv=cv, scoring=METRICAS_CV, n_jobs=-1)
-            puntajes = {m: cvr[f"test_{m}"].mean() for m in METRICAS_CV}
-            puntajes["f1_macro_std"] = cvr["test_f1_macro"].std()
+            puntajes = evaluar_cv(modelo, X, y, grupos, cv, deja_uno)
         fila = {"modelo": spec["name"], **{k: round(float(v), 4) for k, v in puntajes.items()},
                 "segundos": round(time.time() - inicio, 1), "spec": spec}
         print(json.dumps(fila, default=str))

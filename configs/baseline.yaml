@@ -28,12 +28,15 @@ data:
 
 features:
   tamano: 64                # la imagen se reduce a 64x64 antes de extraer
-  tipos: [color, hog, lbp]  # quita alguno para comparar su aporte
+  # color, hog, lbp (los originales), color_espacial, hog_fino, lbp_multi, forma; quita alguno para comparar su aporte
+  tipos: [color, color_espacial, hog_fino, lbp_multi, forma]
   bins_color: 16
 
 cv:
-  tipo: grupos              # grupos (recomendado) o estratificada
-  folds: 5
+  # uno_fuera_grupo (leave-one-out por alimento), grupos, estratificada o uno_fuera
+  # (leave-one-out por imagen, solo para muestras chicas)
+  tipo: uno_fuera_grupo
+  folds: 5                  # para grupos, estratificada y la búsqueda de grid
 
 seed: 42
 

@@ -49,10 +49,12 @@ Usa varias búsquedas por alimento: en español, en inglés, con el nombre cient
    | `MUESTRA_POR_ETIQUETA` | Versión preliminar: toma N frutas + N verduras de todo lo disponible y las divide 80/20. `None` = usar los splits normales (cuando ya haya fotos del equipo). | `5000` |
    | `FRACCION_TEST_MUESTRA` | Parte que va a test en la versión preliminar. | `0.2` |
    | `MAX_POR_CLASE` / `MAX_POR_CLASE_VERDURA` | Imágenes por fruta / verdura en los splits normales. Más es mejor, pero más lento. | `150` / `180` |
+   | `FEATURES` | Qué se mide de cada foto: color, color por zonas, forma (HOG), textura (LBP) y silueta. | 5 tipos |
+   | `CV` | Cómo se mide el desempeño. `uno_fuera_grupo` es leave-one-out por alimento: deja fuera un alimento a la vez. `grupos` hace 5 vueltas y es más rápido. | `uno_fuera_grupo` |
    | `EXCLUIR_GRUPOS` | `["nueces_semillas"]` saca nueces y semillas. | `[]` |
    | `MODELOS` | Los modelos a comparar y sus parámetros de scikit-learn. Quita los que no quieras para que corra más rápido. | 7 modelos |
 
-5. **Córrelo:** **Save Version → Save & Run All → Save**. Corre aunque cierres la pestaña. Kaggle permite hasta 12 horas por corrida, y con los valores por defecto tarda unas horas. Para probar rápido, usa **Run All** con un `MUESTRA_POR_ETIQUETA` chico, como `500`.
+5. **Córrelo:** **Save Version → Save & Run All → Save**. Corre aunque cierres la pestaña. Kaggle permite hasta 12 horas por corrida, y con los valores por defecto tarda varias horas (el leave-one-out entrena cada modelo ~140 veces). Para probar rápido, usa **Run All** con un `MUESTRA_POR_ETIQUETA` chico, como `500`, y `CV = {"tipo": "grupos", "folds": 5}`.
 6. **Revisa los resultados:** abre la versión guardada (desde tu perfil → **Code**) y ve a la pestaña **Output**. Ahí están:
    - `comparacion_modelos.png`: gráficas con las métricas de cada modelo, el tiempo y la matriz de confusión.
    - `resultados_cv.csv`: la validación cruzada de cada modelo.

@@ -38,7 +38,7 @@ Las imágenes y los modelos **no se suben al repo** (ver `.gitignore`); los mode
 src/
   mapping.py        # clase -> fruta/verdura/excluir, a partir de data/mapping.csv
   dataset.py        # lectura de carpetas raiz/clase/imagen y muestreo por clase
-  features.py       # extracción de características: color (HSV), forma (HOG), textura (LBP)
+  features.py       # extracción de características: color (HSV, global y por zonas), forma (HOG), textura (LBP) y silueta
   models.py         # catálogo de modelos de scikit-learn, incluidos voting y stacking
   train.py          # validación cruzada de todos los modelos, reentrena el mejor y evalúa en test
   evaluate.py       # accuracy, F1 por clase y matriz de confusión
@@ -175,11 +175,22 @@ El dataset combinado mezcla licencias (Fruits-360 es CC BY-SA 4.0): manténganlo
 
 ## Modelos y validación
 
-En `configs/baseline.yaml` se listan los modelos a comparar. Cada uno se evalúa con validación cruzada de 5 folds, y el de mayor F1 macro se reentrena con todo el conjunto de entrenamiento y se evalúa en Test.
+En `configs/baseline.yaml` se listan los modelos a comparar. Cada uno se evalúa con la validación cruzada elegida (ver abajo), y el de mayor F1 macro se reentrena con todo el conjunto de entrenamiento y se evalúa en Test.
 
 - **Modelos disponibles:** `logistic_regression`, `svm`, `knn`, `naive_bayes`, `decision_tree`, `random_forest`, `gradient_boosting`, y las combinaciones `voting` y `stacking`.
-- **Validación:** `cv.tipo: grupos` usa `StratifiedGroupKFold`, de modo que una misma variedad nunca está a la vez en entrenamiento y validación. `estratificada` usa `StratifiedKFold`.
-- **Ajuste de hiperparámetros:** agrega `grid` a un modelo para usar `GridSearchCV` con la misma validación.
+- **Validación:**
+  - `uno_fuera_grupo` (por defecto) usa `LeaveOneGroupOut`: cada vuelta deja fuera un alimento completo y lo predice con un modelo que nunca lo vio. Como cada vuelta tiene un solo alimento, las predicciones de todas las vueltas se juntan y las métricas se calculan una vez (por eso `f1_macro_std` sale 0).
+  - `grupos` usa `StratifiedGroupKFold` con 5 vueltas, de modo que una misma variedad nunca está a la vez en entrenamiento y validación. Mide lo mismo que la anterior, pero más rápido.
+  - `estratificada` usa `StratifiedKFold`. Sale más alto porque valida con alimentos que el modelo ya vio.
+  - `uno_fuera` usa `LeaveOneOut`, una imagen por vuelta. Entrena el modelo tantas veces como imágenes haya, así que solo sirve con muestras chicas (`MUESTRA_POR_ETIQUETA` de 300 o menos). Además, fotos casi iguales de la misma pieza quedan en entrenamiento y validación, y el resultado sale inflado.
+- **Ajuste de hiperparámetros:** agrega `grid` a un modelo para usar `GridSearchCV` con la misma validación. Con `uno_fuera_grupo` o `uno_fuera` la búsqueda usa 5 vueltas por grupos y el mejor modelo se mide después con leave-one-out.
+- **Características** (`features.tipos`):
+  - `color`: histograma HSV de toda la imagen, más media y desviación.
+  - `color_espacial`: media y desviación HSV en una cuadrícula de 3x3, más un histograma tono-saturación del centro, donde suele estar el alimento.
+  - `hog` / `hog_fino`: forma y bordes; `hog_fino` usa celdas de 8 px en lugar de 16.
+  - `lbp` / `lbp_multi`: textura; `lbp_multi` la mide a 3 escalas (radios 1, 2 y 3).
+  - `forma`: separa el alimento del fondo por saturación y mide su área, redondez, alargamiento, solidez y excentricidad.
+  - Los modelos publicados antes guardan sus propios tipos, así que siguen funcionando.
 - **Reducción de dimensiones:** `pca` aplica PCA antes del modelo.
 
 ## Criterio de etiquetas
