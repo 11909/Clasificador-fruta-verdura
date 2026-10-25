@@ -106,14 +106,15 @@ def splits_normales(d: dict, excluir, semilla: int) -> tuple[list, list]:
 
 
 def muestra_preliminar(d: dict, excluir, semilla: int) -> tuple[list, list]:
-    """Junta todas las imágenes (train, test y equipo), toma `muestra_por_etiqueta` frutas y las
-    mismas verduras, y las divide por clase con `fraccion_test_muestra` a test."""
+    """Toma `muestra_por_etiqueta` frutas y las mismas verduras: todas las fotos del equipo (con su
+    división fija en train y test) y el resto del dataset combinado, dividido por clase con
+    `fraccion_test_muestra` a test."""
     todas = kaggle(d["train_dirs"] + (d.get("test_dirs") or []), d, excluir, semilla)
-    if d.get("equipo_dir"):
-        e_train, e_test = equipo(d, excluir, semilla)
-        todas += e_train + e_test
-    print(f"muestra preliminar de {d['muestra_por_etiqueta']} por etiqueta, de {conteo(todas)} disponibles")
-    return muestra_balanceada(todas, d["muestra_por_etiqueta"], d.get("fraccion_test_muestra", 0.2), semilla)
+    e_train, e_test = equipo(d, excluir, semilla) if d.get("equipo_dir") else ([], [])
+    print(f"muestra preliminar de {d['muestra_por_etiqueta']} por etiqueta: todas las del equipo "
+          f"{conteo(e_train + e_test)} y el resto de {conteo(todas)} del dataset combinado")
+    return muestra_balanceada(todas, d["muestra_por_etiqueta"], d.get("fraccion_test_muestra", 0.2), semilla,
+                              (e_train, e_test))
 
 
 def main(config_path: str):

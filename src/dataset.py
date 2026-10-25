@@ -74,40 +74,59 @@ def limitar_por_clase(muestras: list, maximo: int | None, semilla: int, maximo_v
     return salida
 
 
+def repartir(muestras: list, n: int, rng: random.Random) -> list:
+    """Toma `n` imágenes repartidas por igual entre clases (una de cada clase por turno)."""
+    clases = defaultdict(list)
+    for m in muestras:
+        clases[m[2]].append(m)
+    colas = [rng.sample(grupo, len(grupo)) for _, grupo in sorted(clases.items())]
+    rng.shuffle(colas)
+    tomadas = []
+    while len(tomadas) < n and any(colas):
+        for cola in colas:
+            if cola and len(tomadas) < n:
+                tomadas.append(cola.pop())
+    return tomadas
+
+
 def balancear_por_etiqueta(muestras: list, maximo: int | None, semilla: int) -> list:
     """Deja el mismo número de imágenes de fruta y de verdura: el de la etiqueta con menos
     imágenes, o `maximo` si es menor. Dentro de cada etiqueta reparte por igual entre clases
     (una imagen de cada clase por turno) para no perder variedades."""
     rng = random.Random(semilla)
-    por_etiqueta = defaultdict(lambda: defaultdict(list))
+    por_etiqueta = defaultdict(list)
     for m in muestras:
-        por_etiqueta[m[1]][m[2]].append(m)
+        por_etiqueta[m[1]].append(m)
     if len(por_etiqueta) < 2:
         return muestras
-    objetivo = min(sum(map(len, clases.values())) for clases in por_etiqueta.values())
+    objetivo = min(len(v) for v in por_etiqueta.values())
     if maximo:
         objetivo = min(objetivo, maximo)
-    elegidas = []
-    for clases in por_etiqueta.values():
-        colas = [rng.sample(grupo, len(grupo)) for _, grupo in sorted(clases.items())]
-        rng.shuffle(colas)
-        tomadas = []
-        while len(tomadas) < objetivo:
-            for cola in colas:
-                if cola and len(tomadas) < objetivo:
-                    tomadas.append(cola.pop())
-        elegidas += tomadas
-    return elegidas
+    return [m for _, grupo in sorted(por_etiqueta.items()) for m in repartir(grupo, objetivo, rng)]
 
 
-def muestra_balanceada(muestras: list, por_etiqueta: int, fraccion_test: float, semilla: int) -> tuple[list, list]:
-    """Toma `por_etiqueta` imágenes de fruta y las mismas de verdura (repartidas entre clases) y las
-    divide en train y test: `fraccion_test` de cada clase va a test."""
+def muestra_balanceada(muestras: list, por_etiqueta: int, fraccion_test: float, semilla: int,
+                       equipo: tuple[list, list] = ([], [])) -> tuple[list, list]:
+    """Toma `por_etiqueta` imágenes de fruta y las mismas de verdura y las divide en train y test.
+
+    Las fotos del equipo (`equipo` = (train, test), ya divididas) entran todas, porque son las más
+    parecidas a las fotos reales; el resto de cada etiqueta se completa con `muestras`, repartidas
+    entre clases, y de esas `fraccion_test` de cada clase va a test."""
     rng = random.Random(semilla)
+    e_train, e_test = equipo
+    del_equipo = Counter(m[1] for m in e_train + e_test)
+    por_etiqueta_kaggle = defaultdict(list)
+    for m in muestras:
+        por_etiqueta_kaggle[m[1]].append(m)
+    # Si el equipo ya pasa de por_etiqueta en una etiqueta, la otra se completa hasta igualarla; si a
+    # una etiqueta no le alcanza, las dos se quedan con lo que tenga la más corta
+    disponibles = [del_equipo[y] + len(por_etiqueta_kaggle[y]) for y in range(len(ETIQUETAS))]
+    por_etiqueta = min(max(por_etiqueta, *del_equipo.values(), 0), *disponibles)
     por_clase = defaultdict(list)
-    for m in balancear_por_etiqueta(muestras, por_etiqueta, semilla):
-        por_clase[m[2]].append(m)
-    train, test = [], []
+    for y, grupo in sorted(por_etiqueta_kaggle.items()):
+        for m in repartir(grupo, max(0, por_etiqueta - del_equipo[y]), rng):
+            por_clase[m[2]].append(m)
+    train, test = list(e_train), list(e_test)
     for _, grupo in sorted(por_clase.items()):
         rng.shuffle(grupo)
         n_test = round(len(grupo) * fraccion_test)

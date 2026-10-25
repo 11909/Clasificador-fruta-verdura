@@ -205,3 +205,19 @@ def test_muestra_balanceada_80_20():
     assert Counter(m[1] for m in test) == {0: 4, 1: 4}
     assert not {m[0] for m in train} & {m[0] for m in test}
     assert Counter(m[2] for m in train + test)["manzana"] == 10  # reparte entre clases
+
+
+def test_muestra_balanceada_usa_todas_las_fotos_del_equipo():
+    from collections import Counter
+    from src.dataset import muestra_balanceada
+
+    kaggle = ([(f"m{i}", 0, "manzana") for i in range(100)] + [(f"z{i}", 1, "zanahoria") for i in range(100)])
+    e_train = [(f"e{i}", 1, "oca") for i in range(21)]
+    e_test = [(f"t{i}", 1, "oca") for i in range(9)]
+    train, test = muestra_balanceada(kaggle, 40, 0.2, 0, (e_train, e_test))
+    assert Counter(m[1] for m in train + test) == {0: 40, 1: 40}
+    assert set(e_train) <= set(train) and set(e_test) <= set(test)  # división fija del equipo
+    assert Counter(m[2] for m in train + test)["zanahoria"] == 10  # verdura se completa con Kaggle
+    # Si el equipo pasa de por_etiqueta, la fruta se completa hasta igualarlo
+    train, test = muestra_balanceada(kaggle, 20, 0.2, 0, (e_train, e_test))
+    assert Counter(m[1] for m in train + test) == {0: 30, 1: 30}
