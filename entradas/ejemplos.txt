@@ -2,6 +2,4 @@
 # Una ruta o enlace por línea. Sirven enlaces de GitHub (normal o raw), Google Drive
 # ("cualquier persona con el enlace") y cualquier enlace directo a una imagen.
 # Para probar con sus propias fotos, agreguen aquí sus enlaces o creen otro .txt.
-https://images.milenio.com/N6G9WQ7N5afEMnuodBCAhJlHTOk=/942x532/uploads/media/2025/07/16/rabano-negro-hortaliza-multiples-propiedades.jpeg
-https://estag.fimagenes.com/img/4/d/3/W/d3W_1600.jpg
-https://homesteadhow-to.com/wp-content/uploads/2025/03/Oxalis-tuberosa-oca-edited.jpg
+
