@@ -100,7 +100,10 @@ def test_descarga_completa_lista_para_drive(monkeypatch, tmp_path):
         ("File:Buena.jpg", "borrada"), ("File:Otra buena.jpg", ""), ("File:Tercera.jpg", "")]
     assert sorted(p.name for p in fotos_dir.iterdir()) == ["web_rambutan_0002.jpg", "web_rambutan_0003.jpg"]
 
-    # para_drive/<fruta>/<zip> se sube tal cual a Drive, y el notebook lo lee como fotos de esa fruta
+    # Sin --empaquetar no se arma ningún zip; con él, uno por carpeta, que el notebook también lee
+    assert not (salida / "para_drive").exists()
+    monkeypatch.setattr("sys.argv", args + ["--empaquetar"])
+    web.main()
     zips = sorted(p.relative_to(salida / "para_drive").as_posix() for p in (salida / "para_drive").rglob("*.zip"))
     assert zips == ["rambutan/web_rambutan_1.zip"]
     from src.dataset import dividir_equipo, es_web

@@ -5,7 +5,7 @@ Uso (Python 3.10+, `pip install pillow numpy icrawler torch transformers`):
     python web_scrapping.py --excluir ruta/a/fotos_prueba       # todo el plan
     python web_scrapping.py --faltantes faltantes.txt           # metas con los conteos reales de Drive
     python web_scrapping.py --revisar                           # limpia con el filtro las fotos ya bajadas
-    python web_scrapping.py --empaquetar                        # rehace para_drive/ después de revisar
+    python web_scrapping.py --empaquetar                        # opcional: zips por carpeta en para_drive/
 
 Lee `plan_web.csv` (junto a este archivo, o `data/plan_web.csv` del repo): alimento, prioridad, meta de
 fotos y búsquedas. Trae dos grupos:
@@ -15,9 +15,10 @@ fotos y búsquedas. Trae dos grupos:
     el notebook en Output, con los conteos reales de Drive) la meta de cada alimento sale de ahí.
     `--prioridad equipo` baja solo ese grupo; `--prioridad sin_fotos,alta,media,secos`, solo las frutas.
 Deja:
-    salida_web/fotos/<alimento>/web_<alimento>_0001.jpg   para revisar en miniaturas
+    salida_web/fotos/<alimento>/web_<alimento>_0001.jpg   se revisan en miniaturas y se suben tal cual a Drive
     salida_web/fuentes_web.csv                            origen, autor y licencia de cada foto
-    salida_web/para_drive/<alimento>/web_<alimento>_1.zip lo que se sube a Drive
+Con `--empaquetar` además arma salida_web/para_drive/<alimento>/web_<alimento>_1.zip, por si Drive tarda
+en subir o listar carpetas con muchas fotos sueltas.
 
 Fuentes (`--fuentes`, en orden; la segunda completa lo que no dio la primera):
     bing     Bing Imágenes con icrawler: la más rápida (varias descargas a la vez, ~30 a 60 min para todo
@@ -406,8 +407,7 @@ def main():
         if filtro is None:
             sys.exit("--revisar necesita el filtro CLIP: pip install torch transformers")
         revisar(salida, plan, filtro, filas)
-        escribir_tabla(tabla, filas)
-        return empaquetar(salida)
+        return escribir_tabla(tabla, filas)
     hashes = Hashes()
     excluidos = cargar_exclusiones(a.excluir, hashes)
     vistos = excluidos | {r["titulo"] for r in filas}
@@ -469,10 +469,10 @@ def main():
         aviso = "" if n >= meta else "  (no hubo más; completar a mano o con otra fuente)"
         print(f"{alimento:30} {n:4}/{meta} en {time.time() - inicio:4.0f} s  descartes {descartes}{aviso}", flush=True)
 
-    empaquetar(salida)
-    print("Antes de subir: revisa salida_web/fotos/ en miniaturas, borra lo que no sea el alimento (o tenga "
-          "otros alimentos) y corre de nuevo con --empaquetar. Si borraste muchas, corre sin --empaquetar para "
-          "completar la meta.")
+    total = sum(1 for r in filas if not r.get("estado"))
+    print(f"\n{total} fotos en {salida / 'fotos'}/. Revisa en miniaturas, borra lo que no sea el alimento "
+          "(o tenga otros alimentos) y sube esas carpetas a la raíz de la carpeta de Drive del equipo. Si "
+          "borraste muchas, corre otra vez para completar la meta.")
 
 
 if __name__ == "__main__":
