@@ -198,7 +198,7 @@ El dataset combinado mezcla licencias (Fruits-360 es CC BY-SA 4.0): manténganlo
 
 ## Modelos y validación
 
-En `configs/baseline.yaml` se listan los modelos a comparar. Cada uno se evalúa con la validación cruzada elegida (ver abajo), y el de mayor F1 macro se reentrena con todo el conjunto de entrenamiento y se evalúa en Test.
+En `configs/baseline.yaml` se listan los modelos a comparar. Cada uno se evalúa con la validación cruzada elegida (ver abajo), y uno se reentrena con todo el conjunto de entrenamiento y se evalúa en Test. Con `elegir_por: vistos` (por defecto) se elige el de mayor F1 macro con el 20 % de las fotos de cada alimento apartadas de train, es decir, con fotos nuevas de alimentos que el modelo sí vio, como al usar la app. Con `elegir_por: cv` se elige por la validación cruzada, que mide alimentos que no vio; en una corrida eso eligió naive_bayes (0.82 en test) aunque svm sacó 0.955.
 
 - **Modelos disponibles:** `logistic_regression`, `svm`, `knn`, `naive_bayes`, `decision_tree`, `random_forest`, `gradient_boosting`, y las combinaciones `voting` y `stacking`.
 - **Validación:**
@@ -262,5 +262,5 @@ python -m src.train --config configs/baseline.yaml   # entrenar local: ajusta la
 - **Fuga de datos:** Fruits-360 tiene muchas fotos casi idénticas de la misma pieza. Por eso la validación cruzada agrupa por variedad y la evaluación final usa la partición Test original.
 - **Fondo blanco:** con solo Fruits-360 el modelo puede aprender el fondo. Prueben con fotos reales tomadas por el equipo.
 - **Ruido de Fruits-360:** son cuadros de video de una pieza girando sobre fondo blanco, cientos por variedad. Al cargar el dataset, `src/limpieza.py` calcula un hash perceptual (dHash de 64 bits) de cada foto de Fruits-360, quita las que difieren en 6 bits o menos de otra de su clase y deja como máximo 100 por clase (`data.limpieza`). Opcionalmente descarta las fotos de fondo blanco liso de cualquier fuente. El dataset de Kaggle no cambia.
-- **Desbalance:** Fruits-360 tiene ~15 imágenes de fruta por cada una de verdura. Por eso se entrena con el mismo número de ambas (`balancear_etiquetas`), los modelos usan `class_weight="balanced"` donde aplica, se ajusta el umbral de verdura con validación cruzada (`ajustar_umbral`) y se reporta accuracy balanceada y F1, no solo accuracy.
+- **Desbalance:** Fruits-360 tiene ~15 imágenes de fruta por cada una de verdura. Por eso se entrena con el mismo número de ambas (`balancear_etiquetas`), los modelos usan `class_weight="balanced"` donde aplica (salvo `gradient_boosting`: con train ya balanceado los pesos no cambian nada y con ellos tarda unas 14 veces más), se ajusta el umbral de verdura con validación cruzada (`ajustar_umbral`) y se reporta accuracy balanceada y F1, no solo accuracy.
 - **Secretos:** las API keys van en Kaggle Secrets, nunca en el código.
