@@ -15,7 +15,7 @@ from src.dataset import EXTENSIONES
 from src.mapping import cargar_alimentos, cargar_mapping, clave_de, etiqueta_de
 
 PLAN_PATH = Path(__file__).resolve().parent.parent / "data" / "plan_equipo.csv"
-# Frutas que solo vienen de Fruits-360: sus fotos reales salen de scripts/descargar_fotos_web.py
+# Frutas que solo vienen de Fruits-360: sus fotos reales salen de scripts/web_scrapping.py
 PLAN_WEB_PATH = PLAN_PATH.with_name("plan_web.csv")
 WEB = "web"
 
@@ -125,7 +125,7 @@ def escribir_faltantes(filas: list[dict], destino: Path) -> str:
     lineas = ["Fotos que faltan por alimento (nombre de carpeta en Drive: faltan).", ""]
     for persona in sorted({f["persona"] for f in filas}):
         propias = [f for f in filas if f["persona"] == persona]
-        titulo = "Fotos de internet, scripts/descargar_fotos_web.py" if persona == WEB else f"Persona {persona}"
+        titulo = "Fotos de internet, scripts/web_scrapping.py" if persona == WEB else f"Persona {persona}"
         lineas.append(f"{titulo} (faltan {sum(f['faltan'] for f in propias)}):")
         lineas += [f"  {f['alimento']}: {f['faltan']}" + ("  (completo)" if not f["faltan"] else "")
                    for f in propias]

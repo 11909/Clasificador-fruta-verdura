@@ -25,7 +25,7 @@ for busqueda in ["oca tuberculo", "oca Oxalis tuberosa", "oca tuber market"]:
 
 Usa varias búsquedas por alimento: en español, en inglés, con el nombre científico y con contexto (`en el mercado`, `cosecha`, `partido`). Si el nombre se confunde con otra cosa, agrega una palabra que lo aclare. Por ejemplo, usa `nabo turnip` y `chile pepper vegetable`.
 
-Para las frutas que solo tenían fotos de Fruits-360 hay un script que baja fotos de Wikimedia Commons: `python scripts/descargar_fotos_web.py --excluir ruta/a/fotos_prueba`. Ver [docs/detalles.md](docs/detalles.md#fotos-de-internet-para-las-frutas-con-solo-fruits-360).
+Para las frutas que solo tenían fotos de Fruits-360 hay un script que baja fotos de Bing y Wikimedia Commons y las deja en carpetas listas para Drive: `python scripts/web_scrapping.py --excluir ruta/a/fotos_prueba`. Ver [docs/detalles.md](docs/detalles.md#fotos-de-internet-para-las-frutas-con-solo-fruits-360).
 
 **2. Limpia.** Revisa la carpeta en vista de miniaturas y borra:
 - lo que no sea el alimento: platillos, dibujos, logos, collages o marcas de agua grandes;
@@ -48,7 +48,7 @@ Para las frutas que solo tenían fotos de Fruits-360 hay un script que baja foto
 
    | Parámetro | Qué hace | Valor por defecto |
    |---|---|---|
-   | `MUESTRA_POR_ETIQUETA` | Toma N frutas + N verduras: todas las fotos del equipo (Drive) y el resto del dataset combinado, dividido 80/20. `None` = usar los splits del dataset combinado con los topes por clase, también con todas las fotos del equipo. | `5000` |
+   | `MUESTRA_POR_ETIQUETA` | Toma N frutas + N verduras, repartidas por igual entre clases: cada clase toma primero sus fotos de Drive y se completa con el dataset combinado, dividido 80/20. `None` = usar los splits del dataset combinado: cada clase llega a su tope por clase, con Drive primero. | `5000` |
    | `FRACCION_TEST_MUESTRA` | Parte que va a test en la versión preliminar. | `0.2` |
    | `MAX_POR_CLASE` / `MAX_POR_CLASE_VERDURA` | Imágenes por fruta / verdura en los splits normales. Más es mejor, pero más lento. | `150` / `180` |
    | `LIMPIEZA` | Quita fotos casi repetidas de Fruits-360 y deja máximo 100 de esa fuente por clase. No cambia el dataset de Kaggle. `None` = sin limpiar. | activada |

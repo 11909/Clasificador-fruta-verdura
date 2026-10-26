@@ -2,6 +2,7 @@ import csv
 import importlib.util
 import io
 import json
+import shutil
 from pathlib import Path
 
 from PIL import Image
@@ -10,7 +11,7 @@ from src.equipo import PLAN_WEB_PATH, escribir_faltantes, faltantes, leer_plan_w
 from src.mapping import cargar_mapping, etiqueta_de
 
 RAIZ = Path(__file__).resolve().parent.parent
-spec = importlib.util.spec_from_file_location("descargar_fotos_web", RAIZ / "scripts" / "descargar_fotos_web.py")
+spec = importlib.util.spec_from_file_location("web_scrapping", RAIZ / "scripts" / "web_scrapping.py")
 web = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(web)
 
@@ -35,14 +36,15 @@ def test_faltantes_lista_las_frutas_web_aparte(tmp_path):
     assert texto.index("Persona A") < texto.index("Fotos de internet") and "rambutan: 50" in texto
 
 
-def jpeg(color, tam=(600, 400), borde_blanco=False):
-    im = Image.new("RGB", tam, color)
+def jpeg(semilla, tam=(600, 400), borde_blanco=False):
+    """Foto distinta por semilla (ruido grueso, para que su hash perceptual no se parezca al de otras)."""
+    import numpy as np
+    ruido = np.random.default_rng(semilla).integers(0, 200, (8, 12, 3), dtype=np.uint8)
+    im = Image.fromarray(ruido).resize(tam, Image.NEAREST)
     if borde_blanco:
-        im = Image.new("RGB", tam, (255, 255, 255))
-        im.paste(color, (100, 100, 500, 300))
-    else:
-        for x in range(0, tam[0], 40):  # textura para que el hash no sea trivial
-            im.paste((color[0] // 2, color[1], color[2]), (x, 0, x + 20, tam[1]))
+        fondo = Image.new("RGB", tam, (255, 255, 255))
+        fondo.paste(im.resize((300, 150)), (150, 125))
+        im = fondo
     buf = io.BytesIO()
     im.save(buf, "JPEG")
     return buf.getvalue()
@@ -55,36 +57,61 @@ def test_candidatos_filtra_titulos_y_originales_chicos(monkeypatch):
                for i, (t, w) in enumerate([("File:Rambutan market.jpg", 1200), ("File:Rambutan tree.jpg", 1200),
                                           ("File:Rambutan small.jpg", 400), ("File:Rambutan drawing.jpg", 900)])}
     monkeypatch.setattr(web, "pedir", lambda url: json.dumps({"query": {"pages": paginas}}).encode())
-    assert [c["titulo_commons"] for c in web.candidatos("rambutan")] == ["File:Rambutan market.jpg"]
+    assert [c["titulo"] for c in web.candidatos_commons("rambutan")] == ["File:Rambutan market.jpg"]
 
 
-def test_descarga_completa_sin_fotos_de_prueba_ni_duplicados(monkeypatch, tmp_path):
+def test_descarga_completa_lista_para_drive(monkeypatch, tmp_path):
     prueba = tmp_path / "fotos_prueba"
     (prueba / "rambutan").mkdir(parents=True)
-    (prueba / "rambutan" / "r.jpg").write_bytes(jpeg((200, 30, 30)))
+    (prueba / "rambutan" / "r.jpg").write_bytes(jpeg(1))
     with open(prueba / "etiquetas.csv", "w", encoding="utf-8") as f:
         f.write("archivo,titulo_commons\nrambutan/x.jpg,File:Usada en prueba.jpg\n")
-    fotos = {"File:Usada en prueba.jpg": jpeg((10, 10, 200)), "File:Igual a prueba.jpg": jpeg((200, 30, 30)),
-             "File:Estudio.jpg": jpeg((200, 30, 30), borde_blanco=True), "File:Buena.jpg": jpeg((30, 160, 40)),
-             "File:Otra buena.jpg": jpeg((240, 200, 20))}
-    monkeypatch.setattr(web, "candidatos", lambda b: iter(
-        [{"titulo_commons": t, "url_descarga": t, "pagina_fuente": "", "autor": "", "licencia": "CC BY"} for t in fotos]))
-    monkeypatch.setattr(web, "pedir", lambda url: fotos[url])
-    salida = tmp_path / "fotos_web"
-    monkeypatch.setattr("sys.argv", ["x", "--salida", str(salida), "--solo", "rambutan", "--meta", "5",
-                                     "--pausa", "0", "--excluir", str(prueba)])
+    fotos = {"File:Usada en prueba.jpg": jpeg(2), "File:Igual a prueba.jpg": jpeg(1),
+             "File:Estudio.jpg": jpeg(3, borde_blanco=True), "File:Buena.jpg": jpeg(4),
+             "File:Otra buena.jpg": jpeg(5), "File:Tercera.jpg": jpeg(6)}
+
+    def falsa(busqueda, vistos, **_):
+        for t, datos in fotos.items():
+            c = {"fuente": "commons", "titulo": t, "url_descarga": t, "pagina_fuente": "", "autor": "",
+                 "licencia": "CC BY"}
+            yield c, None if t in vistos else datos
+
+    monkeypatch.setitem(web.FUENTES, "commons", falsa)
+    salida = tmp_path / "salida_web"
+    args = ["x", "--salida", str(salida), "--fuentes", "commons", "--solo", "rambutan", "--meta", "2",
+            "--excluir", str(prueba)]
+    monkeypatch.setattr("sys.argv", args)
     web.main()
     filas = list(csv.DictReader(open(salida / "fuentes_web.csv", encoding="utf-8")))
-    assert [f["titulo_commons"] for f in filas] == ["File:Buena.jpg", "File:Otra buena.jpg"]
-    assert sorted(p.name for p in (salida / "rambutan").iterdir()) == ["web_rambutan_001.jpg", "web_rambutan_002.jpg"]
-    assert (tmp_path / "fotos_web.zip").exists()
+    assert [f["titulo"] for f in filas] == ["File:Buena.jpg", "File:Otra buena.jpg"]
+    fotos_dir = salida / "fotos" / "rambutan"
+    assert sorted(p.name for p in fotos_dir.iterdir()) == ["web_rambutan_0001.jpg", "web_rambutan_0002.jpg"]
 
-    # El zip en la raíz de Drive se lee como un árbol de alimentos más
-    from src.dataset import dividir_equipo
+    # Al revisar se borra una; al volver a correr no se baja otra vez y se completa con la siguiente
+    (fotos_dir / "web_rambutan_0001.jpg").unlink()
+    web.main()
+    filas = list(csv.DictReader(open(salida / "fuentes_web.csv", encoding="utf-8")))
+    assert [(f["titulo"], f["estado"]) for f in filas] == [
+        ("File:Buena.jpg", "borrada"), ("File:Otra buena.jpg", ""), ("File:Tercera.jpg", "")]
+    assert sorted(p.name for p in fotos_dir.iterdir()) == ["web_rambutan_0002.jpg", "web_rambutan_0003.jpg"]
+
+    # para_drive/<fruta>/<zip> se sube tal cual a Drive, y el notebook lo lee como fotos de esa fruta
+    zips = sorted(p.relative_to(salida / "para_drive").as_posix() for p in (salida / "para_drive").rglob("*.zip"))
+    assert zips == ["rambutan/web_rambutan_1.zip"]
+    from src.dataset import dividir_equipo, es_web
     from src.equipo import descomprimir_zips
     drive = tmp_path / "drive"
-    drive.mkdir()
-    (tmp_path / "fotos_web.zip").rename(drive / "fotos_web.zip")
-    raices = descomprimir_zips(str(drive))
-    a, b = dividir_equipo(raices[0], 0.3, 42)
-    assert Path(raices[0]).name == "fotos_web" and {m[2] for m in a + b} == {"rambutan"} and len(a + b) == 2
+    shutil.copytree(salida / "para_drive", drive)
+    descomprimir_zips(str(drive))
+    a, b = dividir_equipo(str(drive), 0.3, 42)
+    assert {m[2] for m in a + b} == {"rambutan"} and len(a + b) == 2 and all(es_web(m[0]) for m in a + b)
+
+
+def test_fotos_web_false_las_deja_fuera(tmp_path):
+    from src.train import equipo
+    for nombre in ("web_rambutan_0001.jpg", "ana_001.jpg"):
+        (tmp_path / "rambutan").mkdir(exist_ok=True)
+        Image.new("RGB", (30, 30)).save(tmp_path / "rambutan" / nombre)
+    d = {"equipo_dir": [str(tmp_path)], "fraccion_test_equipo": 0.0}
+    assert len(equipo(d, [], 0)[0]) == 2
+    assert [Path(m[0]).name for m in equipo({**d, "fotos_web": False}, [], 0)[0]] == ["ana_001.jpg"]

@@ -56,7 +56,7 @@ data/mapping.csv    # diccionario del criterio botánico (lo revisa el equipo)
 entradas/ejemplos.txt  # enlaces de ejemplo para clasificar
 notebooks/          # kaggle_train, predecir y kaggle_build_dataset
 scripts/check_mapping.py  # lista clases sin etiqueta en un dataset
-scripts/descargar_fotos_web.py  # fotos de Wikimedia Commons para las frutas que solo tienen Fruits-360
+scripts/web_scrapping.py  # fotos de Wikimedia Commons para las frutas que solo tienen Fruits-360
 tests/
 ```
 
@@ -154,13 +154,17 @@ carpeta de Drive/
 Casi todas las frutas fuera de `plan_equipo.csv` solo traen fotos de estudio de Fruits-360. `data/plan_web.csv` las lista con su prioridad, cuántas fotos reales necesita cada una y qué buscar en Wikimedia Commons. La meta sale de la misma cuenta que `faltantes.txt`: Fruits-360 aporta hasta 100 fotos de train y de las nuevas el 70 % va a train, así que 80 fotos (100 en prioridad alta) dejan cada fruta en 150 a 170 de train, sin pasar de las 180 de cada verdura. Las que no tienen nada en Kaggle (plátano macho y las calabazas de la fuente de Bangladesh, que está desactivada) piden 215 = 150 / 0.7. Las cuentas salen de `conteos.csv` del dataset combinado; okra no está porque ya trae fotos reales de Fresh and Rotten.
 
 ```
-python scripts/descargar_fotos_web.py --excluir ruta/a/fotos_prueba
+pip install pillow numpy icrawler
+python scripts/web_scrapping.py --excluir ruta/a/fotos_prueba
 ```
 
-- Corre en la computadora de cualquiera (2 a 3 horas para las ~6,000 fotos, por el límite de velocidad de Wikimedia). Si se corta, se vuelve a correr y sigue donde se quedó.
-- Descarta dibujos, plantas, platillos, fotos de estudio con fondo blanco, las de menos de 300 px y duplicados.
+- El script no depende del resto del repo: basta con `web_scrapping.py` y `plan_web.csv` en la misma carpeta.
+- Fuentes (`--fuentes`, por defecto `bing,commons`): **Bing** (con icrawler) es la más rápida, con varias descargas a la vez, unos 10 a 20 minutos para todo el plan, pero sin licencia conocida y con más ruido. **Wikimedia Commons** tiene licencias libres, pero limita la velocidad y obliga a bajar de una en una, así que tarda de 1 a 2 horas. Commons completa lo que Bing no alcanzó. Openverse, que junta Flickr y otros sitios, quedó fuera porque sin cuenta solo permite 200 consultas al día. iNaturalist también quedó fuera porque casi todas sus fotos son de la planta, no de la fruta.
+- Descarta dibujos, plantas, platillos, fotos de estudio con fondo blanco, las de menos de 200 px y duplicados.
 - `--excluir` recibe la carpeta de fotos de prueba: ninguna foto que esté ahí (por título de Commons o por hash perceptual) entra a entrenamiento, para que la prueba siga siendo con fotos que el modelo nunca vio.
-- Deja `fotos_web/<fruta>/web_<fruta>_001.jpg`, `fotos_web/fuentes_web.csv` (autor, licencia y página de cada foto) y `fotos_web.zip`. Revisa las carpetas en miniaturas, borra lo que no sea la fruta, vuelve a comprimir y sube `fotos_web.zip` a la **raíz** de la carpeta de Drive. El notebook lo lee como un árbol de alimentos más, con la misma división fija 70/30 que las fotos del equipo; `FOTOS_WEB = False` lo deja fuera para comparar.
+- Deja `salida_web/fotos/<fruta>/web_<fruta>_0001.jpg` para revisar, `salida_web/fuentes_web.csv` (fuente, autor y licencia de cada foto) y `salida_web/para_drive/<fruta>/web_<fruta>_1.zip`. Revisa `fotos/` en miniaturas, borra lo que no sea la fruta y corre `--empaquetar` para rehacer `para_drive/`. Lo borrado no se vuelve a bajar; correr el script otra vez completa la meta con fotos nuevas.
+- **Subir:** arrastra las carpetas de `para_drive/` a la raíz de la carpeta de Drive. Si la carpeta de esa fruta ya existe en Drive, sube solo el zip dentro de la existente (Drive no junta carpetas con el mismo nombre). El notebook descomprime los zips y las fotos `web_*` cuentan como fotos de Drive, con la misma división fija 70/30; `FOTOS_WEB = False` las deja fuera para comparar.
+- **Balance:** al entrenar, cada clase toma primero sus fotos de Drive y se completa con el dataset combinado hasta `MAX_POR_CLASE` (`MAX_POR_CLASE_VERDURA` en verduras). En la versión preliminar (`MUESTRA_POR_ETIQUETA`) cada etiqueta se reparte por igual entre clases, con el mismo orden. Así, más fotos en Drive no agrandan una clase sobre las demás.
 - El `faltantes.txt` del notebook termina con una sección "Fotos de internet" con lo que aún falta de cada fruta.
 
 #### Renombrar y subir las fotos
