@@ -7,6 +7,8 @@ import argparse
 import csv
 import hashlib
 import json
+import shutil
+import tempfile
 import time
 from pathlib import Path
 
@@ -171,10 +173,12 @@ def main(config_path: str):
     grupos_test = [m[2] for m in test]
 
     resultados, en_test = [], []
+    # Escalado y PCA ya ajustados, compartidos entre combinaciones del grid y entre modelos con el mismo PCA
+    cache_pca = tempfile.mkdtemp(prefix="pca_")
     for spec in cfg["models"]:
         if not cfg.get("ajustar_hiperparametros", True):
             spec = {k: v for k, v in spec.items() if k != "grid"}  # usa solo los params fijos
-        modelo = crear_modelo(spec["name"], spec.get("params"), spec.get("pca"), semilla)
+        modelo = crear_modelo(spec["name"], spec.get("params"), spec.get("pca"), semilla, cache=cache_pca)
         inicio = time.time()
         if spec.get("grid") and anidada:
             # Validación anidada: cada vuelta externa busca sus hiperparámetros solo con su parte de
@@ -212,6 +216,7 @@ def main(config_path: str):
             en_test.append({"modelo": spec["name"], **{k: round(v, 4) if isinstance(v, float) else v
                                                        for k, v in res.items()}})
             print("test", json.dumps(en_test[-1]))
+    shutil.rmtree(cache_pca, ignore_errors=True)
 
     campos = ["modelo", *METRICAS_CV, *(f"{m}_std" for m in METRICAS_CV), "segundos", "spec"]
     with open(salida / "resultados_cv.csv", "w", newline="", encoding="utf-8") as f:

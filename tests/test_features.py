@@ -86,3 +86,16 @@ def test_validacion_anidada_busca_hiperparametros_dentro_de_cada_vuelta():
     res, cvr = evaluar_cv(interna, X, y, grupos, externa, False, params={"groups": grupos})
     assert len(cvr["estimator"]) == 3 and all(hasattr(e, "best_params_") for e in cvr["estimator"])
     assert res["balanced_accuracy"] > 0.8 and "f1_macro_std" in res
+
+
+def test_cache_de_pca_da_el_mismo_resultado(tmp_path):
+    from sklearn.model_selection import GridSearchCV
+    rng = np.random.default_rng(0)
+    X = np.vstack([rng.normal(0, 1, (60, 8)), rng.normal(1, 1, (60, 8))])
+    y = np.array([0] * 60 + [1] * 60)
+    grid = {"kneighborsclassifier__n_neighbors": [3, 9]}
+    sin = GridSearchCV(crear_modelo("knn", pca=4), grid, cv=3).fit(X, y)
+    con = GridSearchCV(crear_modelo("knn", pca=4, cache=str(tmp_path)), grid, cv=3).fit(X, y)
+    assert sin.best_params_ == con.best_params_ and (sin.predict(X) == con.predict(X)).all()
+    assert any(tmp_path.iterdir())  # el escalado y el PCA quedaron guardados
+    assert crear_modelo("knn", cache=str(tmp_path)).memory is None  # sin PCA no se guarda nada

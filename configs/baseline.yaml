@@ -81,11 +81,12 @@ models:
     params: {max_iter: 300, learning_rate: 0.1}
   - name: svm
     params: {kernel: rbf, C: 10, gamma: scale}
-  - name: voting
-    params:
-      estimadores:
-        svm: {kernel: rbf, C: 10, gamma: scale}
-        random_forest: {n_estimators: 300}
-        gradient_boosting: {max_iter: 300}
+  # voting (svm + random_forest + gradient_boosting) quedó fuera: casi la mitad del tiempo y nunca ganó.
+  # - name: voting
+  #   params:
+  #     estimadores:
+  #       svm: {kernel: rbf, C: 10, gamma: scale}
+  #       random_forest: {n_estimators: 300}
+  #       gradient_boosting: {max_iter: 300}
 
 output_dir: /kaggle/working/outputs
