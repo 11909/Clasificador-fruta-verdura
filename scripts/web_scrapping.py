@@ -5,7 +5,7 @@ Uso (Python 3.10+, `pip install pillow numpy icrawler torch transformers`):
     python web_scrapping.py --excluir ruta/a/fotos_prueba       # todo el plan
     python web_scrapping.py --faltantes faltantes.txt           # metas con los conteos reales de Drive
     python web_scrapping.py --revisar                           # limpia con el filtro las fotos ya bajadas
-    python web_scrapping.py --empaquetar                        # opcional: zips por carpeta en para_drive/
+    python web_scrapping.py --empaquetar                        # solo rehace los zips de para_drive/
 
 Lee `plan_web.csv` (junto a este archivo, o `data/plan_web.csv` del repo): alimento, prioridad, meta de
 fotos y búsquedas. Trae dos grupos:
@@ -15,10 +15,11 @@ fotos y búsquedas. Trae dos grupos:
     el notebook en Output, con los conteos reales de Drive) la meta de cada alimento sale de ahí.
     `--prioridad equipo` baja solo ese grupo; `--prioridad sin_fotos,alta,media,secos`, solo las frutas.
 Deja:
-    salida_web/fotos/<alimento>/web_<alimento>_0001.jpg   se revisan en miniaturas y se suben tal cual a Drive
-    salida_web/fuentes_web.csv                            origen, autor y licencia de cada foto
-Con `--empaquetar` además arma salida_web/para_drive/<alimento>/web_<alimento>_1.zip, por si Drive tarda
-en subir o listar carpetas con muchas fotos sueltas.
+    salida_web/para_drive/<alimento>/web_<alimento>_1.zip  carpetas ya comprimidas: se suben tal cual a Drive
+    salida_web/fotos/<alimento>/web_<alimento>_0001.jpg    las mismas fotos sueltas, para revisar en miniaturas
+    salida_web/fuentes_web.csv                             origen, autor y licencia de cada foto
+Los zips (de FOTOS_POR_ZIP fotos) se rehacen al final de cada corrida y de `--revisar` con las fotos que
+quedan en fotos/; si borras fotos a mano, `--empaquetar` los rehace sin bajar nada. `--sin-zip` no los arma.
 
 Fuentes (`--fuentes`, en orden; la segunda completa lo que no dio la primera):
     bing     Bing Imágenes con icrawler: la más rápida (varias descargas a la vez, ~30 a 60 min para todo
@@ -374,6 +375,7 @@ def main():
     ap.add_argument("--nucleos", type=int, default=2,
                     help="núcleos del procesador para el filtro (menos = más lento pero calienta menos)")
     ap.add_argument("--empaquetar", action="store_true", help="solo rehace para_drive/ con las fotos que quedan")
+    ap.add_argument("--sin-zip", action="store_true", help="no armar los zips de para_drive/ al terminar")
     ap.add_argument("--revisar", action="store_true", help="pasa el filtro CLIP por las fotos ya bajadas")
     ap.add_argument("--sin-filtro", action="store_true", help="no usar el filtro CLIP")
     ap.add_argument("--umbral", type=float, default=UMBRAL_CLIP,
@@ -407,7 +409,8 @@ def main():
         if filtro is None:
             sys.exit("--revisar necesita el filtro CLIP: pip install torch transformers")
         revisar(salida, plan, filtro, filas)
-        return escribir_tabla(tabla, filas)
+        escribir_tabla(tabla, filas)
+        return None if a.sin_zip else empaquetar(salida)
     hashes = Hashes()
     excluidos = cargar_exclusiones(a.excluir, hashes)
     vistos = excluidos | {r["titulo"] for r in filas}
@@ -470,9 +473,11 @@ def main():
         print(f"{alimento:30} {n:4}/{meta} en {time.time() - inicio:4.0f} s  descartes {descartes}{aviso}", flush=True)
 
     total = sum(1 for r in filas if not r.get("estado"))
-    print(f"\n{total} fotos en {salida / 'fotos'}/. Revisa en miniaturas, borra lo que no sea el alimento "
-          "(o tenga otros alimentos) y sube esas carpetas a la raíz de la carpeta de Drive del equipo. Si "
-          "borraste muchas, corre otra vez para completar la meta.")
+    print(f"\n{total} fotos en {salida / 'fotos'}/. Revisa en miniaturas y borra lo que no sea el alimento "
+          "(o tenga otros alimentos); si borraste muchas, corre otra vez para completar la meta, o "
+          "--empaquetar para rehacer los zips.")
+    if not a.sin_zip:
+        empaquetar(salida)
 
 
 if __name__ == "__main__":
