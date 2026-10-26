@@ -1,9 +1,10 @@
 """Descarga fotos reales de internet para las frutas que solo tienen Fruits-360 y las deja listas para Drive.
 
-Uso (Python 3.10+, `pip install pillow numpy icrawler`):
+Uso (Python 3.10+, `pip install pillow numpy icrawler torch transformers`):
     python web_scrapping.py --solo rambutan --meta 10           # prueba rápida
     python web_scrapping.py --excluir ruta/a/fotos_prueba       # todo el plan
     python web_scrapping.py --faltantes faltantes.txt           # metas con los conteos reales de Drive
+    python web_scrapping.py --revisar                           # limpia con el filtro las fotos ya bajadas
     python web_scrapping.py --empaquetar                        # rehace para_drive/ después de revisar
 
 Lee `plan_web.csv` (junto a este archivo, o `data/plan_web.csv` del repo): alimento, prioridad, meta de
@@ -32,7 +33,11 @@ pasar de las 180 de cada verdura; las que no tienen nada en Kaggle piden 215 = 1
 además toma primero las fotos de Drive y completa cada clase con el dataset combinado hasta su tope.
 
 Se descartan las fotos con fondo blanco de estudio, las de menos de 200 px, los dibujos y los
-duplicados (también entre alimentos). `--excluir` recibe la carpeta de fotos de prueba (fotos_prueba/):
+duplicados (también entre alimentos). Las búsquedas de Bing llevan palabras a excluir (`-ave`, `-receta`
+y las de la columna `excluir` del plan, como `-ganso` en oca). Además, si están instalados torch y
+transformers, un modelo CLIP revisa cada foto y descarta las que no son del alimento: aves, personas,
+platillos, dibujos, edificios... (`--sin-filtro` lo apaga). Para limpiar fotos ya bajadas:
+`--revisar` pasa el filtro por salida_web/fotos/ y mueve lo que no pase a salida_web/descartadas/. `--excluir` recibe la carpeta de fotos de prueba (fotos_prueba/):
 ninguna foto que esté ahí, por título de Commons o por hash perceptual, entra al entrenamiento.
 Si se corta o se vuelve a correr, sigue donde se quedó; las fotos que borres al revisar no se vuelven
 a bajar.
@@ -41,6 +46,7 @@ import argparse
 import csv
 import io
 import json
+import logging
 import re
 import shutil
 import sys
@@ -69,6 +75,18 @@ MAX_RESULTADOS = 400  # por búsqueda en Commons; más abajo casi todo es ruido
 FOTOS_POR_ZIP = 150   # Drive lista solo 50 archivos sueltos por carpeta, así que se sube en zips
 COLUMNAS = ["archivo", "alimento", "prioridad", "fuente", "busqueda", "titulo", "autor", "licencia",
             "pagina_fuente", "url_descarga", "estado"]
+# Se agregan con "-" a las búsquedas de Bing, además de la columna `excluir` del plan
+EXCLUIR_BING = ["ave", "bird", "dibujo", "drawing", "clipart", "cartoon", "receta", "recipe", "logo", "ilustracion"]
+# Filtro CLIP: la foto pasa si "el alimento" o "otra fruta o verdura" gana a todo lo que no es comida cruda.
+# La segunda opción absorbe los alimentos raros que CLIP no conoce bien (oca, chaya...)
+CLIP = "openai/clip-vit-base-patch32"
+UMBRAL_CLIP = 0.6  # calibrado con fotos reales: oca 1.00, ganso 0.00, kiwi ave 0.22, romeritos en mole 0.59
+NO_ALIMENTO = ["a bird", "an animal", "a person", "a cooked dish or meal", "a plate or bowl of prepared food",
+               "a soup, stew or food in sauce", "a salad or chopped food", "a drink", "a dessert or baked food",
+               "a drawing, cartoon or illustration", "a logo, text or a poster", "a packaged product in a box or bag",
+               "a building, street or landscape", "a flowering plant or a tree without fruit",
+               "a cactus or a whole plant growing in a garden or field", "a fish or seafood",
+               "a toy, a phone or another object"]
 # Títulos que casi nunca son la fruta sola: dibujos, láminas, plantas en flor, platillos y bebidas
 EXCLUIR = re.compile(
     r"(drawing|illustration|diagram|logo|\bmap\b|icon|painting|stamp|herbari|fruits[-_ ]?360|engraving|"
@@ -179,8 +197,9 @@ def commons(busqueda: str, vistos: set, pausa: float, **_):
         yield c, datos
 
 
-def bing(busqueda: str, vistos: set, cuantas: int, hilos: int = 4, **_):
-    """Bing Imágenes con icrawler: baja `cuantas` fotos a la vez en una carpeta temporal."""
+def bing(busqueda: str, vistos: set, cuantas: int, hilos: int = 4, excluir: str = "", **_):
+    """Bing Imágenes con icrawler: baja `cuantas` fotos a la vez en una carpeta temporal. La búsqueda
+    lleva las palabras de EXCLUIR_BING y de `excluir` con "-" para que Bing las deje fuera."""
     try:
         from icrawler import ImageDownloader
         from icrawler.builtin import BingImageCrawler
@@ -194,9 +213,12 @@ def bing(busqueda: str, vistos: set, cuantas: int, hilos: int = 4, **_):
                 urls[task["filename"]] = task["file_url"]
 
     with tempfile.TemporaryDirectory() as tmp:
+        # CRITICAL: icrawler avisa cada página que no responde ("Exception caught when downloading file");
+        # esas fotos solo se saltan, no hace falta verlo
         crawler = BingImageCrawler(downloader_cls=Registro, downloader_threads=hilos, storage={"root_dir": tmp},
-                                   log_level=40)
-        crawler.crawl(keyword=busqueda, max_num=cuantas, min_size=(LADO_MINIMO, LADO_MINIMO),
+                                   log_level=logging.CRITICAL)
+        negativas = " ".join(f"-{w}" for w in EXCLUIR_BING + excluir.split())
+        crawler.crawl(keyword=f"{busqueda} {negativas}", max_num=cuantas, min_size=(LADO_MINIMO, LADO_MINIMO),
                       filters={"type": "photo"})
         for p in sorted(Path(tmp).iterdir()):
             url = urls.get(p.name, p.name)
@@ -208,6 +230,66 @@ def bing(busqueda: str, vistos: set, cuantas: int, hilos: int = 4, **_):
 
 
 FUENTES = {"commons": commons, "bing": bing}
+
+
+class Filtro:
+    """CLIP sin entrenar: compara la foto con "una foto de <alimento>" y con cosas que no son el alimento."""
+
+    def __init__(self, umbral: float = UMBRAL_CLIP):
+        import torch
+        from transformers import CLIPModel, CLIPProcessor
+        self.torch = torch
+        self.modelo = CLIPModel.from_pretrained(CLIP).eval()
+        self.proc = CLIPProcessor.from_pretrained(CLIP)
+        self.textos = {}
+        self.umbral = umbral
+
+    def _texto(self, nombre_en: str):
+        if nombre_en not in self.textos:
+            frases = [f"a photo of {nombre_en}", "a photo of a different fresh fruit, vegetable or nut"]
+            frases += [f"a photo of {x}" for x in NO_ALIMENTO]
+            self.textos[nombre_en] = self.proc(text=frases, return_tensors="pt", padding=True)
+        return self.textos[nombre_en]
+
+    def probabilidad(self, im: Image.Image, nombre_en: str) -> float:
+        """Probabilidad de que la foto sea el alimento (o al menos un alimento crudo)."""
+        with self.torch.no_grad():
+            salida = self.modelo(**self._texto(nombre_en), pixel_values=self.proc(images=im, return_tensors="pt")["pixel_values"])
+        p = salida.logits_per_image.softmax(dim=-1)[0]
+        return float(p[0] + p[1])
+
+    def pasa(self, im: Image.Image, nombre_en: str) -> bool:
+        return self.probabilidad(im, nombre_en) >= self.umbral
+
+
+def crear_filtro(apagado: bool, umbral: float = UMBRAL_CLIP) -> "Filtro | None":
+    if apagado:
+        return None
+    try:
+        filtro = Filtro(umbral)
+        print("Filtro CLIP activo: se descartan las fotos que no son del alimento.")
+        return filtro
+    except ImportError:
+        print("Aviso: sin filtro CLIP (pip install torch transformers para activarlo). Revisa bien las fotos.")
+        return None
+
+
+def revisar(salida: Path, plan: list[dict], filtro: Filtro, filas: list[dict]):
+    """Pasa el filtro por las fotos ya bajadas y mueve a descartadas/ las que no son del alimento."""
+    nombres = {f["alimento"]: f["nombre_en"] for f in plan}
+    movidas = 0
+    for r in filas:
+        ruta = salida / r["archivo"]
+        if r.get("estado") or r["alimento"] not in nombres or not ruta.exists():
+            continue
+        im = abrir(ruta.read_bytes())
+        if im is None or not filtro.pasa(im, nombres[r["alimento"]]):
+            destino = salida / "descartadas" / r["archivo"].split("/", 1)[1]
+            destino.parent.mkdir(parents=True, exist_ok=True)
+            shutil.move(str(ruta), destino)
+            r["estado"] = "descartada"
+            movidas += 1
+    print(f"revisión: {movidas} fotos movidas a {salida / 'descartadas'}/")
 
 
 # --- Salida ---
@@ -288,6 +370,10 @@ def main():
     ap.add_argument("--pausa", type=float, default=0.5, help="segundos entre descargas de Commons")
     ap.add_argument("--hilos", type=int, default=4, help="descargas a la vez en Bing")
     ap.add_argument("--empaquetar", action="store_true", help="solo rehace para_drive/ con las fotos que quedan")
+    ap.add_argument("--revisar", action="store_true", help="pasa el filtro CLIP por las fotos ya bajadas")
+    ap.add_argument("--sin-filtro", action="store_true", help="no usar el filtro CLIP")
+    ap.add_argument("--umbral", type=float, default=UMBRAL_CLIP,
+                    help="qué tan seguro debe estar el filtro (más alto = descarta más)")
     a = ap.parse_args()
 
     with open(a.plan, encoding="utf-8") as f:
@@ -310,21 +396,29 @@ def main():
     tabla = salida / "fuentes_web.csv"
     filas = leer_tabla(tabla)
     for r in filas:  # las que se borraron al revisar quedan marcadas para no volver a bajarlas
-        if r.get("estado") != "borrada" and not (salida / r["archivo"]).exists():
+        if not r.get("estado") and not (salida / r["archivo"]).exists():
             r["estado"] = "borrada"
+    filtro = crear_filtro(a.sin_filtro, a.umbral)
+    if a.revisar:
+        if filtro is None:
+            sys.exit("--revisar necesita el filtro CLIP: pip install torch transformers")
+        revisar(salida, plan, filtro, filas)
+        escribir_tabla(tabla, filas)
+        return empaquetar(salida)
     hashes = Hashes()
     excluidos = cargar_exclusiones(a.excluir, hashes)
     vistos = excluidos | {r["titulo"] for r in filas}
     for r in filas:
-        if r.get("estado") != "borrada" and (im := abrir((salida / r["archivo"]).read_bytes())) is not None:
+        if not r.get("estado") and (im := abrir((salida / r["archivo"]).read_bytes())) is not None:
             hashes.agregar(dhash(im))
 
     for fila in plan:
         alimento, meta = fila["alimento"], a.meta or int(fila["meta"])
         carpeta = salida / "fotos" / alimento
         carpeta.mkdir(parents=True, exist_ok=True)
-        n = sum(1 for r in filas if r["alimento"] == alimento and r.get("estado") != "borrada")
-        descartes = {"prueba": 0, "repetida": 0, "estudio": 0, "chica o dañada": 0}
+        n = sum(1 for r in filas if r["alimento"] == alimento and not r.get("estado"))
+        descartes = {"prueba": 0, "repetida": 0, "estudio": 0, "chica o dañada": 0, "no es el alimento": 0}
+        no_es = re.compile("|".join(rf"\b{re.escape(w)}" for w in fila.get("excluir", "").split()) or "$^", re.I)
         inicio = time.time()
         for fuente in fuentes:
             for busqueda in fila["busquedas"].split("|"):
@@ -332,6 +426,7 @@ def main():
                     break
                 try:
                     for c, datos in FUENTES[fuente](busqueda, vistos, pausa=a.pausa, hilos=a.hilos,
+                                                     excluir=fila.get("excluir", ""),
                                                      cuantas=min(2 * (meta - n) + 10, 300)):
                         if n >= meta:
                             break
@@ -339,12 +434,18 @@ def main():
                             descartes["prueba" if c["titulo"] in excluidos else "repetida"] += 1
                             continue
                         vistos.add(c["titulo"])
+                        if no_es.search(urllib.parse.unquote(c["titulo"])):
+                            descartes["no es el alimento"] += 1
+                            continue
                         im = abrir(datos)
                         if im is None or min(im.size) < LADO_MINIMO:
                             descartes["chica o dañada"] += 1
                             continue
                         if fondo_blanco(im):
                             descartes["estudio"] += 1
+                            continue
+                        if filtro and not filtro.pasa(im, fila.get("nombre_en") or alimento.replace("_", " ")):
+                            descartes["no es el alimento"] += 1
                             continue
                         h = dhash(im)
                         if hashes.repetido(h):
@@ -366,8 +467,8 @@ def main():
         print(f"{alimento:30} {n:4}/{meta} en {time.time() - inicio:4.0f} s  descartes {descartes}{aviso}", flush=True)
 
     empaquetar(salida)
-    print("Antes de subir: revisa salida_web/fotos/ en miniaturas, borra lo que no sea la fruta (o tenga "
-          "otras frutas) y corre de nuevo con --empaquetar. Si borraste muchas, corre sin --empaquetar para "
+    print("Antes de subir: revisa salida_web/fotos/ en miniaturas, borra lo que no sea el alimento (o tenga "
+          "otros alimentos) y corre de nuevo con --empaquetar. Si borraste muchas, corre sin --empaquetar para "
           "completar la meta.")
 
 

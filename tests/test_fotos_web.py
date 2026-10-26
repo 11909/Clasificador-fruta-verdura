@@ -84,7 +84,7 @@ def test_descarga_completa_lista_para_drive(monkeypatch, tmp_path):
     monkeypatch.setitem(web.FUENTES, "commons", falsa)
     salida = tmp_path / "salida_web"
     args = ["x", "--salida", str(salida), "--fuentes", "commons", "--solo", "rambutan", "--meta", "2",
-            "--excluir", str(prueba)]
+            "--excluir", str(prueba), "--sin-filtro"]
     monkeypatch.setattr("sys.argv", args)
     web.main()
     filas = list(csv.DictReader(open(salida / "fuentes_web.csv", encoding="utf-8")))
@@ -127,3 +127,28 @@ def test_leer_faltantes_del_notebook_y_de_drive(tmp_path):
              "Fotos de internet (faltan 80):\n  Prioridad media (80 c/u):\n    salak: 80\n")
     (tmp_path / "faltantes.txt").write_text(texto, encoding="utf-8")
     assert web.leer_faltantes(str(tmp_path / "faltantes.txt")) == {"oca": 200, "zanahoria": 0, "salak": 80}
+
+
+def test_filtro_y_palabras_excluidas_descartan_lo_que_no_es_el_alimento(monkeypatch, tmp_path):
+    fotos = {"https://x/oca-tuberculo.jpg": jpeg(10), "https://x/ganso-oca.jpg": jpeg(11), "https://x/ave.jpg": jpeg(12)}
+    consultas = []
+
+    def falsa(busqueda, vistos, excluir="", **_):
+        consultas.append(excluir)
+        for t, datos in fotos.items():
+            yield {"fuente": "bing", "titulo": t, "url_descarga": t, "pagina_fuente": "", "autor": "",
+                   "licencia": ""}, None if t in vistos else datos
+
+    class FiltroFalso:  # rechaza la foto 12, como si CLIP viera un ave
+        def pasa(self, im, nombre_en):
+            assert nombre_en.startswith("oca tubers")
+            return im.getpixel((0, 0)) != Image.open(io.BytesIO(fotos["https://x/ave.jpg"])).convert("RGB").getpixel((0, 0))
+
+    monkeypatch.setitem(web.FUENTES, "bing", falsa)
+    monkeypatch.setattr(web, "crear_filtro", lambda apagado, umbral: FiltroFalso())
+    salida = tmp_path / "salida_web"
+    monkeypatch.setattr("sys.argv", ["x", "--salida", str(salida), "--fuentes", "bing", "--solo", "oca", "--meta", "3"])
+    web.main()
+    filas = list(csv.DictReader(open(salida / "fuentes_web.csv", encoding="utf-8")))
+    assert [f["titulo"] for f in filas] == ["https://x/oca-tuberculo.jpg"]  # ganso por palabra, ave por el filtro
+    assert "ganso" in consultas[0]

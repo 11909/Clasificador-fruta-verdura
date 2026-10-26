@@ -154,13 +154,15 @@ carpeta de Drive/
 Casi todas las frutas fuera de `plan_equipo.csv` solo traen fotos de estudio de Fruits-360. `data/plan_web.csv` las lista con su prioridad, cuántas fotos reales necesita cada una y qué buscar en Wikimedia Commons. La meta sale de la misma cuenta que `faltantes.txt`: Fruits-360 aporta hasta 100 fotos de train y de las nuevas el 70 % va a train, así que 80 fotos (100 en prioridad alta) dejan cada fruta en 150 a 170 de train, sin pasar de las 180 de cada verdura. Las que no tienen nada en Kaggle (plátano macho y las calabazas de la fuente de Bangladesh, que está desactivada) piden 215 = 150 / 0.7. Las cuentas salen de `conteos.csv` del dataset combinado; okra no está porque ya trae fotos reales de Fresh and Rotten.
 
 ```
-pip install pillow numpy icrawler
+pip install pillow numpy icrawler torch transformers
 python scripts/web_scrapping.py --excluir ruta/a/fotos_prueba
 ```
 
 - El script no depende del resto del repo: basta con `web_scrapping.py` y `plan_web.csv` en la misma carpeta.
 - `plan_web.csv` también trae los alimentos de `plan_equipo.csv` que aún faltan en Drive (prioridad `equipo`, ~12,900 fotos, ya sin el lote de las Personas A, B y C). `--prioridad equipo` baja solo esos; `--faltantes faltantes.txt` toma las metas del `faltantes.txt` que escribe el notebook en Output, con los conteos reales de Drive.
 - Fuentes (`--fuentes`, por defecto `bing,commons`): **Bing** (con icrawler) es la más rápida, con varias descargas a la vez, unos 30 a 60 minutos para todo el plan, pero sin licencia conocida y con más ruido. **Wikimedia Commons** tiene licencias libres, pero limita la velocidad y obliga a bajar de una en una, así que tarda varias horas: conviene solo para completar. Commons completa lo que Bing no alcanzó. Openverse, que junta Flickr y otros sitios, quedó fuera porque sin cuenta solo permite 200 consultas al día. iNaturalist también quedó fuera porque casi todas sus fotos son de la planta, no de la fruta.
+- Las búsquedas llevan contexto (`oca tuberculo andino`, `tunas fruta de nopal`) y en Bing palabras a excluir (`-ave`, `-receta` y la columna `excluir` del plan, como `-ganso` en oca o `-pescado` en tuna).
+- Si están instalados `torch` y `transformers`, un modelo CLIP revisa cada foto contra "una foto de <alimento>" (columna `nombre_en`) y contra aves, personas, platillos, dibujos, edificios, etc., y descarta lo que no es el alimento. `--umbral` ajusta qué tan estricto es (0.6 por defecto) y `--sin-filtro` lo apaga. `--revisar` lo pasa por las fotos ya bajadas y mueve las que no pasan a `salida_web/descartadas/`.
 - Descarta dibujos, plantas, platillos, fotos de estudio con fondo blanco, las de menos de 200 px y duplicados.
 - `--excluir` recibe la carpeta de fotos de prueba: ninguna foto que esté ahí (por título de Commons o por hash perceptual) entra a entrenamiento, para que la prueba siga siendo con fotos que el modelo nunca vio.
 - Deja `salida_web/fotos/<fruta>/web_<fruta>_0001.jpg` para revisar, `salida_web/fuentes_web.csv` (fuente, autor y licencia de cada foto) y `salida_web/para_drive/<fruta>/web_<fruta>_1.zip`. Revisa `fotos/` en miniaturas, borra lo que no sea la fruta y corre `--empaquetar` para rehacer `para_drive/`. Lo borrado no se vuelve a bajar; correr el script otra vez completa la meta con fotos nuevas.
