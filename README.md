@@ -1,6 +1,6 @@
 # Clasificador fruta vs verdura
 
-Recibe la foto de un alimento y dice si es **fruta** o **verdura** (criterio botánico). Todo corre en Kaggle; no necesitas instalar nada.
+Recibe la foto de un alimento y dice si es **fruta** o **verdura** (criterio botánico, con excepciones acordadas por el equipo, como el chayote; ver `data/mapping.csv`). Todo corre en Kaggle; no necesitas instalar nada.
 
 ## 1. Prepara tu cuenta (una vez)
 
