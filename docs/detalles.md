@@ -151,7 +151,7 @@ carpeta de Drive/
 
 #### Fotos de internet para las frutas con solo Fruits-360
 
-Casi todas las frutas fuera de `plan_equipo.csv` solo traen fotos de estudio de Fruits-360. `data/plan_web.csv` las lista con su prioridad, cuántas fotos reales necesita cada una y qué buscar en Wikimedia Commons. La meta sale de la misma cuenta que `faltantes.txt`: Fruits-360 aporta hasta 100 fotos de train y de las nuevas el 70 % va a train, así que 80 fotos (100 en prioridad alta) dejan cada fruta en 150 a 170 de train, sin pasar de las 180 de cada verdura. Las que no tienen nada en Kaggle (calabaza blanca, okra...) piden 215 = 150 / 0.7.
+Casi todas las frutas fuera de `plan_equipo.csv` solo traen fotos de estudio de Fruits-360. `data/plan_web.csv` las lista con su prioridad, cuántas fotos reales necesita cada una y qué buscar en Wikimedia Commons. La meta sale de la misma cuenta que `faltantes.txt`: Fruits-360 aporta hasta 100 fotos de train y de las nuevas el 70 % va a train, así que 80 fotos (100 en prioridad alta) dejan cada fruta en 150 a 170 de train, sin pasar de las 180 de cada verdura. Las que no tienen nada en Kaggle (plátano macho y las calabazas de la fuente de Bangladesh, que está desactivada) piden 215 = 150 / 0.7. Las cuentas salen de `conteos.csv` del dataset combinado; okra no está porque ya trae fotos reales de Fresh and Rotten.
 
 ```
 python scripts/descargar_fotos_web.py --excluir ruta/a/fotos_prueba
