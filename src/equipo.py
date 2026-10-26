@@ -87,8 +87,9 @@ def leer_plan(path: Path = PLAN_PATH) -> list[dict]:
 
 
 def leer_plan_web(path: Path = PLAN_WEB_PATH) -> list[dict]:
-    """Plan de las fotos de internet, con persona "web" para que faltantes las cuente aparte."""
-    return [{**fila, "persona": WEB} for fila in leer_plan(path)]
+    """Frutas del plan de fotos de internet, con persona "web" para que faltantes las cuente aparte. Los
+    alimentos del plan del equipo (prioridad "equipo") ya salen en su persona y no se repiten."""
+    return [{**fila, "persona": WEB} for fila in leer_plan(path) if fila["prioridad"] != "equipo"]
 
 
 def contar_por_alimento(muestras: list) -> Counter:

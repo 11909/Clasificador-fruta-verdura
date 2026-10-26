@@ -20,7 +20,11 @@ def test_plan_web_son_frutas_del_mapping_con_meta_pareja():
     mapping = cargar_mapping()
     plan = list(csv.DictReader(open(PLAN_WEB_PATH, encoding="utf-8")))
     assert len({f["alimento"] for f in plan}) == len(plan)
-    for f in plan:
+    from src.equipo import leer_plan
+    del_equipo = {p["alimento"] for p in leer_plan()}
+    assert {f["alimento"] for f in plan if f["prioridad"] == "equipo"} <= del_equipo
+    assert all(len(f["busquedas"].split("|")) >= 2 for f in plan)
+    for f in [f for f in plan if f["prioridad"] != "equipo"]:
         assert etiqueta_de(f["alimento"], mapping) == "fruta", f["alimento"]
         # con 100 de Fruits-360 y 70 % a train, ninguna fruta pasa de las 180 de train de una verdura
         assert 80 <= int(f["meta"]) and 100 * (f["prioridad"] != "sin_fotos") + 0.7 * int(f["meta"]) <= 180
@@ -29,6 +33,7 @@ def test_plan_web_son_frutas_del_mapping_con_meta_pareja():
 
 def test_faltantes_lista_las_frutas_web_aparte(tmp_path):
     from collections import Counter
+    assert not any(f["prioridad"] == "equipo" for f in leer_plan_web())  # esas ya salen en su persona
     plan = [{"persona": "A", "alimento": "oca"}] + [f for f in leer_plan_web() if f["alimento"] == "rambutan"]
     filas = faltantes(Counter({"rambutan": 490}), Counter({"rambutan": 30}), 150, 0.3, 80, plan)
     assert [f["faltan"] for f in filas] == [215, 50]
@@ -115,3 +120,10 @@ def test_fotos_web_false_las_deja_fuera(tmp_path):
     d = {"equipo_dir": [str(tmp_path)], "fraccion_test_equipo": 0.0}
     assert len(equipo(d, [], 0)[0]) == 2
     assert [Path(m[0]).name for m in equipo({**d, "fotos_web": False}, [], 0)[0]] == ["ana_001.jpg"]
+
+
+def test_leer_faltantes_del_notebook_y_de_drive(tmp_path):
+    texto = ("Persona A (faltan 300):\n  oca: 200\n  zanahoria: 0  (completo)\n\n"
+             "Fotos de internet (faltan 80):\n  Prioridad media (80 c/u):\n    salak: 80\n")
+    (tmp_path / "faltantes.txt").write_text(texto, encoding="utf-8")
+    assert web.leer_faltantes(str(tmp_path / "faltantes.txt")) == {"oca": 200, "zanahoria": 0, "salak": 80}

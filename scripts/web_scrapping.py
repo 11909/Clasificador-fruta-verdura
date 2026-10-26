@@ -3,19 +3,26 @@
 Uso (Python 3.10+, `pip install pillow numpy icrawler`):
     python web_scrapping.py --solo rambutan --meta 10           # prueba rápida
     python web_scrapping.py --excluir ruta/a/fotos_prueba       # todo el plan
+    python web_scrapping.py --faltantes faltantes.txt           # metas con los conteos reales de Drive
     python web_scrapping.py --empaquetar                        # rehace para_drive/ después de revisar
 
 Lee `plan_web.csv` (junto a este archivo, o `data/plan_web.csv` del repo): alimento, prioridad, meta de
-fotos y búsquedas. Deja:
+fotos y búsquedas. Trae dos grupos:
+    frutas con solo Fruits-360 (prioridad sin_fotos, alta, media, secos): ~6,000 fotos
+    alimentos del plan del equipo que aún faltan en Drive (prioridad equipo): ~12,900 fotos, según
+    faltantes.txt menos el lote de las Personas A, B y C. Con `--faltantes faltantes.txt` (el que escribe
+    el notebook en Output, con los conteos reales de Drive) la meta de cada alimento sale de ahí.
+    `--prioridad equipo` baja solo ese grupo; `--prioridad sin_fotos,alta,media,secos`, solo las frutas.
+Deja:
     salida_web/fotos/<alimento>/web_<alimento>_0001.jpg   para revisar en miniaturas
     salida_web/fuentes_web.csv                            origen, autor y licencia de cada foto
     salida_web/para_drive/<alimento>/web_<alimento>_1.zip lo que se sube a Drive
 
 Fuentes (`--fuentes`, en orden; la segunda completa lo que no dio la primera):
-    bing     Bing Imágenes con icrawler: la más rápida (varias descargas a la vez, ~10 a 20 min para todo
+    bing     Bing Imágenes con icrawler: la más rápida (varias descargas a la vez, ~30 a 60 min para todo
              el plan), pero sin licencia conocida y con más ruido. El dataset debe quedarse privado.
     commons  Wikimedia Commons: licencias libres y menos ruido, pero Wikimedia limita la velocidad y
-             obliga a bajar una foto a la vez (~1 a 2 horas para todo el plan).
+             obliga a bajar una foto a la vez (varias horas para todo el plan; mejor solo para completar).
 Por defecto usa las dos: `--fuentes bing,commons`.
 
 La meta por alimento sale de la misma cuenta que `faltantes.txt`: cada fruta entrena con hasta
@@ -235,6 +242,15 @@ def cargar_exclusiones(carpetas: list[str], hashes: Hashes) -> set[str]:
     return titulos
 
 
+def leer_faltantes(ruta: str) -> dict[str, int]:
+    """{alimento: fotos que faltan} de un faltantes.txt (líneas "  alimento: 120", también "(completo)")."""
+    metas = {}
+    for linea in Path(ruta).read_text(encoding="utf-8").splitlines():
+        if m := re.match(r"^\s+([^\s:]+):\s*(\d+)", linea):
+            metas[m.group(1)] = int(m.group(2))
+    return metas
+
+
 def siguiente(carpeta: Path, alimento: str) -> int:
     """Siguiente número libre, para no pisar fotos aunque se hayan borrado algunas."""
     numeros = [int(m.group(1)) for p in carpeta.glob(f"web_{alimento}_*.jpg")
@@ -267,6 +283,8 @@ def main():
     ap.add_argument("--excluir", nargs="*", default=[], help="carpetas con fotos que no deben entrar (fotos_prueba)")
     ap.add_argument("--solo", default="", help="alimentos separados por coma (por defecto, todo el plan)")
     ap.add_argument("--meta", type=int, help="fotos por alimento, en lugar de la del plan")
+    ap.add_argument("--prioridad", default="", help="prioridades separadas por coma (equipo, sin_fotos, alta, media, secos)")
+    ap.add_argument("--faltantes", help="faltantes.txt del notebook: usa sus números como meta de cada alimento")
     ap.add_argument("--pausa", type=float, default=0.5, help="segundos entre descargas de Commons")
     ap.add_argument("--hilos", type=int, default=4, help="descargas a la vez en Bing")
     ap.add_argument("--empaquetar", action="store_true", help="solo rehace para_drive/ con las fotos que quedan")
@@ -276,6 +294,12 @@ def main():
         plan = list(csv.DictReader(f))
     if a.solo:
         plan = [f for f in plan if f["alimento"] in a.solo.split(",")]
+    if a.prioridad:
+        plan = [f for f in plan if f["prioridad"] in a.prioridad.split(",")]
+    if a.faltantes:
+        metas = leer_faltantes(a.faltantes)
+        plan = [{**f, "meta": metas[f["alimento"]]} for f in plan if metas.get(f["alimento"])]
+        print(f"faltantes: {len(plan)} alimentos con fotos pendientes, {sum(f['meta'] for f in plan)} fotos")
     salida = Path(a.salida)
     if a.empaquetar:
         return empaquetar(salida)

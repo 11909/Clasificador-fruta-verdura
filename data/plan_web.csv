@@ -60,3 +60,62 @@ nuez,secos,80,pecans|pecan nuts|Carya illinoinensis nuts
 nuez_de_castilla,secos,80,walnuts|walnut nuts|Juglans regia nuts
 pistache,secos,80,pistachios|pistachio nuts|Pistacia vera nuts
 maranon,secos,80,cashew nuts|cashews|Anacardium occidentale nuts
+oca,equipo,260,oca tuberculo|oca tubers Oxalis tuberosa|oca andina mercado
+olluco,equipo,260,olluco|ulluco tubers|Ullucus tuberosus
+mashua,equipo,260,mashua tuberculo|mashua tubers|Tropaeolum tuberosum tubers
+acelga,equipo,260,acelga verdura|swiss chard|chard leaves market
+verdolaga,equipo,260,verdolagas verdura|purslane vegetable|Portulaca oleracea vegetable
+quelite,equipo,260,quelites mercado|quelite cenizo|lambsquarters greens
+ñame,equipo,260,ñame tuberculo|yam tuber Dioscorea|yams market
+romanesco,equipo,260,romanesco|romanesco broccoli|romanesco cauliflower
+bok_choy,equipo,260,bok choy|pak choi|bok choy vegetable market
+tupinambo,equipo,260,tupinambo|jerusalem artichoke tubers|sunchokes
+salsifi,equipo,260,salsifi raiz|salsify root|black salsify Scorzonera
+rabano,equipo,33,rabanos|radishes|red radish bunch
+betabel,equipo,150,betabel|beetroot|beets vegetable
+papa,equipo,150,papas tuberculo|potatoes|potatoes market
+yacon,equipo,260,yacon|yacon root|Smallanthus sonchifolius root
+jicama,equipo,260,jicama|jicama root|Pachyrhizus erosus
+yuca,equipo,260,yuca raiz|cassava root|cassava tubers market
+huauzontle,equipo,260,huauzontle|huauzontles|Chenopodium berlandieri nuttalliae
+flor_de_calabaza,equipo,260,flor de calabaza|squash blossoms|zucchini flowers
+alcachofa,equipo,260,alcachofas|artichokes|globe artichoke vegetable
+amaranto,equipo,260,amaranto hojas verdura|amaranth leaves vegetable|red amaranth greens
+radicchio,equipo,260,radicchio|radicchio rosso|red chicory
+endibia,equipo,260,endibias|belgian endive|endive vegetable
+bardana,equipo,260,bardana raiz|burdock root|gobo root
+brotes_de_bambu,equipo,260,brotes de bambu|bamboo shoots|fresh bamboo shoots
+camote,equipo,150,camotes|sweet potatoes|sweet potato tubers
+jengibre,equipo,150,jengibre raiz|ginger root|fresh ginger
+ajo,equipo,38,ajos|garlic bulbs|garlic heads
+cebolla,equipo,18,cebollas|onions|onions market
+malanga,equipo,260,malanga|taro root|eddoe Colocasia
+nopal,equipo,60,nopales|nopal cactus pads|nopales mercado
+poro,equipo,260,poro puerro|leeks|leek vegetable
+berro,equipo,260,berros|watercress|watercress bunch
+perejil,equipo,137,perejil|parsley bunch|fresh parsley
+hinojo,equipo,260,hinojo bulbo|fennel bulb|fennel vegetable
+cebollin,equipo,260,cebollin|chives|green onions scallions
+chaya,equipo,260,chaya hojas|chaya Cnidoscolus aconitifolius|tree spinach chaya
+papaloquelite,equipo,260,papaloquelite|papalo herb|Porophyllum ruderale
+romeritos,equipo,260,romeritos|romeritos Suaeda|romeritos mercado
+ruibarbo,equipo,260,ruibarbo|rhubarb stalks|rhubarb vegetable
+colinabo,equipo,150,colinabo|kohlrabi|kohlrabi vegetable
+elote,equipo,80,elotes|corn on the cob|sweet corn ears
+esparrago,equipo,260,esparragos|asparagus|asparagus bunch
+cilantro,equipo,260,cilantro|coriander leaves|cilantro bunch
+nabo,equipo,260,nabo verdura|turnips|turnip vegetable
+chirivia,equipo,260,chirivia|parsnips|parsnip vegetable
+col_de_bruselas,equipo,260,coles de bruselas|brussels sprouts|brussels sprouts stalk
+kale,equipo,260,kale|kale leaves|curly kale
+chayotextle,equipo,260,chayotextle|chayote root|raiz de chayote
+arugula,equipo,260,arugula|rucula|rocket leaves
+mizuna,equipo,260,mizuna|mizuna greens|Japanese mustard greens
+curcuma,equipo,260,curcuma raiz|turmeric root|fresh turmeric
+cardo,equipo,260,cardo verdura|cardoon|cardoon stalks
+grelos,equipo,260,grelos|turnip greens|rapini broccoli rabe
+brocoli,equipo,150,brocoli|broccoli|broccoli heads
+lechuga,equipo,150,lechugas|lettuce|lettuce heads market
+espinaca,equipo,150,espinacas|spinach|spinach leaves bunch
+chayote,equipo,80,chayotes|chayote|chayote squash
+berenjena,equipo,80,berenjenas|eggplants|aubergines market
