@@ -207,7 +207,7 @@ def test_muestra_balanceada_80_20():
     assert Counter(m[2] for m in train + test)["manzana"] == 10  # reparte entre clases
 
 
-def test_muestra_balanceada_usa_todas_las_fotos_del_equipo():
+def test_muestra_balanceada_toma_primero_drive_y_reparte_por_clase():
     from collections import Counter
     from src.dataset import muestra_balanceada
 
@@ -216,11 +216,27 @@ def test_muestra_balanceada_usa_todas_las_fotos_del_equipo():
     e_test = [(f"t{i}", 1, "oca") for i in range(9)]
     train, test = muestra_balanceada(kaggle, 40, 0.2, 0, (e_train, e_test))
     assert Counter(m[1] for m in train + test) == {0: 40, 1: 40}
-    assert set(e_train) <= set(train) and set(e_test) <= set(test)  # división fija del equipo
-    assert Counter(m[2] for m in train + test)["zanahoria"] == 10  # verdura se completa con Kaggle
-    # Si el equipo pasa de por_etiqueta, la fruta se completa hasta igualarlo
-    train, test = muestra_balanceada(kaggle, 20, 0.2, 0, (e_train, e_test))
-    assert Counter(m[1] for m in train + test) == {0: 30, 1: 30}
+    # oca no entra completa: queda igual que zanahoria, con 20, y todas de Drive con su división fija
+    assert Counter(m[2] for m in train + test) == {"manzana": 40, "oca": 20, "zanahoria": 20}
+    assert {m for m in train if m[2] == "oca"} <= set(e_train) and {m for m in test if m[2] == "oca"} <= set(e_test)
+    # Con más cupo entran todas las de Drive y el resto se completa con el dataset combinado
+    train, test = muestra_balanceada(kaggle, 100, 0.2, 0, (e_train, e_test))
+    assert set(e_train) <= set(train) and set(e_test) <= set(test)
+    assert Counter(m[2] for m in train + test) == {"manzana": 100, "oca": 30, "zanahoria": 70}
+
+
+def test_completar_por_clase_usa_drive_primero_sin_pasar_el_tope():
+    from collections import Counter
+    from src.dataset import completar_por_clase
+
+    kaggle = ([(f"r{i}", 0, "rambutan") for i in range(100)] + [(f"m{i}", 0, "manzana") for i in range(300)]
+              + [(f"z{i}", 1, "zanahoria") for i in range(300)])
+    drive = [(f"w{i}", 0, "rambutan") for i in range(70)] + [(f"n{i}", 1, "rabano negro") for i in range(250)]
+    train = completar_por_clase(drive, kaggle, 150, 0, maximo_verdura=180)
+    por_clase = Counter(m[2] for m in train)
+    assert por_clase["rambutan"] == 150 and set(drive[:70]) <= set(train)  # 70 de Drive + 80 del combinado
+    assert por_clase["manzana"] == 150 and por_clase["zanahoria"] == 180
+    assert por_clase["rabano negro"] == 180  # Drive solo, recortado al tope de verdura
 
 
 def test_descargar_drive_sigue_con_lo_que_bajo(tmp_path, monkeypatch):

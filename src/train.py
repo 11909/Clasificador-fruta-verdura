@@ -16,8 +16,8 @@ from sklearn.metrics import f1_score, make_scorer, precision_score, recall_score
 from sklearn.model_selection import (GridSearchCV, LeaveOneGroupOut, LeaveOneOut, StratifiedGroupKFold,
                                      StratifiedKFold, cross_val_predict, cross_validate)
 
-from src.dataset import (balancear_por_etiqueta, conteo, dividir_equipo, limitar_por_clase, listar_muestras,
-                         muestra_balanceada)
+from src.dataset import (balancear_por_etiqueta, completar_por_clase, conteo, dividir_equipo, es_web,
+                         limitar_por_clase, listar_muestras, muestra_balanceada)
 from src.evaluate import elegir_umbral, intervalos_bootstrap, metricas, predecir_con_umbral
 from src.features import extraer_con_cache
 from src.limpieza import limpiar
@@ -86,6 +86,8 @@ def equipo(d: dict, excluir, semilla: int) -> tuple[list, list]:
     for carpeta in dirs:
         a, b = dividir_equipo(carpeta, d.get("fraccion_test_equipo", 0.3), semilla, excluir)
         e_train, e_test = e_train + a, e_test + b
+    if not d.get("fotos_web", True):
+        e_train, e_test = [m for m in e_train if not es_web(m[0])], [m for m in e_test if not es_web(m[0])]
     print(f"fotos del equipo: train {conteo(e_train)} | test {conteo(e_test)}")
     return e_train, e_test
 
@@ -97,14 +99,17 @@ def kaggle(dirs: list, d: dict, excluir, semilla: int) -> list:
 
 
 def splits_normales(d: dict, excluir, semilla: int) -> tuple[list, list]:
-    """train/test del dataset combinado (con tope por clase) más las fotos del equipo."""
-    train = limitar_por_clase(kaggle(d["train_dirs"], d, excluir, semilla), d.get("max_por_clase"), semilla,
-                              d.get("max_por_clase_verdura"))
+    """train/test del dataset combinado más las fotos del equipo. En train cada clase llega hasta su tope
+    por clase: primero con las fotos de Drive y el resto con el dataset combinado."""
+    e_train, e_test = equipo(d, excluir, semilla) if d.get("equipo_dir") else ([], [])
+    train = completar_por_clase(e_train, kaggle(d["train_dirs"], d, excluir, semilla), d.get("max_por_clase"),
+                                semilla, d.get("max_por_clase_verdura"))
     test = limitar_por_clase(kaggle(d["test_dirs"], d, excluir, semilla), d.get("max_por_clase_test"),
                              semilla) if d.get("test_dirs") else []
-    if d.get("equipo_dir"):
-        e_train, e_test = equipo(d, excluir, semilla)
-        train, test = train + e_train, test + e_test
+    test += e_test
+    de_drive = set(e_train)
+    n_drive = sum(1 for m in train if m in de_drive)
+    print(f"train: {len(train)} imágenes, {n_drive} de Drive y {len(train) - n_drive} del dataset combinado")
     if d.get("balancear_etiquetas"):
         # Mismo número de frutas que de verduras al entrenar; la prueba se deja como está
         train = balancear_por_etiqueta(train, d.get("max_por_etiqueta"), semilla)
@@ -112,13 +117,13 @@ def splits_normales(d: dict, excluir, semilla: int) -> tuple[list, list]:
 
 
 def muestra_preliminar(d: dict, excluir, semilla: int) -> tuple[list, list]:
-    """Toma `muestra_por_etiqueta` frutas y las mismas verduras: todas las fotos del equipo (con su
-    división fija en train y test) y el resto del dataset combinado, dividido por clase con
-    `fraccion_test_muestra` a test."""
+    """Toma `muestra_por_etiqueta` frutas y las mismas verduras, repartidas por igual entre clases: cada
+    clase toma primero sus fotos de Drive (con su división fija en train y test) y se completa con el
+    dataset combinado, dividido por clase con `fraccion_test_muestra` a test."""
     todas = kaggle(d["train_dirs"] + (d.get("test_dirs") or []), d, excluir, semilla)
     e_train, e_test = equipo(d, excluir, semilla) if d.get("equipo_dir") else ([], [])
-    print(f"muestra preliminar de {d['muestra_por_etiqueta']} por etiqueta: todas las del equipo "
-          f"{conteo(e_train + e_test)} y el resto de {conteo(todas)} del dataset combinado")
+    print(f"muestra preliminar de {d['muestra_por_etiqueta']} por etiqueta, entre {conteo(e_train + e_test)} "
+          f"fotos de Drive y {conteo(todas)} del dataset combinado")
     return muestra_balanceada(todas, d["muestra_por_etiqueta"], d.get("fraccion_test_muestra", 0.2), semilla,
                               (e_train, e_test))
 

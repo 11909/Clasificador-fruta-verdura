@@ -4,7 +4,7 @@ import random
 from collections import Counter, defaultdict
 from pathlib import Path
 
-from src.mapping import ETIQUETAS, EXCLUIR, cargar_mapping, etiqueta_de, normalizar
+from src.mapping import ETIQUETAS, EXCLUIR, cargar_alimentos, cargar_mapping, clave_de, etiqueta_de, normalizar
 
 EXTENSIONES = {".jpg", ".jpeg", ".png", ".bmp", ".webp"}
 
@@ -105,28 +105,69 @@ def balancear_por_etiqueta(muestras: list, maximo: int | None, semilla: int) -> 
     return [m for _, grupo in sorted(por_etiqueta.items()) for m in repartir(grupo, objetivo, rng)]
 
 
+def es_web(ruta) -> bool:
+    """Fotos de internet de scripts/web_scrapping.py (web_<alimento>_0001.jpg), que van en Drive con las del equipo."""
+    return Path(ruta).name.startswith("web_")
+
+
+def _colas_por_clase(primero: list, despues: list, rng: random.Random) -> dict[str, list]:
+    """Por clase, las fotos de `primero` (Drive) y luego las de `despues` (dataset combinado), cada
+    grupo barajado: así una clase toma primero las fotos reales y se completa con las demás. Las clases
+    se juntan por alimento (`rabano_negro` de Drive cuenta como `rabano`)."""
+    alimentos, claves = cargar_alimentos(), {}
+    a, b = defaultdict(list), defaultdict(list)
+    for destino, grupo in ((a, primero), (b, despues)):
+        for m in grupo:
+            if m[2] not in claves:
+                clave = clave_de(m[2], alimentos)
+                claves[m[2]] = alimentos[clave] if clave else m[2]
+            destino[claves[m[2]]].append(m)
+    return {c: rng.sample(a[c], len(a[c])) + rng.sample(b[c], len(b[c])) for c in sorted(set(a) | set(b))}
+
+
+def completar_por_clase(equipo: list, kaggle: list, maximo: int | None, semilla: int,
+                        maximo_verdura: int | None = None) -> list:
+    """Cada clase entrena con hasta `maximo` imágenes (`maximo_verdura` en las verduras) entre Drive y
+    el dataset combinado: primero las de Drive y el resto del combinado, para que una clase con muchas
+    fotos en Drive no quede más grande que las demás."""
+    if not maximo and not maximo_verdura:
+        return equipo + kaggle
+    salida = []
+    for cola in _colas_por_clase(equipo, kaggle, random.Random(semilla)).values():
+        tope = (maximo_verdura or maximo) if cola[0][1] == ETIQUETAS.index("verdura") else maximo
+        salida += cola[:tope] if tope else cola
+    return salida
+
+
 def muestra_balanceada(muestras: list, por_etiqueta: int, fraccion_test: float, semilla: int,
                        equipo: tuple[list, list] = ([], [])) -> tuple[list, list]:
     """Toma `por_etiqueta` imágenes de fruta y las mismas de verdura y las divide en train y test.
 
-    Las fotos del equipo (`equipo` = (train, test), ya divididas) entran todas, porque son las más
-    parecidas a las fotos reales; el resto de cada etiqueta se completa con `muestras`, repartidas
-    entre clases, y de esas `fraccion_test` de cada clase va a test."""
+    Dentro de cada etiqueta reparte por igual entre clases (una imagen de cada clase por turno). Cada
+    clase toma primero sus fotos de Drive (`equipo` = (train, test), con su división fija) y se completa
+    con `muestras`; de esas, `fraccion_test` de cada clase va a test. Si a una etiqueta no le alcanza,
+    las dos se quedan con lo que tenga la más corta."""
     rng = random.Random(semilla)
     e_train, e_test = equipo
-    del_equipo = Counter(m[1] for m in e_train + e_test)
-    por_etiqueta_kaggle = defaultdict(list)
-    for m in muestras:
-        por_etiqueta_kaggle[m[1]].append(m)
-    # Si el equipo ya pasa de por_etiqueta en una etiqueta, la otra se completa hasta igualarla; si a
-    # una etiqueta no le alcanza, las dos se quedan con lo que tenga la más corta
-    disponibles = [del_equipo[y] + len(por_etiqueta_kaggle[y]) for y in range(len(ETIQUETAS))]
-    por_etiqueta = min(max(por_etiqueta, *del_equipo.values(), 0), *disponibles)
-    por_clase = defaultdict(list)
-    for y, grupo in sorted(por_etiqueta_kaggle.items()):
-        for m in repartir(grupo, max(0, por_etiqueta - del_equipo[y]), rng):
-            por_clase[m[2]].append(m)
-    train, test = list(e_train), list(e_test)
+    del_equipo, en_test = {m[0] for m in e_train + e_test}, {m[0] for m in e_test}
+    colas = defaultdict(list)
+    for clase, cola in _colas_por_clase(e_train + e_test, muestras, rng).items():
+        colas[cola[0][1]].append(cola[::-1])  # se toma del final
+    disponibles = [sum(len(c) for c in colas[y]) for y in range(len(ETIQUETAS))]
+    por_etiqueta = min(por_etiqueta, *disponibles)
+    train, test, por_clase = [], [], defaultdict(list)
+    for y in range(len(ETIQUETAS)):
+        rng.shuffle(colas[y])
+        tomadas = 0
+        while tomadas < por_etiqueta:
+            for cola in colas[y]:
+                if cola and tomadas < por_etiqueta:
+                    m = cola.pop()
+                    tomadas += 1
+                    if m[0] in del_equipo:
+                        (test if m[0] in en_test else train).append(m)
+                    else:
+                        por_clase[m[2]].append(m)
     for _, grupo in sorted(por_clase.items()):
         rng.shuffle(grupo)
         n_test = round(len(grupo) * fraccion_test)
