@@ -3,6 +3,7 @@ import importlib.util
 import io
 import json
 import shutil
+import zipfile
 from pathlib import Path
 
 from PIL import Image
@@ -100,19 +101,29 @@ def test_descarga_completa_lista_para_drive(monkeypatch, tmp_path):
         ("File:Buena.jpg", "borrada"), ("File:Otra buena.jpg", ""), ("File:Tercera.jpg", "")]
     assert sorted(p.name for p in fotos_dir.iterdir()) == ["web_rambutan_0002.jpg", "web_rambutan_0003.jpg"]
 
-    # Sin --empaquetar no se arma ningún zip; con él, uno por carpeta, que el notebook también lee
-    assert not (salida / "para_drive").exists()
-    monkeypatch.setattr("sys.argv", args + ["--empaquetar"])
-    web.main()
+    # Cada corrida deja un zip por carpeta en para_drive/, con las fotos que quedan, que el notebook lee
     zips = sorted(p.relative_to(salida / "para_drive").as_posix() for p in (salida / "para_drive").rglob("*.zip"))
     assert zips == ["rambutan/web_rambutan_1.zip"]
+    with zipfile.ZipFile(salida / "para_drive" / "rambutan" / "web_rambutan_1.zip") as z:
+        assert sorted(z.namelist()) == ["web_rambutan_0002.jpg", "web_rambutan_0003.jpg"]
+
+    # Si se borra una foto a mano, --empaquetar rehace el zip sin bajar nada; --sin-zip no arma ninguno
+    (fotos_dir / "web_rambutan_0002.jpg").unlink()
+    monkeypatch.setattr("sys.argv", args + ["--empaquetar"])
+    web.main()
+    with zipfile.ZipFile(salida / "para_drive" / "rambutan" / "web_rambutan_1.zip") as z:
+        assert z.namelist() == ["web_rambutan_0003.jpg"]
+    sin_zip = tmp_path / "sin_zip"
+    monkeypatch.setattr("sys.argv", ["x", "--salida", str(sin_zip)] + args[3:] + ["--sin-zip"])
+    web.main()
+    assert (sin_zip / "fotos" / "rambutan").is_dir() and not (sin_zip / "para_drive").exists()
     from src.dataset import dividir_equipo, es_web
     from src.equipo import descomprimir_zips
     drive = tmp_path / "drive"
     shutil.copytree(salida / "para_drive", drive)
     descomprimir_zips(str(drive))
     a, b = dividir_equipo(str(drive), 0.3, 42)
-    assert {m[2] for m in a + b} == {"rambutan"} and len(a + b) == 2 and all(es_web(m[0]) for m in a + b)
+    assert {m[2] for m in a + b} == {"rambutan"} and len(a + b) == 1 and all(es_web(m[0]) for m in a + b)
 
 
 def test_fotos_web_false_las_deja_fuera(tmp_path):
