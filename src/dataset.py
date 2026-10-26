@@ -1,6 +1,7 @@
 """Lectura de carpetas tipo ImageFolder (raiz/clase/imagen.jpg) con etiqueta binaria."""
 import hashlib
 import random
+import re
 from collections import Counter, defaultdict
 from pathlib import Path
 
@@ -108,6 +109,19 @@ def balancear_por_etiqueta(muestras: list, maximo: int | None, semilla: int) -> 
 def es_web(ruta) -> bool:
     """Fotos de internet de scripts/web_scrapping.py (web_<alimento>_0001.jpg), que van en Drive con las del equipo."""
     return Path(ruta).name.startswith("web_")
+
+
+# build_dataset nombra cada imagen del dataset combinado <fuente>_<hash de 12>.jpg
+_DEL_COMBINADO = re.compile(r"^([a-z0-9]+)_[0-9a-f]{12}\.jpg$")
+
+
+def fuente_de(ruta) -> str:
+    """Fuente de una imagen: la del dataset combinado (fruits360, freshrotten...), "web" para las fotos de
+    internet de Drive y "drive" para las fotos del equipo."""
+    if es_web(ruta):
+        return "web"
+    m = _DEL_COMBINADO.match(Path(ruta).name)
+    return m.group(1) if m else "drive"
 
 
 def _colas_por_clase(primero: list, despues: list, rng: random.Random) -> dict[str, list]:

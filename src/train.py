@@ -17,7 +17,7 @@ from sklearn.model_selection import (GridSearchCV, LeaveOneGroupOut, LeaveOneOut
                                      StratifiedKFold, cross_val_predict, cross_validate)
 
 from src.dataset import (balancear_por_etiqueta, completar_por_clase, conteo, dividir_equipo, es_web,
-                         limitar_por_clase, listar_muestras, muestra_balanceada)
+                         fuente_de, limitar_por_clase, listar_muestras, muestra_balanceada)
 from src.evaluate import elegir_umbral, intervalos_bootstrap, metricas, predecir_con_umbral
 from src.features import extraer_con_cache
 from src.limpieza import limpiar
@@ -128,6 +128,15 @@ def muestra_preliminar(d: dict, excluir, semilla: int) -> tuple[list, list]:
                               (e_train, e_test))
 
 
+def guardar_muestras(train: list, test: list, destino: Path):
+    """Una fila por imagen usada (split, fuente, clase, etiqueta), para las gráficas del reporte."""
+    with open(destino, "w", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f)
+        writer.writerow(["split", "fuente", "clase", "etiqueta", "ruta"])
+        for split, muestras in (("train", train), ("test", test)):
+            writer.writerows([split, fuente_de(r), c, ETIQUETAS[y], r] for r, y, c in muestras)
+
+
 def main(config_path: str):
     cfg = yaml.safe_load(open(config_path, encoding="utf-8"))
     d, semilla = cfg["data"], cfg["seed"]
@@ -140,6 +149,7 @@ def main(config_path: str):
     else:
         train, test = splits_normales(d, excluir, semilla)
     print(f"train {conteo(train)} | test {conteo(test)}")
+    guardar_muestras(train, test, salida / "muestras.csv")
 
     X = caracteristicas(train, cfg["features"], salida / "cache", "train")
     y = np.array([m[1] for m in train])
@@ -233,8 +243,16 @@ def main(config_path: str):
     guardar_modelo(modelo, cfg["features"], spec, salida / "modelo.joblib", umbral=umbral)
 
     if test:
-        predichos = (predecir_con_umbral(modelo.predict_proba(X_test), umbral)
-                     if hasattr(modelo, "predict_proba") else modelo.predict(X_test))
+        probs = modelo.predict_proba(X_test)[:, 1] if hasattr(modelo, "predict_proba") else None
+        predichos = (predecir_con_umbral(np.c_[1 - probs, probs], umbral) if probs is not None
+                     else modelo.predict(X_test))
+        with open(salida / "predicciones_test.csv", "w", newline="", encoding="utf-8") as f:
+            # Predicción del modelo elegido en cada imagen de test, para ver los errores por fuente y alimento
+            writer = csv.writer(f)
+            writer.writerow(["fuente", "clase", "real", "predicho", "prob_verdura", "ruta"])
+            writer.writerows([fuente_de(m[0]), m[2], ETIQUETAS[m[1]], ETIQUETAS[p],
+                              "" if probs is None else round(float(q), 4), m[0]]
+                             for m, p, q in zip(test, predichos, probs if probs is not None else [None] * len(test)))
         resultado = metricas(y_test, predichos)
         print("test", json.dumps(resultado))
         json.dump({"modelo": spec["name"], "umbral_verdura": umbral, **resultado}, open(salida / "test_metrics.json", "w"), indent=2)
