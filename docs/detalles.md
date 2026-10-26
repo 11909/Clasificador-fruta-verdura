@@ -56,6 +56,7 @@ data/mapping.csv    # diccionario del criterio botánico (lo revisa el equipo)
 entradas/ejemplos.txt  # enlaces de ejemplo para clasificar
 notebooks/          # kaggle_train, predecir y kaggle_build_dataset
 scripts/check_mapping.py  # lista clases sin etiqueta en un dataset
+scripts/descargar_fotos_web.py  # fotos de Wikimedia Commons para las frutas que solo tienen Fruits-360
 tests/
 ```
 
@@ -147,6 +148,20 @@ carpeta de Drive/
 - **faltantes.txt:** el notebook cuenta las imágenes de train de Kaggle y las del equipo por alimento del plan. Pide las fotos que hacen falta para llegar a `MAX_POR_CLASE` en train (las del equipo cuentan al 70 % porque el resto va a test) y al menos `MINIMO_EQUIPO` fotos reales. Lo escribe en `/kaggle/working/outputs/faltantes.txt`. El `faltantes.txt` inicial de Drive es un estimado hecho antes de tener los conteos reales.
 - Las carpetas pueden llevar acentos o guiones bajos (`limón_amarillo` = `limon amarillo`), y lo que sigue al nombre se ignora (`rabano_negro` cuenta como `rabano`). Si una carpeta no está en `data/mapping.csv`, el notebook se detiene y la lista.
 - Drive puede listar solo las primeras 50 entradas de una carpeta; si una carpeta trae justo 50, el notebook avisa. Por eso conviene subir lotes grandes como zips.
+
+#### Fotos de internet para las frutas con solo Fruits-360
+
+Casi todas las frutas fuera de `plan_equipo.csv` solo traen fotos de estudio de Fruits-360. `data/plan_web.csv` las lista con su prioridad, cuántas fotos reales necesita cada una y qué buscar en Wikimedia Commons. La meta sale de la misma cuenta que `faltantes.txt`: Fruits-360 aporta hasta 100 fotos de train y de las nuevas el 70 % va a train, así que 80 fotos (100 en prioridad alta) dejan cada fruta en 150 a 170 de train, sin pasar de las 180 de cada verdura. Las que no tienen nada en Kaggle (calabaza blanca, okra...) piden 215 = 150 / 0.7.
+
+```
+python scripts/descargar_fotos_web.py --excluir ruta/a/fotos_prueba
+```
+
+- Corre en la computadora de cualquiera (2 a 3 horas para las ~6,000 fotos, por el límite de velocidad de Wikimedia). Si se corta, se vuelve a correr y sigue donde se quedó.
+- Descarta dibujos, plantas, platillos, fotos de estudio con fondo blanco, las de menos de 300 px y duplicados.
+- `--excluir` recibe la carpeta de fotos de prueba: ninguna foto que esté ahí (por título de Commons o por hash perceptual) entra a entrenamiento, para que la prueba siga siendo con fotos que el modelo nunca vio.
+- Deja `fotos_web/<fruta>/web_<fruta>_001.jpg`, `fotos_web/fuentes_web.csv` (autor, licencia y página de cada foto) y `fotos_web.zip`. Revisa las carpetas en miniaturas, borra lo que no sea la fruta, vuelve a comprimir y sube `fotos_web.zip` a la **raíz** de la carpeta de Drive. El notebook lo lee como un árbol de alimentos más, con la misma división fija 70/30 que las fotos del equipo; `FOTOS_WEB = False` lo deja fuera para comparar.
+- El `faltantes.txt` del notebook termina con una sección "Fotos de internet" con lo que aún falta de cada fruta.
 
 #### Renombrar y subir las fotos
 

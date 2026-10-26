@@ -15,6 +15,9 @@ from src.dataset import EXTENSIONES
 from src.mapping import cargar_alimentos, cargar_mapping, clave_de, etiqueta_de
 
 PLAN_PATH = Path(__file__).resolve().parent.parent / "data" / "plan_equipo.csv"
+# Frutas que solo vienen de Fruits-360: sus fotos reales salen de scripts/descargar_fotos_web.py
+PLAN_WEB_PATH = PLAN_PATH.with_name("plan_web.csv")
+WEB = "web"
 
 
 def _miembros(z: zipfile.ZipFile) -> list[str]:
@@ -83,6 +86,11 @@ def leer_plan(path: Path = PLAN_PATH) -> list[dict]:
         return list(csv.DictReader(f))
 
 
+def leer_plan_web(path: Path = PLAN_WEB_PATH) -> list[dict]:
+    """Plan de las fotos de internet, con persona "web" para que faltantes las cuente aparte."""
+    return [{**fila, "persona": WEB} for fila in leer_plan(path)]
+
+
 def contar_por_alimento(muestras: list) -> Counter:
     """{alimento en español: imágenes} a partir de (ruta, etiqueta, clase)."""
     alimentos = cargar_alimentos()
@@ -117,7 +125,8 @@ def escribir_faltantes(filas: list[dict], destino: Path) -> str:
     lineas = ["Fotos que faltan por alimento (nombre de carpeta en Drive: faltan).", ""]
     for persona in sorted({f["persona"] for f in filas}):
         propias = [f for f in filas if f["persona"] == persona]
-        lineas.append(f"Persona {persona} (faltan {sum(f['faltan'] for f in propias)}):")
+        titulo = "Fotos de internet, scripts/descargar_fotos_web.py" if persona == WEB else f"Persona {persona}"
+        lineas.append(f"{titulo} (faltan {sum(f['faltan'] for f in propias)}):")
         lineas += [f"  {f['alimento']}: {f['faltan']}" + ("  (completo)" if not f["faltan"] else "")
                    for f in propias]
         lineas.append("")

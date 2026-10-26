@@ -25,6 +25,8 @@ for busqueda in ["oca tuberculo", "oca Oxalis tuberosa", "oca tuber market"]:
 
 Usa varias búsquedas por alimento: en español, en inglés, con el nombre científico y con contexto (`en el mercado`, `cosecha`, `partido`). Si el nombre se confunde con otra cosa, agrega una palabra que lo aclare. Por ejemplo, usa `nabo turnip` y `chile pepper vegetable`.
 
+Para las frutas que solo tenían fotos de Fruits-360 hay un script que baja fotos de Wikimedia Commons: `python scripts/descargar_fotos_web.py --excluir ruta/a/fotos_prueba`. Ver [docs/detalles.md](docs/detalles.md#fotos-de-internet-para-las-frutas-con-solo-fruits-360).
+
 **2. Limpia.** Revisa la carpeta en vista de miniaturas y borra:
 - lo que no sea el alimento: platillos, dibujos, logos, collages o marcas de agua grandes;
 - las fotos con fondo blanco de estudio, porque de esas ya hay muchas en Kaggle;

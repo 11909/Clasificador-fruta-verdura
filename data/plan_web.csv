@@ -1,0 +1,63 @@
+alimento,prioridad,meta,busquedas
+calabaza_blanca,sin_fotos,215,ash gourd|wax gourd|Benincasa hispida fruit
+calabaza_puntiaguda,sin_fotos,215,pointed gourd|parwal vegetable|Trichosanthes dioica fruit
+calabaza_serpiente,sin_fotos,215,snake gourd|Trichosanthes cucumerina fruit|snake gourd market
+fruto_de_espinaca_de_malabar,sin_fotos,215,Basella alba fruit|Basella rubra berries|malabar spinach berries
+okra,sin_fotos,215,okra pods|okra vegetable|Abelmoschus esculentus fruit
+rambutan,alta,100,rambutan|rambutans fruit|Nephelium lappaceum fruit
+pitahaya,alta,100,pitahaya|dragon fruit|Selenicereus undatus fruit
+aguacate,alta,100,avocados|avocado fruit|Persea americana fruit
+tuna,alta,100,prickly pear fruit|Opuntia fruit|tunas fruta
+guayaba,alta,100,guava fruit|guavas|Psidium guajava fruit
+coco,alta,100,coconuts|coconut fruit|coconuts market
+platano_macho,alta,100,plantains|plantain bananas|plantains market
+limon_verde,alta,100,limes fruit|lime citrus|Citrus aurantiifolia fruit
+limon_amarillo,alta,100,lemons|lemon fruit|Citrus limon fruit
+mandarina,alta,100,mandarin oranges|tangerines|Citrus reticulata fruit
+toronja,alta,100,grapefruit|grapefruits|Citrus paradisi fruit
+sandia,alta,100,watermelon|watermelons|watermelon slice
+melon,alta,100,cantaloupe|melons market|honeydew melon
+pina,alta,100,pineapple fruit|pineapples|Ananas comosus fruit
+fresa,alta,100,strawberries|strawberry fruit|strawberries market
+uva,alta,100,grapes fruit|table grapes|bunch of grapes
+kiwi,alta,100,kiwifruit|kiwi fruit|Actinidia deliciosa fruit
+durazno,alta,100,peaches fruit|peach fruit|Prunus persica fruit
+pera,alta,100,pears fruit|pear fruit|Pyrus communis fruit
+granada,alta,100,pomegranate fruit|pomegranates|Punica granatum fruit
+maracuya,alta,100,passion fruit|Passiflora edulis fruit|maracuja
+tamarillo,alta,100,tamarillo|Solanum betaceum fruit|tamarillos
+arandano,media,80,blueberries|blueberry fruit|Vaccinium corymbosum fruit
+frambuesa,media,80,raspberries|raspberry fruit|Rubus idaeus fruit
+zarzamora,media,80,blackberries fruit|blackberry fruit|Rubus fruticosus fruit
+mora,media,80,mulberries|mulberry fruit|Morus nigra fruit
+cereza,media,80,cherries fruit|sweet cherries|Prunus avium fruit
+ciruela,media,80,plums fruit|plum fruit|Prunus domestica fruit
+chabacano,media,80,apricots|apricot fruit|Prunus armeniaca fruit
+nectarina,media,80,nectarines|nectarine fruit|nectarines market
+higo,media,80,figs fruit|fig fruit|Ficus carica fruit
+datil,media,80,dates fruit|medjool dates|Phoenix dactylifera fruit
+caqui,media,80,persimmons|persimmon fruit|Diospyros kaki fruit
+carambola,media,80,carambola|star fruit|Averrhoa carambola fruit
+chirimoya,media,80,cherimoya|cherimoya fruit|Annona cherimola fruit
+lichi,media,80,lychee|lychees|Litchi chinensis fruit
+mangostan,media,80,mangosteen|mangosteens|Garcinia mangostana fruit
+kumquat,media,80,kumquats|kumquat fruit|Citrus japonica fruit
+clementina,media,80,clementines|clementine fruit|clementines market
+tangelo,media,80,tangelo|tangelos|minneola tangelo
+pomelo,media,80,pomelo fruit|pomelos|Citrus maxima fruit
+membrillo,media,80,quince fruit|quinces|Cydonia oblonga fruit
+uchuva,media,80,Physalis peruviana fruit|cape gooseberry|goldenberries
+granadilla,media,80,granadilla|sweet granadilla|Passiflora ligularis fruit
+salak,media,80,salak fruit|snake fruit|Salacca zalacca fruit
+grosella_espinosa,media,80,gooseberries|gooseberry fruit|Ribes uva-crispa fruit
+grosella_roja,media,80,redcurrants|red currant fruit|Ribes rubrum fruit
+huckleberry,media,80,huckleberries|huckleberry fruit|Vaccinium membranaceum fruit
+pepino_dulce,media,80,pepino dulce|Solanum muricatum fruit|pepino melon
+almendra,secos,80,almonds|almond nuts|Prunus dulcis seeds
+avellana,secos,80,hazelnuts|hazelnut nuts|Corylus avellana nuts
+cacahuate,secos,80,peanuts|peanuts in shell|Arachis hypogaea seeds
+castana,secos,80,chestnuts|chestnut nuts|Castanea sativa nuts
+nuez,secos,80,pecans|pecan nuts|Carya illinoinensis nuts
+nuez_de_castilla,secos,80,walnuts|walnut nuts|Juglans regia nuts
+pistache,secos,80,pistachios|pistachio nuts|Pistacia vera nuts
+maranon,secos,80,cashew nuts|cashews|Anacardium occidentale nuts
