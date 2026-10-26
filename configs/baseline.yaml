@@ -59,10 +59,16 @@ seed: 42
 # etiquetas (accuracy balanceada) y lo guarda con el modelo. false = umbral 0.5.
 ajustar_umbral: true
 
+# Cómo se elige el modelo final: "vistos" = mayor f1_macro con fraccion_vistos de las fotos de cada
+# alimento apartadas de train (fotos nuevas de alimentos vistos, como en la app); "cv" = mayor f1_macro
+# de la validación cruzada (alimentos que el modelo no vio). La validación cruzada se reporta igual.
+elegir_por: vistos
+fraccion_vistos: 0.2
+
 # false = ignora los "grid" de los modelos y usa solo sus params fijos (más rápido)
 ajustar_hiperparametros: true
 
-# Modelos a comparar con validación cruzada. Se reentrena el de mayor f1_macro.
+# Modelos a comparar con validación cruzada. Se reentrena el mejor según elegir_por.
 # Opciones: logistic_regression, svm, knn, naive_bayes, decision_tree, random_forest,
 #           gradient_boosting, voting, stacking.
 # "pca" reduce dimensiones antes del modelo (entero = componentes, decimal = varianza a conservar).

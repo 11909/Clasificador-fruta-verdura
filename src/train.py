@@ -14,6 +14,7 @@ from pathlib import Path
 
 import numpy as np
 import yaml
+from sklearn.base import clone
 from sklearn.metrics import f1_score, make_scorer, precision_score, recall_score
 from sklearn.model_selection import (GridSearchCV, LeaveOneGroupOut, LeaveOneOut, StratifiedGroupKFold,
                                      StratifiedKFold, cross_val_predict, cross_validate)
@@ -70,6 +71,17 @@ def evaluar_cv(modelo, X, y, grupos, cv, deja_uno: bool, params: dict | None = N
                          return_estimator=params is not None)
     return ({**{m: cvr[f"test_{m}"].mean() for m in METRICAS_CV},
              **{f"{m}_std": cvr[f"test_{m}"].std() for m in METRICAS_CV}}, cvr)
+
+
+def separar_vistos(grupos: np.ndarray, fraccion: float, semilla: int) -> np.ndarray:
+    """Máscara de validación con `fraccion` de las fotos de cada alimento: valida con fotos nuevas de
+    alimentos que el modelo sí vio, como pasa al usar la app con los alimentos del catálogo."""
+    rng = np.random.default_rng(semilla)
+    val = np.zeros(len(grupos), bool)
+    for g in np.unique(grupos):
+        idx = rng.permutation(np.flatnonzero(grupos == g))
+        val[idx[:round(len(idx) * fraccion)]] = True
+    return val
 
 
 def caracteristicas(muestras: list, cfg_feat: dict, cache_dir: Path, nombre: str) -> np.ndarray:
@@ -172,6 +184,10 @@ def main(config_path: str):
     y_test = [m[1] for m in test]
     grupos_test = [m[2] for m in test]
 
+    # Criterio para elegir el modelo final: "vistos" (f1 con fotos nuevas de alimentos vistos) o "cv"
+    elegir_por = cfg.get("elegir_por", "cv")
+    val = separar_vistos(grupos, cfg.get("fraccion_vistos", 0.2), semilla) if elegir_por == "vistos" else None
+
     resultados, en_test = [], []
     # Escalado y PCA ya ajustados, compartidos entre combinaciones del grid y entre modelos con el mismo PCA
     cache_pca = tempfile.mkdtemp(prefix="pca_")
@@ -203,6 +219,9 @@ def main(config_path: str):
                 modelo = busqueda.best_estimator_
             # Todas las métricas con la misma validación, también para los modelos con grid
             puntajes, _ = evaluar_cv(modelo, X, y, grupos, cv, deja_uno)
+        if val is not None:
+            vistos = clone(modelo).fit(X[~val], y[~val])
+            puntajes["f1_macro_vistos"] = f1_score(y[val], vistos.predict(X[val]), average="macro")
         fila = {"modelo": spec["name"], **{k: round(float(v), 4) for k, v in puntajes.items()},
                 "segundos": round(time.time() - inicio, 1), "spec": spec}
         print(json.dumps(fila, default=str))
@@ -218,7 +237,8 @@ def main(config_path: str):
             print("test", json.dumps(en_test[-1]))
     shutil.rmtree(cache_pca, ignore_errors=True)
 
-    campos = ["modelo", *METRICAS_CV, *(f"{m}_std" for m in METRICAS_CV), "segundos", "spec"]
+    campos = ["modelo", *METRICAS_CV, *(f"{m}_std" for m in METRICAS_CV),
+              *(["f1_macro_vistos"] if val is not None else []), "segundos", "spec"]
     with open(salida / "resultados_cv.csv", "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=campos, extrasaction="ignore")
         writer.writeheader()
@@ -230,9 +250,10 @@ def main(config_path: str):
             writer.writeheader()
             writer.writerows({**r, "matriz_confusion": json.dumps(r["matriz_confusion"])} for r in en_test)
 
-    mejor = max(resultados, key=lambda r: r["f1_macro"])
+    criterio = "f1_macro_vistos" if val is not None else "f1_macro"
+    mejor = max(resultados, key=lambda r: r[criterio])
     spec = mejor["spec"]
-    print(f"mejor modelo en validación cruzada: {spec['name']} (f1_macro {mejor['f1_macro']})")
+    print(f"mejor modelo por {criterio}: {spec['name']} ({mejor[criterio]})")
     modelo = crear_modelo(spec["name"], spec.get("params"), spec.get("pca"), semilla)
     if spec.get("mejores_params"):
         modelo.set_params(**spec["mejores_params"])

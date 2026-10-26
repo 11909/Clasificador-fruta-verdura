@@ -99,3 +99,10 @@ def test_cache_de_pca_da_el_mismo_resultado(tmp_path):
     assert sin.best_params_ == con.best_params_ and (sin.predict(X) == con.predict(X)).all()
     assert any(tmp_path.iterdir())  # el escalado y el PCA quedaron guardados
     assert crear_modelo("knn", cache=str(tmp_path)).memory is None  # sin PCA no se guarda nada
+
+
+def test_separar_vistos_aparta_fotos_de_cada_alimento():
+    from src.train import separar_vistos
+    grupos = np.repeat(["ajo", "pera", "kiwi"], [10, 5, 1])
+    val = separar_vistos(grupos, 0.2, 0)
+    assert val[grupos == "ajo"].sum() == 2 and val[grupos == "pera"].sum() == 1 and val[grupos == "kiwi"].sum() == 0
