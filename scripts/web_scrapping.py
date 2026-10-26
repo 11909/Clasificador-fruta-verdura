@@ -235,8 +235,9 @@ FUENTES = {"commons": commons, "bing": bing}
 class Filtro:
     """CLIP sin entrenar: compara la foto con "una foto de <alimento>" y con cosas que no son el alimento."""
 
-    def __init__(self, umbral: float = UMBRAL_CLIP):
+    def __init__(self, umbral: float = UMBRAL_CLIP, nucleos: int = 2):
         import torch
+        torch.set_num_threads(nucleos)  # pocos núcleos: más lento, pero la compu no se calienta tanto
         from transformers import CLIPModel, CLIPProcessor
         self.torch = torch
         self.modelo = CLIPModel.from_pretrained(CLIP).eval()
@@ -262,11 +263,11 @@ class Filtro:
         return self.probabilidad(im, nombre_en) >= self.umbral
 
 
-def crear_filtro(apagado: bool, umbral: float = UMBRAL_CLIP) -> "Filtro | None":
+def crear_filtro(apagado: bool, umbral: float = UMBRAL_CLIP, nucleos: int = 2) -> "Filtro | None":
     if apagado:
         return None
     try:
-        filtro = Filtro(umbral)
+        filtro = Filtro(umbral, nucleos)
         print("Filtro CLIP activo: se descartan las fotos que no son del alimento.")
         return filtro
     except ImportError:
@@ -369,6 +370,8 @@ def main():
     ap.add_argument("--faltantes", help="faltantes.txt del notebook: usa sus números como meta de cada alimento")
     ap.add_argument("--pausa", type=float, default=0.5, help="segundos entre descargas de Commons")
     ap.add_argument("--hilos", type=int, default=4, help="descargas a la vez en Bing")
+    ap.add_argument("--nucleos", type=int, default=2,
+                    help="núcleos del procesador para el filtro (menos = más lento pero calienta menos)")
     ap.add_argument("--empaquetar", action="store_true", help="solo rehace para_drive/ con las fotos que quedan")
     ap.add_argument("--revisar", action="store_true", help="pasa el filtro CLIP por las fotos ya bajadas")
     ap.add_argument("--sin-filtro", action="store_true", help="no usar el filtro CLIP")
@@ -398,7 +401,7 @@ def main():
     for r in filas:  # las que se borraron al revisar quedan marcadas para no volver a bajarlas
         if not r.get("estado") and not (salida / r["archivo"]).exists():
             r["estado"] = "borrada"
-    filtro = crear_filtro(a.sin_filtro, a.umbral)
+    filtro = crear_filtro(a.sin_filtro, a.umbral, a.nucleos)
     if a.revisar:
         if filtro is None:
             sys.exit("--revisar necesita el filtro CLIP: pip install torch transformers")

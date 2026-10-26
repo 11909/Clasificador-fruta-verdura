@@ -145,7 +145,7 @@ def test_filtro_y_palabras_excluidas_descartan_lo_que_no_es_el_alimento(monkeypa
             return im.getpixel((0, 0)) != Image.open(io.BytesIO(fotos["https://x/ave.jpg"])).convert("RGB").getpixel((0, 0))
 
     monkeypatch.setitem(web.FUENTES, "bing", falsa)
-    monkeypatch.setattr(web, "crear_filtro", lambda apagado, umbral: FiltroFalso())
+    monkeypatch.setattr(web, "crear_filtro", lambda apagado, umbral, nucleos: FiltroFalso())
     salida = tmp_path / "salida_web"
     monkeypatch.setattr("sys.argv", ["x", "--salida", str(salida), "--fuentes", "bing", "--solo", "oca", "--meta", "3"])
     web.main()
