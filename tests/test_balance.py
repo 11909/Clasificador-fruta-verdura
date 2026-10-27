@@ -3,7 +3,7 @@ from collections import Counter
 import numpy as np
 
 from src.clasificador import Clasificador
-from src.dataset import balancear_por_etiqueta
+from src.dataset import balancear_por_etiqueta, completar_por_clase, muestra_balanceada
 from src.evaluate import elegir_umbral, predecir_con_umbral
 from src.modelo import cargar_modelo
 
@@ -17,6 +17,19 @@ def test_balancear_por_etiqueta_iguala_y_reparte():
     assert set(por_clase) == {"a", "b", "c"} and max(por_clase.values()) - min(por_clase.values()) <= 1
     assert Counter(m[1] for m in balancear_por_etiqueta(muestras, 10, 0)) == {0: 10, 1: 10}
     assert len(set(elegidas)) == len(elegidas)
+
+
+def test_refuerzo_da_mas_imagenes_a_esos_alimentos():
+    # 3 verduras con 100 imágenes; betabel (beetroot en el dataset) pesa el doble
+    muestras = [(f"{c}{i}.jpg", 1, c) for c in ("beetroot", "lechuga", "kale") for i in range(100)]
+    muestras += [(f"f{i}.jpg", 0, "manzana") for i in range(300)]
+    train, test = muestra_balanceada(muestras, 120, 0.0, 0, refuerzo={"Betabel": 2})
+    n = Counter(m[2] for m in train if m[1] == 1)
+    assert n["beetroot"] == 60 and n["lechuga"] == 30 and n["kale"] == 30
+    n = Counter(m[2] for m in balancear_por_etiqueta(muestras, 120, 0, {"betabel": 2}) if m[1] == 1)
+    assert n["beetroot"] == 60 and n["lechuga"] == 30
+    n = Counter(m[2] for m in completar_por_clase([], muestras, None, 0, 20, {"betabel": 2}) if m[1] == 1)
+    assert n["beetroot"] == 40 and n["lechuga"] == 20
 
 
 def test_elegir_umbral_corrige_sesgo_a_fruta():

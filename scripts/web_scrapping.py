@@ -5,6 +5,8 @@ Uso (Python 3.10+, `pip install pillow numpy icrawler torch transformers`):
     python web_scrapping.py --excluir ruta/a/fotos_prueba       # todo el plan
     python web_scrapping.py --faltantes faltantes.txt           # metas con los conteos reales de Drive
     python web_scrapping.py --revisar                           # limpia con el filtro las fotos ya bajadas
+    python web_scrapping.py --plan plan_coloridas.csv --salida salida_coloridas --lote c2 \
+        --excluir salida_web/fotos ruta/a/fotos_prueba          # más fotos de verduras de colores
     python web_scrapping.py --empaquetar                        # opcional: zips por carpeta en para_drive/
 
 Lee `plan_web.csv` (junto a este archivo, o `data/plan_web.csv` del repo): alimento, prioridad, meta de
@@ -335,9 +337,9 @@ def leer_faltantes(ruta: str) -> dict[str, int]:
     return metas
 
 
-def siguiente(carpeta: Path, alimento: str) -> int:
+def siguiente(carpeta: Path, alimento: str, lote: str = "") -> int:
     """Siguiente número libre, para no pisar fotos aunque se hayan borrado algunas."""
-    numeros = [int(m.group(1)) for p in carpeta.glob(f"web_{alimento}_*.jpg")
+    numeros = [int(m.group(1)) for p in carpeta.glob(f"web_{alimento}_{lote + '_' if lote else ''}*.jpg")
                if (m := re.search(r"_(\d+)\.jpg$", p.name))]
     return max(numeros, default=0) + 1
 
@@ -366,6 +368,8 @@ def main():
     ap.add_argument("--fuentes", default="bing,commons", help="en orden, separadas por coma: bing, commons")
     ap.add_argument("--excluir", nargs="*", default=[], help="carpetas con fotos que no deben entrar (fotos_prueba)")
     ap.add_argument("--solo", default="", help="alimentos separados por coma (por defecto, todo el plan)")
+    ap.add_argument("--lote", default="", help="se agrega al nombre (web_betabel_c2_0001.jpg) para no pisar "
+                    "en Drive las fotos de una descarga anterior")
     ap.add_argument("--meta", type=int, help="fotos por alimento, en lugar de la del plan")
     ap.add_argument("--prioridad", default="", help="prioridades separadas por coma (equipo, sin_fotos, alta, media, secos)")
     ap.add_argument("--faltantes", help="faltantes.txt del notebook: usa sus números como meta de cada alimento")
@@ -456,7 +460,8 @@ def main():
                             continue
                         hashes.agregar(h)
                         im.thumbnail((LADO_MAXIMO, LADO_MAXIMO))
-                        archivo = carpeta / f"web_{alimento}_{siguiente(carpeta, alimento):04d}.jpg"
+                        prefijo = f"web_{alimento}_{a.lote + '_' if a.lote else ''}"
+                        archivo = carpeta / f"{prefijo}{siguiente(carpeta, alimento, a.lote):04d}.jpg"
                         im.save(archivo, "JPEG", quality=90)
                         filas.append({"archivo": archivo.relative_to(salida).as_posix(), "alimento": alimento,
                                       "prioridad": fila["prioridad"], "busqueda": busqueda, "estado": "", **c})
