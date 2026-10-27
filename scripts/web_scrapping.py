@@ -7,6 +7,7 @@ Uso (Python 3.10+, `pip install pillow numpy icrawler torch transformers`):
     python web_scrapping.py --revisar                           # limpia con el filtro las fotos ya bajadas
     python web_scrapping.py --plan plan_coloridas.csv --salida salida_coloridas --lote c2 \
         --excluir salida_web/fotos ruta/a/fotos_prueba          # más fotos de verduras de colores
+    python web_scrapping.py --salida salida_coloridas --lote c2 --empaquetar   # sus zips para Drive
     python web_scrapping.py --empaquetar                        # opcional: zips por carpeta en para_drive/
 
 Lee `plan_web.csv` (junto a este archivo, o `data/plan_web.csv` del repo): alimento, prioridad, meta de
@@ -344,8 +345,9 @@ def siguiente(carpeta: Path, alimento: str, lote: str = "") -> int:
     return max(numeros, default=0) + 1
 
 
-def empaquetar(salida: Path):
-    """para_drive/<alimento>/web_<alimento>_1.zip con las fotos que quedan en fotos/<alimento>/."""
+def empaquetar(salida: Path, lote: str = ""):
+    """para_drive/<alimento>/web_<alimento>_1.zip con las fotos que quedan en fotos/<alimento>/. Con `lote`
+    el zip se llama web_<alimento>_<lote>_1.zip, para no chocar en Drive con los zips de otra descarga."""
     destino = salida / "para_drive"
     shutil.rmtree(destino, ignore_errors=True)
     total = 0
@@ -353,7 +355,7 @@ def empaquetar(salida: Path):
         fotos = sorted((salida / "fotos" / alimento).glob("web_*.jpg"))
         for k in range(0, len(fotos), FOTOS_POR_ZIP):
             (destino / alimento).mkdir(parents=True, exist_ok=True)
-            with zipfile.ZipFile(destino / alimento / f"web_{alimento}_{k // FOTOS_POR_ZIP + 1}.zip", "w") as z:
+            with zipfile.ZipFile(destino / alimento / f"web_{alimento}_{lote + '_' if lote else ''}{k // FOTOS_POR_ZIP + 1}.zip", "w") as z:
                 for p in fotos[k:k + FOTOS_POR_ZIP]:
                     z.write(p, p.name)
         total += len(fotos)
@@ -396,7 +398,7 @@ def main():
         print(f"faltantes: {len(plan)} alimentos con fotos pendientes, {sum(f['meta'] for f in plan)} fotos")
     salida = Path(a.salida)
     if a.empaquetar:
-        return empaquetar(salida)
+        return empaquetar(salida, a.lote)
     fuentes = [x.strip() for x in a.fuentes.split(",") if x.strip()]
     if not fuentes or set(fuentes) - set(FUENTES):
         sys.exit(f"--fuentes debe ser una lista de {', '.join(FUENTES)}")
