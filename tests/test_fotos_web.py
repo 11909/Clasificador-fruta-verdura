@@ -176,3 +176,12 @@ def test_filtro_y_palabras_excluidas_descartan_lo_que_no_es_el_alimento(monkeypa
     filas = list(csv.DictReader(open(salida / "fuentes_web.csv", encoding="utf-8")))
     assert [f["titulo"] for f in filas] == ["https://x/oca-tuberculo.jpg"]  # ganso por palabra, ave por el filtro
     assert "ganso" in consultas[0]
+
+
+def test_rivales_quitan_el_mismo_alimento_pero_no_los_parecidos():
+    rivales = web.rivales
+    assert "celery" not in rivales("celery stalks, long green stems")
+    assert "cabbage" not in rivales("red cabbage")
+    assert "potato" in rivales("sweet potatoes, red skinned tubers")
+    assert "sweet potato" in rivales("potatoes, tubers")
+    assert "broccoli" in rivales("romanesco broccoli")
