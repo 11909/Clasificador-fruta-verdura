@@ -88,16 +88,43 @@ UMBRAL_CLIP = 0.6  # calibrado con fotos reales: oca 1.00, ganso 0.00, kiwi ave 
 NO_ALIMENTO = ["a bird", "an animal", "a person", "a cooked dish or meal", "a plate or bowl of prepared food",
                "a soup, stew or food in sauce", "a salad or chopped food", "a drink", "a dessert or baked food",
                "a drawing, cartoon or illustration", "a logo, text or a poster", "a packaged product in a box or bag",
-               "a building, street or landscape", "a flowering plant or a tree without fruit",
-               "a cactus or a whole plant growing in a garden or field", "a fish or seafood",
-               "a toy, a phone or another object"]
-# Títulos que casi nunca son la fruta sola: dibujos, láminas, plantas en flor, platillos y bebidas
+               "a building, street or landscape", "a fish or seafood",
+               "a toy, a phone or another object", "a market stall with many different fruits and vegetables"]
+# Solo para frutas: en una verdura la planta, las hojas o la flor pueden ser justo lo que se busca
+NO_ALIMENTO_FRUTA = ["a flowering plant or a tree without fruit", "a cactus or a whole plant growing in a garden or field"]
+# Frutas y verduras con que CLIP compara cada foto: la foto pasa solo si se parece más al alimento buscado
+# que a cualquiera de estas (así una sandía no entra como rábano ni una naranja como camote)
+OTROS_ALIMENTOS = ["watermelon", "orange", "tangerine", "lemon", "lime", "grapefruit", "apple", "pear", "peach",
+                   "plum", "cherry", "strawberry", "raspberry", "grape", "pomegranate", "mango", "papaya", "banana",
+                   "pineapple", "kiwi", "melon", "tomato", "red bell pepper", "chili pepper", "cucumber", "eggplant",
+                   "pumpkin", "zucchini", "potato", "sweet potato", "carrot", "beetroot", "radish", "turnip", "onion",
+                   "garlic", "ginger", "cabbage", "lettuce", "broccoli", "cauliflower", "spinach", "celery", "corn",
+                   "avocado", "coconut", "mushroom"]
+
+
+def singular(nombre: str) -> str:
+    """'radishes' -> 'radish', 'sweet potatoes' -> 'sweet potato', 'beetroot' -> 'beetroot'."""
+    nombre = nombre.strip().lower()
+    for fin, cambio in (("ies", "y"), ("oes", "o"), ("shes", "sh"), ("ches", "ch"), ("s", "")):
+        if nombre.endswith(fin) and not nombre.endswith("ss"):
+            return nombre[: -len(fin)] + cambio
+    return nombre
+
+
+# Títulos que casi nunca son el alimento solo: dibujos, láminas, platillos y bebidas. Los de una fruta además
+# no deben ser plantas en flor ni hojas; en las verduras sí se aceptan (hojas, flor de calabaza, en la planta)
 EXCLUIR = re.compile(
     r"(drawing|illustration|diagram|logo|\bmap\b|icon|painting|stamp|herbari|fruits[-_ ]?360|engraving|"
-    r"lithograph|\bplate\b|tafel|k[oö]hler|botanical|\bflowers?\b|blossom|\bflor(es)?\b|\btrees?\b|"
-    r"\bleaf\b|leaves|seedling|\bplants?\b|\bjuice|\bjam\b|\bcake|\bpie\b|salad|smoothie|dessert|"
+    r"lithograph|\bplate\b|tafel|k[oö]hler|botanical|\bjuice|\bjam\b|\bcake|\bpie\b|salad|smoothie|dessert|"
     r"ice[ _-]?cream|cocktail|\bwine\b|liqueur|recipe|\bdish\b|\bcurry\b|stall[ _-]?sign|\bcoins?\b|"
-    r"\bbooks?\b|poster|\blabel|\bpdf\b|\btiff?\b|\bsvg\b|clipart|vector|cartoon)", re.I)
+    r"\bbooks?\b|poster|\blabel|\bpdf\b|\btiff?\b|\bsvg\b|clipart|vector|cartoon|"
+    r"farmers?[ _-]?market|grocery|supermarket|assorted|mixed|variety)", re.I)
+EXCLUIR_FRUTA = re.compile(r"(\bflowers?\b|blossom|\bflor(es)?\b|\btrees?\b|\bleaf\b|leaves|seedling|\bplants?\b)",
+                           re.I)
+
+
+def excluido(titulo: str, tipo: str = "fruta") -> bool:
+    return bool(EXCLUIR.search(titulo) or (tipo != "verdura" and EXCLUIR_FRUTA.search(titulo)))
 
 
 # --- Imágenes: mismo hash y misma detección de fondo blanco que src/limpieza.py del repo ---
@@ -160,7 +187,7 @@ def pedir(url: str, intentos: int = 5) -> bytes:
     raise RuntimeError("sin respuesta")
 
 
-def candidatos_commons(busqueda: str):
+def candidatos_commons(busqueda: str, tipo: str = "fruta"):
     """Archivos de Commons para `busqueda`, en el orden de relevancia, de 50 en 50 (lo máximo por llamada)."""
     for offset in range(0, MAX_RESULTADOS, 50):
         params = {"action": "query", "format": "json", "generator": "search", "gsrnamespace": 6,
@@ -170,7 +197,7 @@ def candidatos_commons(busqueda: str):
         paginas = sorted(datos.get("query", {}).get("pages", {}).values(), key=lambda p: p.get("index", 0))
         for p in paginas:
             info = (p.get("imageinfo") or [{}])[0]
-            if info.get("mime") not in ("image/jpeg", "image/png", "image/webp") or EXCLUIR.search(p["title"]):
+            if info.get("mime") not in ("image/jpeg", "image/png", "image/webp") or excluido(p["title"], tipo):
                 continue
             # Si el original es más angosto que ANCHO, Commons da el original, y upload.wikimedia.org
             # rechaza las descargas de originales con 429
@@ -186,8 +213,8 @@ def candidatos_commons(busqueda: str):
         time.sleep(1)
 
 
-def commons(busqueda: str, vistos: set, pausa: float, **_):
-    for c in candidatos_commons(busqueda):
+def commons(busqueda: str, vistos: set, pausa: float, tipo: str = "fruta", **_):
+    for c in candidatos_commons(busqueda, tipo):
         if c["titulo"] in vistos:
             yield c, None  # ya vista o de prueba: se cuenta como descarte sin bajarla
             continue
@@ -201,7 +228,7 @@ def commons(busqueda: str, vistos: set, pausa: float, **_):
         yield c, datos
 
 
-def bing(busqueda: str, vistos: set, cuantas: int, hilos: int = 4, excluir: str = "", **_):
+def bing(busqueda: str, vistos: set, cuantas: int, hilos: int = 4, excluir: str = "", tipo: str = "fruta", **_):
     """Bing Imágenes con icrawler: baja `cuantas` fotos a la vez en una carpeta temporal. La búsqueda
     lleva las palabras de EXCLUIR_BING y de `excluir` con "-" para que Bing las deje fuera."""
     try:
@@ -228,7 +255,7 @@ def bing(busqueda: str, vistos: set, cuantas: int, hilos: int = 4, excluir: str 
             url = urls.get(p.name, p.name)
             c = {"fuente": "bing", "titulo": url, "url_descarga": url, "pagina_fuente": "", "autor": "",
                  "licencia": "desconocida (Bing)"}
-            if EXCLUIR.search(urllib.parse.unquote(url)):
+            if excluido(urllib.parse.unquote(url), tipo):
                 continue
             yield c, None if url in vistos else p.read_bytes()
 
@@ -249,22 +276,38 @@ class Filtro:
         self.textos = {}
         self.umbral = umbral
 
-    def _texto(self, nombre_en: str):
-        if nombre_en not in self.textos:
+    def _texto(self, nombre_en: str, tipo: str = "fruta"):
+        if (nombre_en, tipo) not in self.textos:
+            # nombre_en es "beetroot, a dark red root vegetable": lo de antes de la coma es el alimento
+            propio = singular(nombre_en.split(",")[0])
+            otros = [x for x in OTROS_ALIMENTOS if x != propio]
             frases = [f"a photo of {nombre_en}", "a photo of a different fresh fruit, vegetable or nut"]
-            frases += [f"a photo of {x}" for x in NO_ALIMENTO]
-            self.textos[nombre_en] = self.proc(text=frases, return_tensors="pt", padding=True)
-        return self.textos[nombre_en]
+            no_alimento = NO_ALIMENTO + (NO_ALIMENTO_FRUTA if tipo != "verdura" else [])
+            frases += [f"a photo of {x}" for x in no_alimento]
+            frases += [f"a photo of {x}" for x in otros]
+            self.textos[nombre_en, tipo] = (self.proc(text=frases, return_tensors="pt", padding=True),
+                                            2 + len(no_alimento))
+        return self.textos[nombre_en, tipo]
 
-    def probabilidad(self, im: Image.Image, nombre_en: str) -> float:
-        """Probabilidad de que la foto sea el alimento (o al menos un alimento crudo)."""
+    def probabilidades(self, im: Image.Image, nombre_en: str, tipo: str = "fruta") -> tuple[float, bool]:
+        """(probabilidad de que la foto sea un alimento crudo, si el alimento buscado le gana a todos los
+        de OTROS_ALIMENTOS)."""
+        textos, inicio_otros = self._texto(nombre_en, tipo)
         with self.torch.no_grad():
-            salida = self.modelo(**self._texto(nombre_en), pixel_values=self.proc(images=im, return_tensors="pt")["pixel_values"])
-        p = salida.logits_per_image.softmax(dim=-1)[0]
-        return float(p[0] + p[1])
+            salida = self.modelo(**textos, pixel_values=self.proc(images=im, return_tensors="pt")["pixel_values"])
+        logits = salida.logits_per_image[0]
+        p = logits[:inicio_otros].softmax(dim=-1)
+        es_alimento = float(p[0] + p[1])
+        gana = bool(logits[0] >= logits[inicio_otros:].max()) if len(logits) > inicio_otros else True
+        return es_alimento, gana
 
-    def pasa(self, im: Image.Image, nombre_en: str) -> bool:
-        return self.probabilidad(im, nombre_en) >= self.umbral
+    def probabilidad(self, im: Image.Image, nombre_en: str, tipo: str = "fruta") -> float:
+        """Probabilidad de que la foto sea el alimento (o al menos un alimento crudo)."""
+        return self.probabilidades(im, nombre_en, tipo)[0]
+
+    def pasa(self, im: Image.Image, nombre_en: str, tipo: str = "fruta") -> bool:
+        es_alimento, gana = self.probabilidades(im, nombre_en, tipo)
+        return es_alimento >= self.umbral and gana
 
 
 def crear_filtro(apagado: bool, umbral: float = UMBRAL_CLIP, nucleos: int = 2) -> "Filtro | None":
@@ -275,20 +318,23 @@ def crear_filtro(apagado: bool, umbral: float = UMBRAL_CLIP, nucleos: int = 2) -
         print("Filtro CLIP activo: se descartan las fotos que no son del alimento.")
         return filtro
     except ImportError:
-        print("Aviso: sin filtro CLIP (pip install torch transformers para activarlo). Revisa bien las fotos.")
-        return None
+        # Sin el filtro entra mucha basura (Bing a veces da fotos de otra cosa), así que no se sigue sin avisar
+        sys.exit("Falta el filtro CLIP: pip install torch transformers (con Python 3.12 de 64 bits funciona; "
+                 "ver LEEME). Para bajar sin filtro, a sabiendas de que habrá más fotos que no son del alimento, "
+                 "agrega --sin-filtro.")
 
 
 def revisar(salida: Path, plan: list[dict], filtro: Filtro, filas: list[dict]):
     """Pasa el filtro por las fotos ya bajadas y mueve a descartadas/ las que no son del alimento."""
     nombres = {f["alimento"]: f["nombre_en"] for f in plan}
+    tipos = {f["alimento"]: f.get("tipo") or "fruta" for f in plan}
     movidas = 0
     for r in filas:
         ruta = salida / r["archivo"]
         if r.get("estado") or r["alimento"] not in nombres or not ruta.exists():
             continue
         im = abrir(ruta.read_bytes())
-        if im is None or not filtro.pasa(im, nombres[r["alimento"]]):
+        if im is None or not filtro.pasa(im, nombres[r["alimento"]], tipos[r["alimento"]]):
             destino = salida / "descartadas" / r["archivo"].split("/", 1)[1]
             destino.parent.mkdir(parents=True, exist_ok=True)
             shutil.move(str(ruta), destino)
@@ -371,7 +417,7 @@ def main():
     ap.add_argument("--salida", default="salida_web")
     ap.add_argument("--plan", default=str(PLAN))
     ap.add_argument("--fuentes", default="bing,commons", help="en orden, separadas por coma: bing, commons")
-    ap.add_argument("--excluir", nargs="*", default=[], help="carpetas con fotos que no deben entrar (fotos_prueba)")
+    ap.add_argument("--excluir", nargs="*", action="extend", default=[], help="carpetas con fotos que no deben entrar (fotos_prueba)")
     ap.add_argument("--solo", default="", help="alimentos separados por coma (por defecto, todo el plan)")
     ap.add_argument("--lote", default="", help="se agrega al nombre (web_betabel_c2_0001.jpg) para no pisar "
                     "en Drive las fotos de una descarga anterior")
@@ -442,7 +488,7 @@ def main():
                     continue
                 try:
                     for c, datos in FUENTES[fuente](busqueda, vistos, pausa=a.pausa, hilos=a.hilos,
-                                                     excluir=fila.get("excluir", ""),
+                                                     excluir=fila.get("excluir", ""), tipo=fila.get("tipo") or "fruta",
                                                      cuantas=min(2 * (tope - n) + 10, 300)):
                         if n >= tope:
                             break
@@ -460,7 +506,8 @@ def main():
                         if fondo_blanco(im):
                             descartes["estudio"] += 1
                             continue
-                        if filtro and not filtro.pasa(im, fila.get("nombre_en") or alimento.replace("_", " ")):
+                        if filtro and not filtro.pasa(im, fila.get("nombre_en") or alimento.replace("_", " "),
+                                                    fila.get("tipo") or "fruta"):
                             descartes["no es el alimento"] += 1
                             continue
                         h = dhash(im)

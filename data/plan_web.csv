@@ -1,121 +1,121 @@
-alimento,prioridad,meta,nombre_en,busquedas,excluir
-calabaza_blanca,sin_fotos,215,"ash gourd, a long green wax gourd vegetable",ash gourd vegetable|wax gourd fresh|Benincasa hispida fruit market,
-calabaza_puntiaguda,sin_fotos,215,"pointed gourd, small green striped parwal vegetables",pointed gourd vegetable|parwal vegetable fresh|Trichosanthes dioica fruit,
-calabaza_serpiente,sin_fotos,215,"snake gourd, a long thin green vegetable",snake gourd vegetable|snake gourd fresh market|Trichosanthes cucumerina fruit,serpiente snake reptile
-fruto_de_espinaca_de_malabar,sin_fotos,215,"Malabar spinach berries, small dark purple berries",Basella alba berries|Basella rubra fruit berries|malabar spinach berries,
-platano_macho,sin_fotos,215,"plantains, large green cooking bananas",plantains fresh market|plantain bananas raw|platano macho verde,frito chips tostones
-rambutan,alta,100,"rambutan fruit, red hairy fruit",rambutan fruit|rambutans fresh|Nephelium lappaceum fruit,
-pitahaya,alta,100,"dragon fruit, pink pitahaya fruit",pitahaya fruta|dragon fruit fresh|Selenicereus undatus fruit,cactus flor flower
-aguacate,alta,100,avocado fruit,avocados fresh|avocado fruit whole|aguacates mercado,toast guacamole
-tuna,alta,100,prickly pear fruits (tunas),prickly pear fruit|Opuntia fruit fresh|tunas fruta de nopal,pescado fish atun
-guayaba,alta,100,guava fruit,guava fruit fresh|guavas market|Psidium guajava fruit,
-coco,alta,100,coconut fruit,coconuts fruit|coconut fruit fresh|cocos fruta mercado,pelicula disney chanel
-limon_verde,alta,100,green lime fruit,limes fruit fresh|green limes citrus|limones verdes mercado,cocktail mojito
-limon_amarillo,alta,100,yellow lemon fruit,lemons fruit fresh|yellow lemons citrus|Citrus limon fruit,lemonade
-mandarina,alta,100,mandarin orange fruit,mandarin oranges fruit|tangerines fresh|mandarinas fruta,
-toronja,alta,100,grapefruit,grapefruit fruit fresh|grapefruits citrus|toronjas fruta,
-sandia,alta,100,watermelon fruit,watermelon fruit|watermelons market|sandia fruta,
-melon,alta,100,"melon fruit, cantaloupe",cantaloupe melon fruit|melons market|honeydew melon fruit,
-pina,alta,100,pineapple fruit,pineapple fruit fresh|pineapples market|piña fruta,pizza
-fresa,alta,100,strawberries,strawberries fresh|strawberry fruit|fresas fruta,cake
-uva,alta,100,grapes fruit,grapes fruit fresh|table grapes bunch|uvas fruta,wine vino
-kiwi,alta,100,kiwi fruit,kiwifruit fresh|kiwi fruit sliced|kiwis fruta,bird ave
-durazno,alta,100,peach fruit,peaches fruit fresh|peach fruit whole|duraznos fruta,
-pera,alta,100,pear fruit,pears fruit fresh|pear fruit whole|peras fruta,
-granada,alta,100,pomegranate fruit,pomegranate fruit fresh|pomegranates opened|granada fruta,ciudad city alhambra
-maracuya,alta,100,passion fruit,passion fruit fresh|Passiflora edulis fruit|maracuya fruta,flower flor
-tamarillo,alta,100,"tamarillo, tree tomato fruit",tamarillo fruit|Solanum betaceum fruit|tamarillos fresh,
-arandano,media,80,blueberries,blueberries fresh|blueberry fruit|arandanos fruta,muffin
-frambuesa,media,80,raspberries,raspberries fresh|raspberry fruit|frambuesas fruta,pi computer
-zarzamora,media,80,blackberries fruit,blackberries fruit fresh|blackberry fruit|zarzamoras fruta,phone telefono
-mora,media,80,mulberries fruit,mulberries fruit|mulberry fruit fresh|Morus nigra fruit,
-cereza,media,80,cherries fruit,cherries fruit fresh|sweet cherries|cerezas fruta,flower blossom
-ciruela,media,80,plums fruit,plums fruit fresh|plum fruit whole|ciruelas fruta,
-chabacano,media,80,apricot fruit,apricots fruit fresh|apricot fruit|chabacanos fruta,dried seco
-nectarina,media,80,nectarine fruit,nectarines fruit|nectarine fruit fresh|nectarines market,
-higo,media,80,fig fruit,figs fruit fresh|fig fruit opened|higos fruta,
-datil,media,80,"date fruit, dates",dates fruit|medjool dates fresh|datiles fruta,calendar calendario
-caqui,media,80,persimmon fruit,persimmons fruit|persimmon fruit fresh|Diospyros kaki fruit,pantalon pants color
-carambola,media,80,"star fruit, carambola",carambola fruit|star fruit fresh|Averrhoa carambola fruit,
-chirimoya,media,80,cherimoya fruit,cherimoya fruit|cherimoya fresh|Annona cherimola fruit,
-lichi,media,80,lychee fruit,lychee fruit fresh|lychees peeled|Litchi chinensis fruit,
-mangostan,media,80,mangosteen fruit,mangosteen fruit|mangosteens fresh|Garcinia mangostana fruit,
-kumquat,media,80,kumquat fruit,kumquats fruit|kumquat fruit fresh|Citrus japonica fruit,
-clementina,media,80,clementine fruit,clementines fruit|clementine fruit fresh|clementinas fruta,
-tangelo,media,80,tangelo citrus fruit,tangelo fruit|tangelos citrus|minneola tangelo fruit,
-pomelo,media,80,pomelo fruit,pomelo fruit fresh|pomelos citrus|Citrus maxima fruit,
-membrillo,media,80,quince fruit,quince fruit fresh|quinces fruit|membrillos fruta,dulce paste jam
-uchuva,media,80,"cape gooseberry, physalis fruit",Physalis peruviana fruit|cape gooseberry fruit|goldenberries fresh,
-granadilla,media,80,sweet granadilla fruit,granadilla fruit|sweet granadilla fresh|Passiflora ligularis fruit,flower flor
-salak,media,80,"salak, snake fruit",salak fruit|snake fruit fresh|Salacca zalacca fruit,snake reptile serpiente
-grosella_espinosa,media,80,gooseberries fruit,gooseberries fruit fresh|gooseberry fruit|Ribes uva-crispa fruit,
-grosella_roja,media,80,red currants fruit,redcurrants fruit|red currant berries|Ribes rubrum fruit,
-huckleberry,media,80,huckleberries fruit,huckleberries fruit|huckleberry berries fresh|Vaccinium membranaceum berries,finn book
-pepino_dulce,media,80,pepino melon fruit,pepino dulce fruta|Solanum muricatum fruit|pepino melon fruit,
-almendra,secos,80,almonds,almonds nuts|raw almonds|almendras,
-avellana,secos,80,hazelnuts,hazelnuts nuts|hazelnuts in shell|avellanas,nutella
-cacahuate,secos,80,peanuts,peanuts in shell|raw peanuts|cacahuates,butter cartoon snoopy
-castana,secos,80,chestnuts,chestnuts nuts|roasted chestnuts|castañas fruto,horse caballo
-nuez,secos,80,pecan nuts,pecans nuts|pecan nuts in shell|nueces pecanas,pie pay
-nuez_de_castilla,secos,80,walnuts,walnuts nuts|walnuts in shell|nuez de castilla,
-pistache,secos,80,pistachios,pistachios nuts|pistachio nuts in shell|pistaches,ice cream helado
-maranon,secos,80,cashew nuts,cashew nuts|raw cashews|nuez de la india,apple
-oca,equipo,260,"oca tubers, colorful Andean tubers",oca tuberculo andino|Oxalis tuberosa tubers|oca andina papa tuberculo mercado,ave ganso goose bird pato duck juego game
-olluco,equipo,260,ulluco tubers,olluco tuberculo|ulluco tubers|Ullucus tuberosus tubers,
-mashua,equipo,260,mashua tubers,mashua tuberculo|mashua tubers|Tropaeolum tuberosum tubers,flor flower
-acelga,equipo,260,swiss chard leaves,acelga verdura|swiss chard vegetable|chard leaves market,
-verdolaga,equipo,260,purslane leaves,verdolagas verdura|purslane vegetable|Portulaca oleracea vegetable,flower flor
-quelite,equipo,260,"quelites, edible wild greens",quelites verdura mercado|quelite cenizo verdura|lambsquarters greens,
-ñame,equipo,260,yam tubers,ñame tuberculo|yam tuber Dioscorea|true yams market,sweet potato camote
-romanesco,equipo,260,romanesco broccoli,romanesco broccoli vegetable|romanesco cauliflower|romanesco verdura,fractal
-bok_choy,equipo,260,bok choy,bok choy vegetable|pak choi fresh|bok choy market,
-tupinambo,equipo,260,Jerusalem artichoke tubers,tupinambo tuberculo|jerusalem artichoke tubers|sunchokes vegetable,flower flor
-salsifi,equipo,260,salsify roots,salsifi raiz verdura|salsify root vegetable|black salsify Scorzonera roots,flower flor
-rabano,equipo,33,radishes,rabanos verdura|radishes fresh|red radish bunch,
-betabel,equipo,150,beetroot,betabel verdura|beetroot fresh|beets vegetable,
-papa,equipo,150,potatoes,papas tuberculo|potatoes raw|potatoes market,francisco pope fries
-yacon,equipo,260,yacon root,yacon raiz|yacon root vegetable|Smallanthus sonchifolius root,
-jicama,equipo,260,jicama root,jicama verdura|jicama root|Pachyrhizus erosus root,
-yuca,equipo,260,cassava root,yuca raiz|cassava root|cassava tubers market,yucca planta plant
-huauzontle,equipo,260,huauzontle greens,huauzontle verdura|huauzontles mercado|Chenopodium berlandieri nuttalliae,capeado receta
-flor_de_calabaza,equipo,260,squash blossoms,flor de calabaza verdura|squash blossoms fresh|zucchini flowers raw,quesadilla relleno
-alcachofa,equipo,260,artichokes,alcachofas verdura|artichokes fresh|globe artichoke vegetable,
-amaranto,equipo,260,amaranth leaves,amaranto hojas verdura|amaranth leaves vegetable|red amaranth greens,semilla cereal alegria
-radicchio,equipo,260,radicchio,radicchio vegetable|radicchio rosso fresh|red chicory,
-endibia,equipo,260,belgian endive,endibias verdura|belgian endive|endive vegetable,
-bardana,equipo,260,burdock roots,bardana raiz verdura|burdock root vegetable|gobo root,
-brotes_de_bambu,equipo,260,bamboo shoots,brotes de bambu verdura|fresh bamboo shoots|bamboo shoots vegetable,panda
-camote,equipo,150,sweet potatoes,camotes verdura|sweet potatoes raw|sweet potato tubers,
-jengibre,equipo,150,ginger root,jengibre raiz|ginger root fresh|fresh ginger rhizome,
-ajo,equipo,38,garlic bulbs,ajos verdura|garlic bulbs|garlic heads,
-cebolla,equipo,18,onions,cebollas verdura|onions fresh|onions market,
-malanga,equipo,260,taro root,malanga raiz|taro root|eddoe Colocasia root,
-nopal,equipo,60,nopal cactus pads,nopales verdura|nopal cactus pads|nopales mercado,
-poro,equipo,260,leeks,poro puerro verdura|leeks fresh|leek vegetable,
-berro,equipo,260,watercress,berros verdura|watercress fresh|watercress bunch,
-perejil,equipo,137,parsley,perejil verdura|parsley bunch|fresh parsley,
-hinojo,equipo,260,fennel bulb,hinojo bulbo|fennel bulb|fennel vegetable,seeds semillas
-cebollin,equipo,260,chives or green onions,cebollin verdura|chives fresh|green onions scallions,
-chaya,equipo,260,chaya leaves,chaya hojas verdura|chaya Cnidoscolus aconitifolius|tree spinach chaya leaves,
-papaloquelite,equipo,260,papalo herb leaves,papaloquelite hierba|papalo herb|Porophyllum ruderale leaves,
-romeritos,equipo,260,fresh romeritos greens,romeritos frescos verdura|romeritos Suaeda planta|romeritos mercado manojo,mole receta platillo
-ruibarbo,equipo,260,rhubarb stalks,ruibarbo verdura|rhubarb stalks|rhubarb vegetable,pie
-colinabo,equipo,150,kohlrabi,colinabo verdura|kohlrabi|kohlrabi vegetable,
-elote,equipo,80,corn on the cob,elotes mazorca|corn on the cob|sweet corn ears,palomitas popcorn
-esparrago,equipo,260,asparagus,esparragos verdura|asparagus fresh|asparagus bunch,
-cilantro,equipo,260,cilantro leaves,cilantro verdura|coriander leaves|cilantro bunch,seeds semillas
-nabo,equipo,260,turnips,nabo verdura|turnips|turnip vegetable,
-chirivia,equipo,260,parsnips,chirivia verdura|parsnips|parsnip vegetable,
-col_de_bruselas,equipo,260,brussels sprouts,coles de bruselas|brussels sprouts fresh|brussels sprouts stalk,
-kale,equipo,260,kale leaves,kale verdura|kale leaves|curly kale,chips
-chayotextle,equipo,260,chayote root tuber,chayotextle raiz|chayote root|raiz de chayote,
-arugula,equipo,260,arugula leaves,arugula verdura|rucula hojas|rocket leaves salad greens,pizza
-mizuna,equipo,260,mizuna greens,mizuna verdura|mizuna greens|Japanese mustard greens,
-curcuma,equipo,260,turmeric root,curcuma raiz|turmeric root fresh|fresh turmeric rhizome,powder polvo
-cardo,equipo,260,cardoon stalks,cardo verdura|cardoon vegetable|cardoon stalks,flower flor
-grelos,equipo,260,turnip greens,grelos verdura|turnip greens|rapini broccoli rabe,
-brocoli,equipo,150,broccoli,brocoli verdura|broccoli fresh|broccoli heads,
-lechuga,equipo,150,lettuce,lechugas verdura|lettuce|lettuce heads market,
-espinaca,equipo,150,spinach leaves,espinacas verdura|spinach fresh|spinach leaves bunch,popeye
-chayote,equipo,80,chayote squash,chayotes verdura|chayote fresh|chayote squash,
-berenjena,equipo,80,eggplants,berenjenas verdura|eggplants fresh|aubergines market,emoji
+alimento,prioridad,meta,nombre_en,busquedas,excluir,tipo
+calabaza_blanca,sin_fotos,215,"ash gourd, a long green wax gourd vegetable",ash gourd vegetable|wax gourd fresh|Benincasa hispida fruit,,fruta
+calabaza_puntiaguda,sin_fotos,215,"pointed gourd, small green striped parwal vegetables",pointed gourd vegetable|parwal vegetable fresh|Trichosanthes dioica fruit,,fruta
+calabaza_serpiente,sin_fotos,215,"snake gourd, a long thin green vegetable",snake gourd vegetable|snake gourd fresh|Trichosanthes cucumerina fruit,serpiente snake reptile,fruta
+fruto_de_espinaca_de_malabar,sin_fotos,215,"Malabar spinach berries, small dark purple berries",Basella alba berries|Basella rubra fruit berries|malabar spinach berries,,fruta
+platano_macho,sin_fotos,215,"plantains, large green cooking bananas",plantains fresh|plantain bananas raw|platano macho verde,frito chips tostones,fruta
+rambutan,alta,100,"rambutan fruit, red hairy fruit",rambutan fruit|rambutans fresh|Nephelium lappaceum fruit,,fruta
+pitahaya,alta,100,"dragon fruit, pink pitahaya fruit",pitahaya fruta|dragon fruit fresh|Selenicereus undatus fruit,cactus flor flower,fruta
+aguacate,alta,100,avocado fruit,avocados fresh|avocado fruit whole|aguacates frescos,toast guacamole,fruta
+tuna,alta,100,prickly pear fruits (tunas),prickly pear fruit|Opuntia fruit fresh|tunas fruta de nopal,pescado fish atun,fruta
+guayaba,alta,100,guava fruit,guava fruit fresh|guavas whole|Psidium guajava fruit,,fruta
+coco,alta,100,coconut fruit,coconuts fruit|coconut fruit fresh|cocos fruta entera,pelicula disney chanel,fruta
+limon_verde,alta,100,green lime fruit,limes fruit fresh|green limes citrus|limones verdes frescos,cocktail mojito,fruta
+limon_amarillo,alta,100,yellow lemon fruit,lemons fruit fresh|yellow lemons citrus|Citrus limon fruit,lemonade,fruta
+mandarina,alta,100,mandarin orange fruit,mandarin oranges fruit|tangerines fresh|mandarinas fruta,,fruta
+toronja,alta,100,grapefruit,grapefruit fruit fresh|grapefruits citrus|toronjas fruta,,fruta
+sandia,alta,100,watermelon fruit,watermelon fruit|watermelons whole|sandia fruta,,fruta
+melon,alta,100,"melon fruit, cantaloupe",cantaloupe melon fruit|melons whole|honeydew melon fruit,,fruta
+pina,alta,100,pineapple fruit,pineapple fruit fresh|pineapples whole|piña fruta,pizza,fruta
+fresa,alta,100,strawberries,strawberries fresh|strawberry fruit|fresas fruta,cake,fruta
+uva,alta,100,grapes fruit,grapes fruit fresh|table grapes bunch|uvas fruta,wine vino,fruta
+kiwi,alta,100,kiwi fruit,kiwifruit fresh|kiwi fruit sliced|kiwis fruta,bird ave,fruta
+durazno,alta,100,peach fruit,peaches fruit fresh|peach fruit whole|duraznos fruta,,fruta
+pera,alta,100,pear fruit,pears fruit fresh|pear fruit whole|peras fruta,,fruta
+granada,alta,100,pomegranate fruit,pomegranate fruit fresh|pomegranates opened|granada fruta,ciudad city alhambra,fruta
+maracuya,alta,100,passion fruit,passion fruit fresh|Passiflora edulis fruit|maracuya fruta,flower flor,fruta
+tamarillo,alta,100,"tamarillo, tree tomato fruit",tamarillo fruit|Solanum betaceum fruit|tamarillos fresh,,fruta
+arandano,media,80,blueberries,blueberries fresh|blueberry fruit|arandanos fruta,muffin,fruta
+frambuesa,media,80,raspberries,raspberries fresh|raspberry fruit|frambuesas fruta,pi computer,fruta
+zarzamora,media,80,blackberries fruit,blackberries fruit fresh|blackberry fruit|zarzamoras fruta,phone telefono,fruta
+mora,media,80,mulberries fruit,mulberries fruit|mulberry fruit fresh|Morus nigra fruit,,fruta
+cereza,media,80,cherries fruit,cherries fruit fresh|sweet cherries|cerezas fruta,flower blossom,fruta
+ciruela,media,80,plums fruit,plums fruit fresh|plum fruit whole|ciruelas fruta,,fruta
+chabacano,media,80,apricot fruit,apricots fruit fresh|apricot fruit|chabacanos fruta,dried seco,fruta
+nectarina,media,80,nectarine fruit,nectarines fruit|nectarine fruit fresh|nectarines whole,,fruta
+higo,media,80,fig fruit,figs fruit fresh|fig fruit opened|higos fruta,,fruta
+datil,media,80,"date fruit, dates",dates fruit|medjool dates fresh|datiles fruta,calendar calendario,fruta
+caqui,media,80,persimmon fruit,persimmons fruit|persimmon fruit fresh|Diospyros kaki fruit,pantalon pants color,fruta
+carambola,media,80,"star fruit, carambola",carambola fruit|star fruit fresh|Averrhoa carambola fruit,,fruta
+chirimoya,media,80,cherimoya fruit,cherimoya fruit|cherimoya fresh|Annona cherimola fruit,,fruta
+lichi,media,80,lychee fruit,lychee fruit fresh|lychees peeled|Litchi chinensis fruit,,fruta
+mangostan,media,80,mangosteen fruit,mangosteen fruit|mangosteens fresh|Garcinia mangostana fruit,,fruta
+kumquat,media,80,kumquat fruit,kumquats fruit|kumquat fruit fresh|Citrus japonica fruit,,fruta
+clementina,media,80,clementine fruit,clementines fruit|clementine fruit fresh|clementinas fruta,,fruta
+tangelo,media,80,tangelo citrus fruit,tangelo fruit|tangelos citrus|minneola tangelo fruit,,fruta
+pomelo,media,80,pomelo fruit,pomelo fruit fresh|pomelos citrus|Citrus maxima fruit,,fruta
+membrillo,media,80,quince fruit,quince fruit fresh|quinces fruit|membrillos fruta,dulce paste jam,fruta
+uchuva,media,80,"cape gooseberry, physalis fruit",Physalis peruviana fruit|cape gooseberry fruit|goldenberries fresh,,fruta
+granadilla,media,80,sweet granadilla fruit,granadilla fruit|sweet granadilla fresh|Passiflora ligularis fruit,flower flor,fruta
+salak,media,80,"salak, snake fruit",salak fruit|snake fruit fresh|Salacca zalacca fruit,snake reptile serpiente,fruta
+grosella_espinosa,media,80,gooseberries fruit,gooseberries fruit fresh|gooseberry fruit|Ribes uva-crispa fruit,,fruta
+grosella_roja,media,80,red currants fruit,redcurrants fruit|red currant berries|Ribes rubrum fruit,,fruta
+huckleberry,media,80,huckleberries fruit,huckleberries fruit|huckleberry berries fresh|Vaccinium membranaceum berries,finn book,fruta
+pepino_dulce,media,80,pepino melon fruit,pepino dulce fruta|Solanum muricatum fruit|pepino melon fruit,,fruta
+almendra,secos,80,almonds,almonds nuts|raw almonds|almendras,,fruta
+avellana,secos,80,hazelnuts,hazelnuts nuts|hazelnuts in shell|avellanas,nutella,fruta
+cacahuate,secos,80,peanuts,peanuts in shell|raw peanuts|cacahuates,butter cartoon snoopy,fruta
+castana,secos,80,chestnuts,chestnuts nuts|roasted chestnuts|castañas fruto,horse caballo,fruta
+nuez,secos,80,pecan nuts,pecans nuts|pecan nuts in shell|nueces pecanas,pie pay,fruta
+nuez_de_castilla,secos,80,walnuts,walnuts nuts|walnuts in shell|nuez de castilla,,fruta
+pistache,secos,80,pistachios,pistachios nuts|pistachio nuts in shell|pistaches,ice cream helado,fruta
+maranon,secos,80,cashew nuts,cashew nuts|raw cashews|nuez de la india,apple,fruta
+oca,equipo,260,"oca tubers, colorful Andean tubers",oca tuberculo andino|Oxalis tuberosa tubers|oca andina tuberculos,ave ganso goose bird pato duck juego game,verdura
+olluco,equipo,260,ulluco tubers,olluco tuberculo|ulluco tubers|Ullucus tuberosus tubers,,verdura
+mashua,equipo,260,mashua tubers,mashua tuberculo|mashua tubers|Tropaeolum tuberosum tubers,flor flower,verdura
+acelga,equipo,260,swiss chard leaves,acelga verdura|swiss chard vegetable|chard leaves fresh,,verdura
+verdolaga,equipo,260,purslane leaves,verdolagas verdura|purslane vegetable|Portulaca oleracea vegetable,flower flor,verdura
+quelite,equipo,260,"quelites, edible wild greens",quelites verdura|quelite cenizo verdura|lambsquarters greens,,verdura
+ñame,equipo,260,yam tubers,ñame tuberculo|yam tuber Dioscorea|true yams tubers,sweet potato camote,verdura
+romanesco,equipo,260,romanesco broccoli,romanesco broccoli vegetable|romanesco cauliflower|romanesco verdura,fractal,verdura
+bok_choy,equipo,260,bok choy,bok choy vegetable|pak choi fresh|bok choy heads,,verdura
+tupinambo,equipo,260,Jerusalem artichoke tubers,tupinambo tuberculo|jerusalem artichoke tubers|sunchokes vegetable,flower flor,verdura
+salsifi,equipo,260,salsify roots,salsifi raiz verdura|salsify root vegetable|black salsify Scorzonera roots,flower flor,verdura
+rabano,equipo,33,radishes,rabanos verdura|radishes fresh|red radish bunch,sandia watermelon,verdura
+betabel,equipo,150,beetroot,betabel verdura|beetroot fresh|beets vegetable,ciruela plum cereza cherry,verdura
+papa,equipo,150,potatoes,papas tuberculo|potatoes raw|potato tubers,francisco pope fries camote,verdura
+yacon,equipo,260,yacon root,yacon raiz|yacon root vegetable|Smallanthus sonchifolius root,,verdura
+jicama,equipo,260,jicama root,jicama verdura|jicama root|Pachyrhizus erosus root,,verdura
+yuca,equipo,260,cassava root,yuca raiz|cassava root|cassava tubers,yucca planta plant,verdura
+huauzontle,equipo,260,huauzontle greens,huauzontle verdura|huauzontles frescos|Chenopodium berlandieri nuttalliae,capeado receta,verdura
+flor_de_calabaza,equipo,260,squash blossoms,flor de calabaza verdura|squash blossoms fresh|zucchini flowers raw,quesadilla relleno halloween,verdura
+alcachofa,equipo,260,artichokes,alcachofas verdura|artichokes fresh|globe artichoke vegetable,,verdura
+amaranto,equipo,260,amaranth leaves,amaranto hojas verdura|amaranth leaves vegetable|red amaranth greens,semilla cereal alegria,verdura
+radicchio,equipo,260,radicchio,radicchio vegetable|radicchio rosso fresh|red chicory,,verdura
+endibia,equipo,260,belgian endive,endibias verdura|belgian endive|endive vegetable,,verdura
+bardana,equipo,260,burdock roots,bardana raiz verdura|burdock root vegetable|gobo root,,verdura
+brotes_de_bambu,equipo,260,bamboo shoots,brotes de bambu verdura|fresh bamboo shoots|bamboo shoots vegetable,panda,verdura
+camote,equipo,150,sweet potatoes,camotes verdura|sweet potatoes raw|sweet potato tubers,papaya,verdura
+jengibre,equipo,150,ginger root,jengibre raiz|ginger root fresh|fresh ginger rhizome,,verdura
+ajo,equipo,38,garlic bulbs,ajos verdura|garlic bulbs|garlic heads,,verdura
+cebolla,equipo,18,onions,cebollas verdura|onions fresh|onion bulbs,ajo garlic,verdura
+malanga,equipo,260,taro root,malanga raiz|taro root|eddoe Colocasia root,,verdura
+nopal,equipo,60,nopal cactus pads,nopales verdura|nopal cactus pads|nopales frescos,,verdura
+poro,equipo,260,leeks,poro puerro verdura|leeks fresh|leek vegetable,,verdura
+berro,equipo,260,watercress,berros verdura|watercress fresh|watercress bunch,,verdura
+perejil,equipo,137,parsley,perejil verdura|parsley bunch|fresh parsley,,verdura
+hinojo,equipo,260,fennel bulb,hinojo bulbo|fennel bulb|fennel vegetable,seeds semillas,verdura
+cebollin,equipo,260,chives or green onions,cebollin verdura|chives fresh|green onions scallions,,verdura
+chaya,equipo,260,chaya leaves,chaya hojas verdura|chaya Cnidoscolus aconitifolius|tree spinach chaya leaves,,verdura
+papaloquelite,equipo,260,papalo herb leaves,papaloquelite hierba|papalo herb|Porophyllum ruderale leaves,,verdura
+romeritos,equipo,260,fresh romeritos greens,romeritos frescos verdura|romeritos Suaeda planta|romeritos manojo,mole receta platillo,verdura
+ruibarbo,equipo,260,rhubarb stalks,ruibarbo verdura|rhubarb stalks|rhubarb vegetable,pie,verdura
+colinabo,equipo,150,kohlrabi,colinabo verdura|kohlrabi|kohlrabi vegetable,,verdura
+elote,equipo,80,corn on the cob,elotes mazorca|corn on the cob|sweet corn ears,palomitas popcorn,fruta
+esparrago,equipo,260,asparagus,esparragos verdura|asparagus fresh|asparagus bunch,,verdura
+cilantro,equipo,260,cilantro leaves,cilantro verdura|coriander leaves|cilantro bunch,seeds semillas,verdura
+nabo,equipo,260,turnips,nabo verdura|turnips|turnip vegetable,,verdura
+chirivia,equipo,260,parsnips,chirivia verdura|parsnips|parsnip vegetable,,verdura
+col_de_bruselas,equipo,260,brussels sprouts,coles de bruselas|brussels sprouts fresh|brussels sprouts stalk,,verdura
+kale,equipo,260,kale leaves,kale verdura|kale leaves|curly kale,chips,verdura
+chayotextle,equipo,260,chayote root tuber,chayotextle raiz|chayote root|raiz de chayote,,verdura
+arugula,equipo,260,arugula leaves,arugula verdura|rucula hojas|rocket leaves salad greens,pizza,verdura
+mizuna,equipo,260,mizuna greens,mizuna verdura|mizuna greens|Japanese mustard greens,,verdura
+curcuma,equipo,260,turmeric root,curcuma raiz|turmeric root fresh|fresh turmeric rhizome,powder polvo,verdura
+cardo,equipo,260,cardoon stalks,cardo verdura|cardoon vegetable|cardoon stalks,flower flor,verdura
+grelos,equipo,260,turnip greens,grelos verdura|turnip greens|rapini broccoli rabe,,verdura
+brocoli,equipo,150,broccoli,brocoli verdura|broccoli fresh|broccoli heads,,verdura
+lechuga,equipo,150,lettuce,lechugas verdura|lettuce|lettuce heads,,verdura
+espinaca,equipo,150,spinach leaves,espinacas verdura|spinach fresh|spinach leaves bunch,popeye,verdura
+chayote,equipo,80,chayote squash,chayotes verdura|chayote fresh|chayote squash,,fruta
+berenjena,equipo,80,eggplants,berenjenas verdura|eggplants fresh|aubergines fresh,emoji,fruta

@@ -1,22 +1,22 @@
-alimento,prioridad,meta,nombre_en,busquedas,excluir
-tomate_verde,nuevos,215,"tomatillos, small green husked fruits",tomate verde tomatillo|tomatillos fresh market|tomatillo with husk,salsa receta
-guanabana,nuevos,215,"soursop, a large spiky green fruit",guanabana fruta|soursop fruit fresh|guanabana cut open,jugo juice
-mamey,nuevos,215,"mamey sapote, a brown fruit with orange flesh",mamey fruta|mamey sapote fruit|mamey cut in half,licuado smoothie
-zapote_negro,nuevos,215,"black sapote, a green fruit with dark brown flesh",zapote negro fruta|black sapote fruit|black sapote cut open,
-chicozapote,nuevos,215,"sapodilla, a small brown fruit",chicozapote fruta|sapodilla fruit|chikoo fruit fresh,chicle gum
-tejocote,nuevos,215,"tejocotes, small orange Mexican hawthorn fruits",tejocote fruta|tejocotes mercado|mexican hawthorn fruit,ponche dulce candy
-nanche,nuevos,215,"nance, small yellow fruits",nanche fruta|nanches mercado|nance fruit Byrsonima,licor
-jaca,nuevos,215,"jackfruit, a huge green spiky fruit",jaca fruta|jackfruit whole|jackfruit cut open,
-lima,nuevos,215,"sweet limes, round pale green citrus fruits",lima dulce fruta|sweet lime mosambi|lima chichona,
-xoconostle,nuevos,215,"xoconostle, a sour pink cactus fruit",xoconostle fruta|xoconostle mercado|sour prickly pear,
-tamarindo,nuevos,215,"tamarind pods, brown seed pods",tamarindo vainas|tamarind pods fresh|tamarind fruit pods,dulce candy agua drink
-chicharo,nuevos,215,"green pea pods",chicharos en vaina|green pea pods fresh|peas in pod market,sopa soup
-haba,nuevos,215,"fava bean pods, large green pods",habas verdes vaina|fava bean pods fresh|broad beans in pod,sopa soup
-chilacayote,nuevos,215,"figleaf gourd, a large striped green squash",chilacayote|figleaf gourd|Cucurbita ficifolia fruit,dulce
-apionabo,nuevos,260,"celeriac, a knobby pale root vegetable",apionabo raiz|celeriac root|celery root vegetable market,sopa soup
-rutabaga,nuevos,260,"rutabaga, a purple and yellow root vegetable",rutabaga raiz|rutabaga vegetable|swede root vegetable,
-epazote,nuevos,260,"epazote, a green herb",epazote hierba|epazote fresh herb|Dysphania ambrosioides leaves,
-albahaca,nuevos,260,"basil, a green leafy herb",albahaca fresca|fresh basil bunch|basil leaves fresh,pesto pizza
-hierbabuena,nuevos,260,"mint, a green leafy herb",hierbabuena fresca|fresh mint bunch|spearmint leaves fresh,mojito te tea
-chipilin,nuevos,260,"chipilin, a green leafy herb",chipilin hierba|chipilin fresh leaves|Crotalaria longirostrata leaves,tamal
-germinado_de_soya,nuevos,260,"bean sprouts, white sprouts",germinado de soya|bean sprouts fresh|mung bean sprouts raw,
+alimento,prioridad,meta,nombre_en,busquedas,excluir,tipo
+tomate_verde,nuevos,215,"tomatillos, small green husked fruits",tomate verde tomatillo|tomatillos fresh|tomatillo with husk,salsa receta,fruta
+guanabana,nuevos,215,"soursop, a large spiky green fruit",guanabana fruta|soursop fruit fresh|guanabana cut open,jugo juice,fruta
+mamey,nuevos,215,"mamey sapote, a brown fruit with orange flesh",mamey fruta|mamey sapote fruit|mamey cut in half,licuado smoothie,fruta
+zapote_negro,nuevos,215,"black sapote, a green fruit with dark brown flesh",zapote negro fruta|black sapote fruit|black sapote cut open,,fruta
+chicozapote,nuevos,215,"sapodilla, a small brown fruit",chicozapote fruta|sapodilla fruit|chikoo fruit fresh,chicle gum,fruta
+tejocote,nuevos,215,"tejocotes, small orange Mexican hawthorn fruits",tejocote fruta|tejocotes frescos|mexican hawthorn fruit,ponche dulce candy,fruta
+nanche,nuevos,215,"nance, small yellow fruits",nanche fruta|nanches frescos|nance fruit Byrsonima,licor,fruta
+jaca,nuevos,215,"jackfruit, a huge green spiky fruit",yaca fruta jackfruit|jackfruit whole|jackfruit cut open,ciudad city catedral spain,fruta
+lima,nuevos,215,"sweet limes, round pale green citrus fruits",lima dulce fruta|sweet lime mosambi|lima chichona,peru ciudad city,fruta
+xoconostle,nuevos,215,"xoconostle, a sour pink cactus fruit",xoconostle fruta|xoconostles frescos|xoconostle cactus fruit,tuna,fruta
+tamarindo,nuevos,215,"tamarind pods, brown seed pods",tamarindo vainas|tamarind pods fresh|tamarind fruit pods,dulce candy agua drink,fruta
+chicharo,nuevos,215,green pea pods,chicharos en vaina|green pea pods fresh|peas in pod,sopa soup,fruta
+haba,nuevos,215,"fava bean pods, large green pods",habas verdes vaina|fava bean pods fresh|broad beans in pod,sopa soup,fruta
+chilacayote,nuevos,215,"figleaf gourd, a large striped green squash",chilacayote|figleaf gourd|Cucurbita ficifolia fruit,dulce,fruta
+apionabo,nuevos,260,"celeriac, a knobby pale root vegetable",apionabo raiz|celeriac root|celery root vegetable,sopa soup,verdura
+rutabaga,nuevos,260,"rutabaga, a purple and yellow root vegetable",rutabaga raiz|rutabaga vegetable|swede root vegetable,,verdura
+epazote,nuevos,260,"epazote, a green herb",epazote hierba|epazote fresh herb|Dysphania ambrosioides leaves,,verdura
+albahaca,nuevos,260,"basil, a green leafy herb",albahaca fresca|fresh basil bunch|basil leaves fresh,pesto pizza,verdura
+hierbabuena,nuevos,260,"mint, a green leafy herb",hierbabuena fresca|fresh mint bunch|spearmint leaves fresh,mojito te tea,verdura
+chipilin,nuevos,260,"chipilin, a green leafy herb",chipilin hierba|chipilin fresh leaves|Crotalaria longirostrata leaves,tamal,verdura
+germinado_de_soya,nuevos,260,"bean sprouts, white sprouts",germinado de soya|bean sprouts fresh|mung bean sprouts raw,,verdura

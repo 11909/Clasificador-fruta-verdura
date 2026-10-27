@@ -2,6 +2,7 @@ import csv
 import importlib.util
 import io
 import json
+import re
 import shutil
 from pathlib import Path
 
@@ -132,6 +133,26 @@ def test_leer_faltantes_del_notebook_y_de_drive(tmp_path):
     assert web.leer_faltantes(str(tmp_path / "faltantes.txt")) == {"oca": 200, "zanahoria": 0, "salak": 80}
 
 
+def test_titulos_excluidos_segun_fruta_o_verdura():
+    assert web.excluido("red-radish-leaves.jpg", "fruta") and not web.excluido("red-radish-leaves.jpg", "verdura")
+    assert web.excluido("farmers-market-carrots.jpg", "verdura") and web.excluido("beet-salad.jpg", "verdura")
+    assert [web.singular(x) for x in ("radishes", "sweet potatoes", "beetroot", "cherries")] == [
+        "radish", "sweet potato", "beetroot", "cherry"]
+
+
+def test_planes_tienen_tipo_y_busquedas_sin_otros_alimentos():
+    mapping = cargar_mapping()
+    for plan in Path("data").glob("plan_*.csv"):
+        if plan.name == "plan_equipo.csv":
+            continue
+        for f in csv.DictReader(open(plan, encoding="utf-8")):
+            assert f["tipo"] == etiqueta_de(f["alimento"], mapping), (plan.name, f["alimento"])
+            # en un mercado salen otros alimentos junto al que se busca
+            assert not re.search(r"market|mercado", f["busquedas"], re.I), (plan.name, f["alimento"])
+            if f["alimento"] != "sandia":
+                assert "watermelon" not in f["busquedas"], (plan.name, f["alimento"])
+
+
 def test_filtro_y_palabras_excluidas_descartan_lo_que_no_es_el_alimento(monkeypatch, tmp_path):
     fotos = {"https://x/oca-tuberculo.jpg": jpeg(10), "https://x/ganso-oca.jpg": jpeg(11), "https://x/ave.jpg": jpeg(12)}
     consultas = []
@@ -143,7 +164,7 @@ def test_filtro_y_palabras_excluidas_descartan_lo_que_no_es_el_alimento(monkeypa
                    "licencia": ""}, None if t in vistos else datos
 
     class FiltroFalso:  # rechaza la foto 12, como si CLIP viera un ave
-        def pasa(self, im, nombre_en):
+        def pasa(self, im, nombre_en, tipo="fruta"):
             assert nombre_en.startswith("oca tubers")
             return im.getpixel((0, 0)) != Image.open(io.BytesIO(fotos["https://x/ave.jpg"])).convert("RGB").getpixel((0, 0))
 
