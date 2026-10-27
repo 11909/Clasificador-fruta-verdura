@@ -417,7 +417,7 @@ def main():
     ap.add_argument("--salida", default="salida_web")
     ap.add_argument("--plan", default=str(PLAN))
     ap.add_argument("--fuentes", default="bing,commons", help="en orden, separadas por coma: bing, commons")
-    ap.add_argument("--excluir", nargs="*", default=[], help="carpetas con fotos que no deben entrar (fotos_prueba)")
+    ap.add_argument("--excluir", nargs="*", action="extend", default=[], help="carpetas con fotos que no deben entrar (fotos_prueba)")
     ap.add_argument("--solo", default="", help="alimentos separados por coma (por defecto, todo el plan)")
     ap.add_argument("--lote", default="", help="se agrega al nombre (web_betabel_c2_0001.jpg) para no pisar "
                     "en Drive las fotos de una descarga anterior")
