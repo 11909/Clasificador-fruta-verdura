@@ -36,8 +36,9 @@ data:
 
 features:
   tamano: 64                # la imagen se reduce a 64x64 antes de extraer
-  # color, hog, lbp (los originales), color_espacial, hog_fino, lbp_multi, forma; quita alguno para comparar su aporte
-  tipos: [color, color_espacial, hog_fino, lbp_multi, forma]
+  # color, hog, lbp (los originales), color_espacial, hog_fino, lbp_multi, forma, color_lab, bovw;
+  # quita alguno para comparar su aporte. bovw aprende su vocabulario de las fotos de train.
+  tipos: [color, color_espacial, forma, color_lab, bovw]
   bins_color: 16
   # Separa el alimento del fondo antes de medir: grabcut (OpenCV), saturacion o null (imagen completa)
   segmentar: grabcut
@@ -62,7 +63,7 @@ ajustar_umbral: true
 # Cómo se elige el modelo final: "vistos" = mayor f1_macro con fraccion_vistos de las fotos de cada
 # alimento apartadas de train (fotos nuevas de alimentos vistos, como en la app); "cv" = mayor f1_macro
 # de la validación cruzada (alimentos que el modelo no vio). La validación cruzada se reporta igual.
-elegir_por: vistos
+elegir_por: cv
 fraccion_vistos: 0.2
 
 # false = ignora los "grid" de los modelos y usa solo sus params fijos (más rápido)

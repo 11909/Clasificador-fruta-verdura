@@ -106,3 +106,16 @@ def test_separar_vistos_aparta_fotos_de_cada_alimento():
     grupos = np.repeat(["ajo", "pera", "kiwi"], [10, 5, 1])
     val = separar_vistos(grupos, 0.2, 0)
     assert val[grupos == "ajo"].sum() == 2 and val[grupos == "pera"].sum() == 1 and val[grupos == "kiwi"].sum() == 0
+
+
+def test_color_lab_y_bovw(tmp_path):
+    from src.features import aprender_vocabulario
+    rutas = []
+    for i in range(6):
+        imagen_aleatoria(i).save(tmp_path / f"{i}.png")
+        rutas.append(str(tmp_path / f"{i}.png"))
+    vocabulario = aprender_vocabulario(rutas, palabras=8, por_imagen=20)
+    assert vocabulario.shape == (8, 128)
+    x = extraer(imagen_aleatoria(0), tipos=["color_lab", "bovw"], vocabulario=vocabulario)
+    assert x.shape == (6 + 64 + 8,) and np.isfinite(x).all()
+    assert abs((x[-8:] ** 2).sum() - 1) < 1e-5  # histograma de palabras normalizado
