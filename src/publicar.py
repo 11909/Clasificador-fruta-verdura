@@ -5,7 +5,8 @@ src/modelo.py descarga siempre el modelo del Release más reciente, en cuanto te
 publicación todos (notebook de predicción, demo, línea de comandos) usan el modelo nuevo.
 
 Por defecto solo publica si el modelo nuevo supera al publicado en accuracy balanceada de test,
-para que nadie reemplace por error un modelo mejor. Con --forzar publica de todas formas.
+para que nadie reemplace por error un modelo mejor. El publicado se mide con las mismas imágenes de
+test que el nuevo (comparar_con_publicado), porque el test cambia entre corridas. Con --forzar publica de todas formas.
 
 Necesita un token de GitHub con permiso de escritura en el repo (ver docs/detalles.md, "Publicar el modelo").
 En Kaggle se guarda en Secrets con el nombre GITHUB_TOKEN; aquí se lee de la variable de entorno.
@@ -13,6 +14,7 @@ En Kaggle se guarda en Secrets con el nombre GITHUB_TOKEN; aquí se lee de la va
 Uso:  GITHUB_TOKEN=... python -m src.publicar --salida /kaggle/working/outputs
 """
 import argparse
+import csv
 import json
 import os
 import subprocess
@@ -25,7 +27,8 @@ REPO = "11909/Clasificador-fruta-verdura"
 API = "https://api.github.com"
 METRICA = "balanced_accuracy"
 ARCHIVOS = ("modelo.joblib", "test_metrics.json", "resultados_cv.csv")
-OPCIONALES = ("resultados_test.csv", "comparacion_modelos.png", "metricas_modelos.png", "matrices_modelos.png")  # se suben si existen
+OPCIONALES = ("resultados_test.csv", "comparacion_modelos.png", "metricas_modelos.png", "matrices_modelos.png",
+              "publicado_en_test.json")  # se suben si existen
 
 
 class NoEncontrado(RuntimeError):
@@ -71,6 +74,40 @@ def metricas_publicadas(token: str, repo: str = REPO) -> dict | None:
     return None
 
 
+MISMO_TEST = "publicado_en_test.json"
+
+
+def comparar_con_publicado(salida: str | os.PathLike, fuente: str | None = None) -> dict | None:
+    """Mide el modelo publicado (o `fuente`) con las mismas imágenes de test de esta corrida
+    (predicciones_test.csv) y lo guarda en publicado_en_test.json. Así se comparan los dos con el mismo
+    examen: las métricas guardadas en el Release salieron de otro test. None si no hay test o modelo."""
+    from src.evaluate import metricas, predecir_con_umbral
+    from src.features import extraer_lote
+    from src.mapping import ETIQUETAS
+    from src.modelo import MODELO_URL, cargar_modelo
+
+    salida = Path(salida)
+    if not (salida / "predicciones_test.csv").exists():
+        return None
+    with open(salida / "predicciones_test.csv", encoding="utf-8") as f:
+        filas = list(csv.DictReader(f))
+    if not filas:
+        return None
+    try:
+        paquete = cargar_modelo(fuente or MODELO_URL)
+    except (RuntimeError, OSError) as error:
+        print(f"No pude bajar el modelo publicado para compararlo: {error}")
+        return None
+    X = extraer_lote([f["ruta"] for f in filas], **paquete["features"])
+    modelo, umbral = paquete["modelo"], paquete.get("umbral", 0.5)
+    predichos = (predecir_con_umbral(modelo.predict_proba(X), umbral) if hasattr(modelo, "predict_proba")
+                 else modelo.predict(X))
+    res = {"modelo": paquete["spec"]["name"], "umbral_verdura": umbral, "creado": paquete.get("creado"),
+           **metricas([ETIQUETAS.index(f["real"]) for f in filas], predichos)}
+    (salida / MISMO_TEST).write_text(json.dumps(res, indent=2), encoding="utf-8")
+    return res
+
+
 def _commit_actual() -> str | None:
     r = subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True, text=True,
                        cwd=Path(__file__).resolve().parent)
@@ -84,7 +121,8 @@ def _descripcion(nuevas: dict, anteriores: dict | None) -> str:
              f"Modelo: **{nuevas.get('modelo', '?')}**, umbral de verdura {nuevas.get('umbral_verdura', 0.5)}.\n\n"
              "| Métrica en test | Valor |\n|---|---|\n" + "\n".join(filas))
     if anteriores and isinstance(anteriores.get(METRICA), (int, float)):
-        texto += f"\n\nRelease anterior ({anteriores['release']}): {METRICA} {anteriores[METRICA]:.4f}."
+        donde = " con el mismo test" if anteriores.get("mismo_test") else ""
+        texto += f"\n\nRelease anterior ({anteriores['release']}){donde}: {METRICA} {anteriores[METRICA]:.4f}."
     return texto + f"\n\n```json\n{json.dumps(nuevas, indent=2)}\n```"
 
 
@@ -98,6 +136,18 @@ def publicar(salida: str | os.PathLike, token: str, repo: str = REPO, forzar: bo
     nuevas = json.loads((salida / "test_metrics.json").read_text(encoding="utf-8"))
 
     anteriores = metricas_publicadas(token, repo)
+    if anteriores:
+        # Con el mismo test que el modelo nuevo, si se pudo medir; si no, la métrica guardada en el Release
+        try:
+            mismo = (json.loads((salida / MISMO_TEST).read_text(encoding="utf-8")) if (salida / MISMO_TEST).exists()
+                     else comparar_con_publicado(salida))
+        except Exception as error:  # noqa: BLE001 - sin la comparación se usa la métrica del Release
+            print(f"No pude medir el modelo publicado con este test ({error}); comparo con la de su Release.")
+            mismo = None
+        if mismo:
+            anteriores = {**anteriores, METRICA: mismo[METRICA], "mismo_test": True}
+            print(f"{anteriores['release']} en el mismo test: {METRICA} {mismo[METRICA]:.4f} "
+                  f"(nuevo: {nuevas.get(METRICA, 0):.4f})")
     if anteriores and not forzar and isinstance(anteriores.get(METRICA), (int, float)):
         if nuevas.get(METRICA, 0) <= anteriores[METRICA]:
             print(f"No se publica: {METRICA} {nuevas.get(METRICA, 0):.4f} no supera la de "
