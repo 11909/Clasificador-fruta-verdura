@@ -1,0 +1,21 @@
+alimento,prioridad,meta,nombre_en,busquedas,excluir,tipo
+betabel,bajo_rendimiento,200,"beetroot, a dark red root vegetable",fresh beetroot whole|beets with leaves|beetroot cut in half|red beets in a basket|beetroot on wooden table|harvested beets with soil,receta jugo juice salad ensalada ciruela plum,verdura
+camote,bajo_rendimiento,200,"sweet potatoes, red skinned tubers",raw sweet potatoes|sweet potato cut in half raw|purple sweet potatoes raw|sweet potatoes in a basket|sweet potatoes on wooden table|freshly dug sweet potatoes,receta fries papas papaya baked,verdura
+flor_de_calabaza,bajo_rendimiento,200,"squash blossoms, orange flowers",fresh squash blossoms|zucchini flowers raw|squash blossoms bunch|squash blossoms in hand|squash blossom on plant,quesadilla relleno stuffed fried halloween,verdura
+cebolla,bajo_rendimiento,200,"onions, a bulb vegetable",whole onions|red onion whole|white onions|onion cut in half|onions in a basket|onions with green tops,aros rings receta ajo garlic,verdura
+papa,bajo_rendimiento,200,"potatoes, tubers",raw potatoes|red potatoes raw|potatoes in a basket|potato cut in half raw|freshly dug potatoes|yellow potatoes raw,fries francisco pope chips receta camote mashed,verdura
+curcuma,bajo_rendimiento,200,"fresh turmeric root, orange rhizome",fresh turmeric root|turmeric rhizome cut|raw turmeric roots|turmeric root on wooden table|fresh turmeric with leaves,powder polvo capsule tea,verdura
+chayotextle,bajo_rendimiento,200,"chayote root, a pale brown tuber",chayotextle|chayote root tuber|raiz de chayote|chinchayote,,verdura
+romanesco,bajo_rendimiento,200,"romanesco broccoli, a green fractal vegetable",romanesco broccoli|romanesco cauliflower|romanesco head|romanesco florets|romanesco with leaves,fractal art drawing,verdura
+arugula,bajo_rendimiento,150,"arugula leaves",fresh arugula|arugula leaves bunch|rocket leaves fresh|arugula in a bowl raw|rucula hojas,pizza salad ensalada,verdura
+col_de_bruselas,bajo_rendimiento,150,brussels sprouts,raw brussels sprouts|brussels sprouts on stalk|fresh brussels sprouts|brussels sprouts cut in half raw|brussels sprouts in a bowl raw,roasted asadas recipe receta,verdura
+nabo,bajo_rendimiento,150,"turnips, purple and white roots",fresh turnips|turnips with greens|purple top turnips|turnip cut in half|turnips in a basket,receta soup,verdura
+hinojo,bajo_rendimiento,150,fennel bulb,fresh fennel bulb|fennel bulbs with fronds|fennel bulb cut in half|raw fennel,seeds semillas tea,verdura
+amaranto,bajo_rendimiento,150,amaranth leaves,amaranth greens bunch|fresh amaranth leaves|red amaranth leaves|amaranth vegetable leaves,semilla cereal alegria,verdura
+endibia,bajo_rendimiento,150,belgian endive,belgian endive heads|fresh endive|endive cut in half|red endive,salad ensalada,verdura
+apio,bajo_rendimiento,150,celery stalks,fresh celery stalks|celery bunch|celery with leaves|celery sticks raw|celery heart,juice jugo soup,verdura
+brotes_de_bambu,bajo_rendimiento,150,bamboo shoots,fresh bamboo shoots|raw bamboo shoots|bamboo shoots peeled|bamboo shoot harvest,panda,verdura
+bardana,bajo_rendimiento,150,burdock roots,burdock root fresh|gobo root|burdock roots bundle|raw burdock root,flower flor tea,verdura
+zanahoria,bajo_rendimiento,150,"carrots, orange root vegetables",fresh carrots|carrots with tops|carrots in a basket|carrots on wooden table|carrots cut|freshly pulled carrots,receta pastel cake juice jugo,verdura
+jicama,bajo_rendimiento,150,jicama root,jicama root whole|jicama cut in half|fresh jicama|jicama sticks raw,,verdura
+mashua,bajo_rendimiento,150,"mashua tubers, purple and yellow tubers",mashua tubers|mashua tuberculo|Tropaeolum tuberosum tubers|isaño tuberculo,flor flower,verdura

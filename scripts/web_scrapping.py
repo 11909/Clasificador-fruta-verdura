@@ -91,6 +91,18 @@ NO_ALIMENTO = ["a bird", "an animal", "a person", "a cooked dish or meal", "a pl
                "a building, street or landscape", "a fish or seafood",
                "a toy, a phone or another object", "a market stall with many different fruits and vegetables"]
 # Solo para frutas: en una verdura la planta, las hojas o la flor pueden ser justo lo que se busca
+NO_ALIMENTO += ["a farm field or farmland without visible vegetables", "a tractor or farm machinery",
+                "roasted, fried or cooked vegetables", "a spice powder", "text, a chart or an infographic",
+                "a color swatch or color palette", "a sports scene", "a screenshot"]
+# El alimento dibujado o cocido: la foto pasa solo si "una foto de <alimento>" gana con al menos UMBRAL_FOTO
+# y "<alimento> crudo" con al menos UMBRAL_CRUDO
+NO_FOTO = ["a drawing of", "a cartoon of", "clipart of", "a 3D render of", "a painting of", "an infographic about"]
+COCIDO = ["cooked", "roasted or fried", "a dish made with"]
+UMBRAL_FOTO = 0.2
+UMBRAL_CRUDO = 0.2
+# Ventaja mínima (en logits de CLIP) del alimento buscado sobre el más parecido de OTROS_ALIMENTOS; se mide con
+# la descripción completa y con el nombre solo, porque "red skinned tubers" también describe papas rojas
+MARGEN = 0.25
 NO_ALIMENTO_FRUTA = ["a flowering plant or a tree without fruit", "a cactus or a whole plant growing in a garden or field"]
 # Frutas y verduras con que CLIP compara cada foto: la foto pasa solo si se parece más al alimento buscado
 # que a cualquiera de estas (así una sandía no entra como rábano ni una naranja como camote)
@@ -109,6 +121,22 @@ def singular(nombre: str) -> str:
         if nombre.endswith(fin) and not nombre.endswith("ss"):
             return nombre[: -len(fin)] + cambio
     return nombre
+
+
+# Palabras que solo describen al alimento: "celery stalks" sigue siendo "celery" y "red cabbage" sigue siendo
+# "cabbage", así que esos no compiten contra él; "sweet potato" o "romanesco broccoli" sí compiten con "potato"
+# y "broccoli" porque son otro alimento
+DESCRIPTORES = {"fruit", "stalk", "root", "bulb", "leaf", "leave", "cob", "on", "the", "head", "bunch", "fresh",
+                "raw", "whole", "red", "green", "yellow", "white", "purple", "orange"}
+
+
+def rivales(nombre_en: str) -> list[str]:
+    """Los OTROS_ALIMENTOS contra los que compite nombre_en (quita los que son el mismo alimento)."""
+    palabras = {singular(w) for w in re.findall(r"[a-z]+", nombre_en.split(",")[0].lower())}
+    def mismo(x):
+        propias = {singular(w) for w in x.split()}
+        return propias <= palabras and not (palabras - propias - DESCRIPTORES)
+    return [x for x in OTROS_ALIMENTOS if not mismo(x)]
 
 
 # Títulos que casi nunca son el alimento solo: dibujos, láminas, platillos y bebidas. Los de una fruta además
@@ -264,7 +292,13 @@ FUENTES = {"commons": commons, "bing": bing}
 
 
 class Filtro:
-    """CLIP sin entrenar: compara la foto con "una foto de <alimento>" y con cosas que no son el alimento."""
+    """CLIP sin entrenar. Una foto pasa si:
+    - parece un alimento crudo y no algo de NO_ALIMENTO (animales, platillos, campos, tractores, texto...);
+    - el alimento buscado le gana a todas las frutas y verduras de OTROS_ALIMENTOS;
+    - es una foto y no un dibujo, caricatura, clipart, render 3D o infografía del alimento;
+    - el alimento está crudo, no cocido, asado o en un platillo.
+    Los umbrales se calibraron con 137 fotos de Bing revisadas a mano (dibujos, campos, tractores,
+    platillos y fotos buenas): pasan 71 de 79 buenas y 0 de 58 malas."""
 
     def __init__(self, umbral: float = UMBRAL_CLIP, nucleos: int = 2):
         import torch
@@ -276,38 +310,53 @@ class Filtro:
         self.textos = {}
         self.umbral = umbral
 
+    @staticmethod
+    def _vector(salida):
+        # transformers 5 devuelve un objeto con el vector en pooler_output; las versiones anteriores, el vector
+        v = salida if hasattr(salida, "norm") else salida.pooler_output
+        return v / v.norm(dim=-1, keepdim=True)
+
+    def _incrustar_textos(self, frases: list[str]):
+        with self.torch.no_grad():
+            return self._vector(self.modelo.get_text_features(**self.proc(text=frases, return_tensors="pt", padding=True)))
+
     def _texto(self, nombre_en: str, tipo: str = "fruta"):
+        """Frases de cada grupo, ya convertidas por CLIP (se calculan una vez por alimento)."""
         if (nombre_en, tipo) not in self.textos:
             # nombre_en es "beetroot, a dark red root vegetable": lo de antes de la coma es el alimento
-            propio = singular(nombre_en.split(",")[0])
-            otros = [x for x in OTROS_ALIMENTOS if x != propio]
-            frases = [f"a photo of {nombre_en}", "a photo of a different fresh fruit, vegetable or nut"]
+            corto = nombre_en.split(",")[0].strip()
             no_alimento = NO_ALIMENTO + (NO_ALIMENTO_FRUTA if tipo != "verdura" else [])
-            frases += [f"a photo of {x}" for x in no_alimento]
-            frases += [f"a photo of {x}" for x in otros]
-            self.textos[nombre_en, tipo] = (self.proc(text=frases, return_tensors="pt", padding=True),
-                                            2 + len(no_alimento))
+            grupos = {
+                "alimento": [f"a photo of {nombre_en}", "a photo of a different fresh fruit, vegetable or nut"]
+                            + [f"a photo of {x}" for x in no_alimento],
+                "otros": [f"a photo of {x}" for x in rivales(nombre_en)],
+                "nombre": [f"a photo of {corto}"],
+                "estilo": [f"a photo of {corto}"] + [f"{x} {corto}" for x in NO_FOTO],
+                "crudo": [f"a photo of raw {corto}"] + [f"a photo of {x} {corto}" for x in COCIDO],
+            }
+            self.textos[nombre_en, tipo] = {g: self._incrustar_textos(f) for g, f in grupos.items()}
         return self.textos[nombre_en, tipo]
 
-    def probabilidades(self, im: Image.Image, nombre_en: str, tipo: str = "fruta") -> tuple[float, bool]:
-        """(probabilidad de que la foto sea un alimento crudo, si el alimento buscado le gana a todos los
-        de OTROS_ALIMENTOS)."""
-        textos, inicio_otros = self._texto(nombre_en, tipo)
+    def probabilidades(self, im: Image.Image, nombre_en: str, tipo: str = "fruta") -> dict:
+        """alimento: probabilidad de que sea un alimento crudo; gana: si el buscado le gana por MARGEN a OTROS_ALIMENTOS;
+        foto: probabilidad de que sea foto y no dibujo; crudo: probabilidad de que no esté cocido."""
+        textos = self._texto(nombre_en, tipo)
         with self.torch.no_grad():
-            salida = self.modelo(**textos, pixel_values=self.proc(images=im, return_tensors="pt")["pixel_values"])
-        logits = salida.logits_per_image[0]
-        p = logits[:inicio_otros].softmax(dim=-1)
-        es_alimento = float(p[0] + p[1])
-        gana = bool(logits[0] >= logits[inicio_otros:].max()) if len(logits) > inicio_otros else True
-        return es_alimento, gana
+            v = self._vector(self.modelo.get_image_features(**self.proc(images=im, return_tensors="pt")))
+        escala = float(self.modelo.logit_scale.detach().exp())
+        lo = {g: (escala * v @ t.T)[0] for g, t in textos.items()}
+        p = lo["alimento"].softmax(dim=-1)
+        margen = float(min(lo["alimento"][0], lo["nombre"][0]) - lo["otros"].max())
+        return {"alimento": float(p[0] + p[1]), "gana": margen >= MARGEN, "margen": margen,
+                "foto": float(lo["estilo"].softmax(dim=-1)[0]), "crudo": float(lo["crudo"].softmax(dim=-1)[0])}
 
     def probabilidad(self, im: Image.Image, nombre_en: str, tipo: str = "fruta") -> float:
         """Probabilidad de que la foto sea el alimento (o al menos un alimento crudo)."""
-        return self.probabilidades(im, nombre_en, tipo)[0]
+        return self.probabilidades(im, nombre_en, tipo)["alimento"]
 
     def pasa(self, im: Image.Image, nombre_en: str, tipo: str = "fruta") -> bool:
-        es_alimento, gana = self.probabilidades(im, nombre_en, tipo)
-        return es_alimento >= self.umbral and gana
+        p = self.probabilidades(im, nombre_en, tipo)
+        return p["alimento"] >= self.umbral and p["gana"] and p["foto"] >= UMBRAL_FOTO and p["crudo"] >= UMBRAL_CRUDO
 
 
 def crear_filtro(apagado: bool, umbral: float = UMBRAL_CLIP, nucleos: int = 2) -> "Filtro | None":
