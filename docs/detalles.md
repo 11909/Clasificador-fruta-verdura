@@ -198,7 +198,7 @@ El dataset combinado mezcla licencias (Fruits-360 es CC BY-SA 4.0): manténganlo
 
 ## Modelos y validación
 
-En `configs/baseline.yaml` se listan los modelos a comparar. Cada uno se evalúa con la validación cruzada elegida (ver abajo), y uno se reentrena con todo el conjunto de entrenamiento y se evalúa en Test. Con `elegir_por: cv` (por defecto) se elige por la validación cruzada, que mide alimentos que no vio. Con `elegir_por: vistos` se elige el de mayor F1 macro con el 20 % de las fotos de cada alimento apartadas de train, es decir, con fotos nuevas de alimentos que el modelo sí vio, como al usar la app. En una corrida con el test del dataset combinado, en una corrida eso eligió naive_bayes (0.82 en test) aunque svm sacó 0.955.
+En `configs/baseline.yaml` se listan los modelos a comparar. Cada uno se evalúa con la validación cruzada elegida (ver abajo), y uno se reentrena con todo el conjunto de entrenamiento y se evalúa en Test. Con `elegir_por: cv` (por defecto) se elige por la validación cruzada, que mide alimentos que no vio. Con `elegir_por: vistos` se elige el de mayor F1 macro con el 20 % de las fotos de cada alimento apartadas de train, es decir, con fotos nuevas de alimentos que el modelo sí vio, como al usar la app. Con el test anterior (del dataset combinado), `cv` eligió naive_bayes (0.82 en test) aunque svm sacó 0.955.
 
 - **Modelos disponibles:** `logistic_regression`, `svm`, `knn`, `naive_bayes`, `decision_tree`, `random_forest`, `gradient_boosting`, y las combinaciones `voting` y `stacking`.
 - **Validación:**
