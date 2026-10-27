@@ -1,0 +1,38 @@
+alimento,prioridad,meta,nombre_en,busquedas,excluir,tipo
+romanesco,sin_fotos,260,"romanesco broccoli, a green fractal vegetable",romanesco with leaves|romanesco plant garden leaves|romanesco broccoli whole|romanesco head whole|romanesco cut florets|romanesco broccoli vegetable|romanesco cauliflower|romanesco verdura,fractal art drawing,verdura
+radicchio,sin_fotos,260,"radicchio, a red leaf chicory",radicchio fresh head|radicchio growing field|radicchio di treviso|radicchio head cut|radicchio vegetable|radicchio rosso fresh|red chicory,salad ensalada,verdura
+oca,sin_fotos,260,"oca tubers, colorful pink and yellow Andean tubers",oca tubers Andean|oca harvest soil Andes|red oca tubers|Oxalis tuberosa pink tubers|oca tuberculo andino|Oxalis tuberosa tubers|oca andina tuberculos,ave ganso goose bird pato duck juego game,verdura
+olluco,sin_fotos,260,"ulluco tubers, shiny pink and yellow tubers",ulluco tubers|ulluco harvest soil|ulluco tubers pink yellow|olluco tuberculos andinos|olluco tuberculo|ulluco tubers|Ullucus tuberosus tubers,,verdura
+ruibarbo,sin_fotos,260,"rhubarb, red stalks",red rhubarb stalks|rhubarb stalks with leaves|rhubarb plant garden|red rhubarb stalks bunch|fresh rhubarb stalks|ruibarbo verdura|rhubarb stalks|rhubarb vegetable,pie tarta,verdura
+ñame,sin_fotos,260,yam tubers,ñame tuberculo|yam tuber Dioscorea|true yams tubers,sweet potato camote,verdura
+nopal,sin_fotos,260,nopal cactus pads,nopales verdura|nopal cactus pads|nopales frescos,,verdura
+papaloquelite,sin_fotos,260,papalo herb leaves,papaloquelite hierba|papalo herb|Porophyllum ruderale leaves,,verdura
+perejil,sin_fotos,260,parsley,perejil verdura|parsley bunch|fresh parsley,,verdura
+platano_macho,sin_fotos,215,"plantains, large green cooking bananas",plantains fresh|plantain bananas raw|platano macho verde,frito chips tostones,fruta
+poro,sin_fotos,260,leeks,poro puerro verdura|leeks fresh|leek vegetable,,verdura
+quelite,sin_fotos,260,"quelites, edible wild greens",quelites verdura|quelite cenizo verdura|lambsquarters greens,,verdura
+raiz_de_nenufar,sin_fotos,260,"lotus root, a long beige rhizome with holes",lotus root fresh whole|lotus root sliced raw|raiz de loto fresca|Nelumbo nucifera rhizome,flower flor chips frito fried,verdura
+romeritos,sin_fotos,260,fresh romeritos greens,romeritos frescos verdura|romeritos Suaeda planta|romeritos manojo,mole receta platillo,verdura
+salsifi,sin_fotos,260,salsify roots,salsifi raiz verdura|salsify root vegetable|black salsify Scorzonera roots,flower flor,verdura
+tallo_de_malanga,sin_fotos,260,"taro stems, long green leaf stalks",taro stems fresh|taro stalks vegetable|arbi stems bunch|colocasia stems fresh,curry receta,verdura
+tupinambo,sin_fotos,260,Jerusalem artichoke tubers,tupinambo tuberculo|jerusalem artichoke tubers|sunchokes vegetable,flower flor,verdura
+verdolaga,sin_fotos,260,purslane leaves,verdolagas verdura|purslane vegetable|Portulaca oleracea vegetable,flower flor,verdura
+yacon,sin_fotos,260,yacon root,yacon raiz|yacon root vegetable|Smallanthus sonchifolius root,,verdura
+yuca,sin_fotos,260,cassava root,yuca raiz|cassava root|cassava tubers,yucca planta plant,verdura
+betabel,coloridas,150,"beetroot, a dark red root vegetable",beets with greens bunch|beetroot harvest soil|beetroot cut in half|raw beets whole|golden beets raw|beetroot with leaves,receta jugo juice salad ensalada ciruela plum cereza cherry,verdura
+rabano,coloridas,150,"radishes, small red root vegetables",radish bunch with leaves|radishes harvest garden soil|red radishes cut|red radishes whole|daikon radish whole|radishes on wooden table,receta ensalada salad sandia watermelon,verdura
+zanahoria,coloridas,150,"carrots, orange root vegetables",carrots bunch with tops|carrots harvest garden soil|rainbow carrots purple|fresh carrots whole|carrots with green leaves,receta pastel cake juice jugo,verdura
+camote,coloridas,150,"sweet potatoes, red skinned tubers",sweet potato harvest soil|purple sweet potato raw|sweet potato cut in half|sweet potatoes whole raw|red sweet potatoes|sweet potato tubers,receta fries papas papaya,verdura
+cebolla,coloridas,150,"onions, a bulb vegetable",red onions with green tops bunch|onion harvest garden soil|red onion cut in half|red onions whole|white onion whole|spring onions bunch,aros rings receta ajo garlic,verdura
+papa,coloridas,150,"potatoes, tubers",potato harvest soil plant|red potatoes raw|purple potatoes raw|yellow potatoes raw|potatoes in soil|potato tubers raw,fries francisco pope chips receta camote,verdura
+curcuma,coloridas,150,"fresh turmeric root, orange rhizome",fresh turmeric root|turmeric rhizome harvest with leaves soil|fresh turmeric root cut|turmeric rhizomes raw,powder polvo capsule,verdura
+col,coloridas,150,"red cabbage, a purple leafy vegetable",red cabbage head|red cabbage growing garden leaves|red cabbage whole|red cabbage cut in half|purple cabbage head,ensalada salad coleslaw,verdura
+nabo,coloridas,150,"turnips, purple and white roots",purple turnips|turnips bunch with greens|turnip harvest garden soil|purple top turnips,,verdura
+mashua,coloridas,150,"mashua tubers, purple and yellow tubers",mashua tubers|mashua harvest soil|purple mashua tubers|Tropaeolum tuberosum tubers,flor flower,verdura
+acelga,coloridas,150,"rainbow chard, leaves with red and yellow stems",rainbow chard leaves|rainbow chard bunch|rainbow chard growing garden|red chard leaves,,verdura
+flor_de_calabaza,coloridas,150,"squash blossoms, orange flowers",fresh squash blossoms|squash blossoms on plant garden|orange squash blossoms bunch|squash flowers fresh bunch,quesadilla relleno stuffed halloween,verdura
+amaranto,coloridas,150,red amaranth leaves,red amaranth leaves|red amaranth plant garden|red amaranth leaves bunch|amaranthus red greens,semilla cereal alegria,verdura
+kale,coloridas,150,purple kale leaves,purple kale leaves|purple kale growing garden|purple kale bunch|red russian kale,chips,verdura
+lechuga,coloridas,150,red leaf lettuce,red leaf lettuce|red lettuce growing garden soil|red leaf lettuce head|lollo rosso lettuce,ensalada salad,verdura
+endibia,coloridas,150,red endive,red endive|red endive with roots|red belgian endive|red endive heads,,verdura
+rutabaga,coloridas,150,"rutabaga, a purple and yellow root vegetable",rutabaga whole|rutabaga with leaves harvest|rutabaga purple top|swede turnip whole,,verdura
