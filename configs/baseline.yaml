@@ -33,6 +33,11 @@ data:
   # Grupos de data/mapping.csv que se dejan fuera del entrenamiento y la prueba.
   # Para quitar nueces y semillas: excluir_grupos: [nueces_semillas]
   excluir_grupos: []
+  # Peso extra por alimento: {alimento: n} da n veces más fotos a ese alimento al entrenar (si las tiene),
+  # para las verduras de colores, que el modelo confunde con fruta. null = todos pesan igual.
+  refuerzo: {betabel: 2, rabano: 2, zanahoria: 2, camote: 2, cebolla: 2, papa: 2, curcuma: 2, romanesco: 2,
+             col: 2, radicchio: 2, nabo: 2, oca: 2, olluco: 2, mashua: 2, ruibarbo: 2, acelga: 2,
+             flor_de_calabaza: 2, amaranto: 2, kale: 2, lechuga: 2, endibia: 2, rutabaga: 2}
 
 features:
   tamano: 64                # la imagen se reduce a 64x64 antes de extraer

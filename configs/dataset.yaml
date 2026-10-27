@@ -44,14 +44,21 @@ fuentes:
       test: Test
     nivel_clase: 0
     quitar_prefijos: [fresh, rotten, stale]
+    renombrar:   # en Test las carpetas vienen mal escritas (freshpatato, rottentamto)
+      patato: potato
+      tamto: tomato
 
   - nombre: packeat
     kaggle: sergeynesteruk/packed-fruits-and-vegetables-recognition-benchmark
-    splits:   # por confirmar con --explorar
-      train: train
-      test: test
+    splits:   # el zip trae un nivel repetido: train/train/<clase>
+      train: train/train
+      test: test/test
     nivel_clase: 0
     max_por_clase: 1500   # PackEat es grande y dominado por manzana y tomate
+    renombrar:   # PackEat agrupa brócoli y coliflor como "cabbage" y el chile como "pepper"
+      cabbage broccoli: broccoli
+      cabbage cauliflower: cauliflower
+      pepper chili: chili
 
   - nombre: vegetales15   # Vegetable Image Dataset, 15 clases a 224x224
     kaggle: misrakahmed/vegetable-image-dataset

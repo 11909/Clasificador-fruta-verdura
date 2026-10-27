@@ -28,6 +28,21 @@ def test_resolver_clase_limpia_prefijos_y_plurales():
     assert resolver_clase("freshxyz", fuente, MAPPING)[1] is None
 
 
+def test_clases_de_las_fuentes_de_kaggle_quedan_mapeadas():
+    # nombres reales de carpeta de freshrotten y PackEat que antes quedaban sin mapeo o en otro alimento
+    import yaml
+    fuentes = {f["nombre"]: f for f in yaml.safe_load(open("configs/dataset.yaml"))["fuentes"]}
+    mapping = cargar_mapping()
+    casos = {"freshrotten": {"freshpatato": "papa", "rottentamto": "jitomate"},
+             "packeat": {"cabbage_broccoli": "brocoli", "cabbage_cauliflower": "coliflor", "beet_round": "betabel",
+                         "raddish_round": "rabano", "salad_green": "lechuga", "tangerine_tangerine": "mandarina",
+                         "pepper_chili": "chile", "pepper_sweet_red": "pimiento", "daikon_daikon": "rabano"}}
+    for fuente, clases in casos.items():
+        for carpeta, alimento in clases.items():
+            assert resolver_clase(carpeta, fuentes[fuente], mapping)[0] == alimento, carpeta
+    assert fuentes["packeat"]["splits"] == {"train": "train/train", "test": "test/test"}
+
+
 def test_construir_combina_deduplica_y_reporta(tmp_path):
     a, b = tmp_path / "a", tmp_path / "b"
     for i in range(3):
@@ -170,6 +185,22 @@ def test_descomprimir_zips_en_raiz_y_en_carpeta_de_alimento(tmp_path):
     assert sorted(p.relative_to(raiz_zip).as_posix() for p in (tmp_path / "drive_zips" / "ana").rglob("*")) == [
         "nopal", "nopal/ana_001.jpg"]
     assert (drive / "zanahoria" / "luis_001.jpg").exists() and not (drive / "zanahoria" / "notas.txt").exists()
+
+
+def test_dos_zips_en_una_carpeta_no_se_pisan(tmp_path):
+    import zipfile
+    from src.equipo import descomprimir_zips
+
+    betabel = tmp_path / "drive" / "betabel"
+    betabel.mkdir(parents=True)
+    for nombre, contenido in (("web_betabel_1.zip", b"a"), ("web_betabel_2.zip", b"b")):
+        with zipfile.ZipFile(betabel / nombre, "w") as z:  # los dos traen 0001.jpg
+            z.writestr("0001.jpg", contenido)
+            z.writestr("otra/0001.jpg", contenido + b"2")
+    for _ in range(2):  # volver a descomprimir no crea copias
+        descomprimir_zips(str(tmp_path / "drive"))
+    fotos = sorted(p.name for p in betabel.glob("*.jpg"))
+    assert len(fotos) == 4 and {(betabel / f).read_bytes() for f in fotos} == {b"a", b"a2", b"b", b"b2"}
 
 
 def test_faltantes_usa_kaggle_y_equipo():

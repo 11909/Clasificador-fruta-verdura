@@ -2,17 +2,19 @@ alimento,etiqueta,grupo,nombres_dataset,nota
 acelga,verdura,,swiss chard|chard,hojas
 aguacate,fruta,,avocado,
 ajo,verdura,,garlic,bulbo
+albahaca,verdura,,basil,hojas
 alcachofa,verdura,,artichoke,flor
 almendra,fruta,nueces_semillas,almonds,
 amaranto,verdura,,red amaranth,hojas
 apio,verdura,,celery,tallo
+apionabo,verdura,,celeriac|celery root,raíz
 arándano,fruta,,blueberry,
 arúgula,verdura,,arugula|rucula|rocket,hojas
 avellana,fruta,nueces_semillas,hazelnut,
 bardana,verdura,,burdock|gobo,raíz
 berenjena,fruta,,eggplant|aubergine|brinjal,
 berro,verdura,,watercress,hojas
-betabel,verdura,,beetroot|red beet,raíz
+betabel,verdura,,beetroot|red beet|beet,raíz
 bok choy,verdura,,pak choi|bok choy,hojas
 brócoli,verdura,,broccoli,flor
 brotes de bambú,verdura,,bamboo shoot,brote
@@ -35,7 +37,11 @@ chabacano,fruta,,apricot,
 chaya,verdura,,tree spinach,hojas
 chayote,fruta,,chayote,
 chayotextle,verdura,,,raíz del chayote
+chícharo,fruta,,pea pod|green peas|peas,vaina (legumbre)
+chicozapote,fruta,,sapodilla|chikoo,
+chilacayote,fruta,,figleaf gourd,
 chile,fruta,,chili|green chili|jalapeno,
+chipilín,verdura,,chipilin,hojas
 chirimoya,fruta,,cherimoya,
 chirivía,verdura,,parsnip,raíz
 cilantro,verdura,,coriander,hojas
@@ -52,35 +58,43 @@ durazno,fruta,,peach,
 ejote,fruta,,bean pod|bean|flat bean|yardlong bean,vaina (legumbre)
 elote,fruta,,corn|sweetcorn,criterio del equipo
 endibia,verdura,,endive|belgian endive,hojas
+epazote,verdura,,epazote,hojas
 espárrago,verdura,,asparagus,tallo
 espinaca,verdura,,spinach|green spinach,hojas
 flor de calabaza,verdura,,squash blossom|zucchini flower,flor
 frambuesa,fruta,,raspberry,
 fresa,fruta,,strawberry,
 fruto de espinaca de malabar,fruta,,malabar spinach seed,
+germinado de soya,verdura,,bean sprouts|soybean sprouts,brote
 granada,fruta,,pomegranate,
 granadilla,fruta,,granadilla,
 grelos,verdura,,rapini|broccoli rabe,hojas e inflorescencia
 grosella espinosa,fruta,,gooseberry,
 grosella roja,fruta,,redcurrant,
+guanábana,fruta,,soursop|guanabana,
 guayaba,fruta,,guava,
+haba,fruta,,fava bean|broad bean,vaina (legumbre)
+hierbabuena,verdura,,mint|spearmint,hojas
 higo,fruta,,fig,
 hinojo,verdura,,fennel,bulbo y tallo
 hongo,excluir,,mushroom|brown cap mushroom,
 huauzontle,verdura,,,inflorescencia
 huckleberry,fruta,,huckleberry,
+jaca,fruta,,jackfruit,
 jengibre,verdura,,ginger,rizoma
 jícama,verdura,,jicama,raíz
 jitomate,fruta,,tomato|tomate,
 kale,verdura,,col rizada,hojas
 kiwi,fruta,,kiwi,
 kumquat,fruta,,kumquats,
-lechuga,verdura,,lettuce,hojas
+lechuga,verdura,,lettuce|salad green,hojas
 lichi,fruta,,lychee,
+lima,fruta,,sweet lime|mosambi,
 limón amarillo,fruta,,lemon,
 limón verde,fruta,,limes|lime,
 malanga,verdura,,taro,cormo
-mandarina,fruta,,mandarine|satsumas,
+mamey,fruta,,mamey sapote|mamey,
+mandarina,fruta,,mandarine|satsumas|tangerine,
 mango,fruta,,mango,
 mangostán,fruta,,mangostan,
 manzana,fruta,,apple,
@@ -94,6 +108,7 @@ mizuna,verdura,,mizuna,hojas
 mora,fruta,,mulberry,
 nabo,verdura,,turnip,raíz
 ñame,verdura,,elephant foot yam,cormo
+nanche,fruta,,nance,
 naranja,fruta,,orange,
 nectarina,fruta,,nectarine,
 nopal,verdura,,nopal,tallo
@@ -118,26 +133,32 @@ plátano macho,fruta,,plantain,
 pomelo,fruta,,pomelo,
 poro,verdura,,leek,tallo y hojas
 quelite,verdura,,quelites,hojas
-rábano,verdura,,radish,raíz
+rábano,verdura,,radish|daikon|raddish,raíz
 radicchio,verdura,,radicchio|chicory,hojas
 raíz de nenúfar,verdura,,shaluk,rizoma
 rambután,fruta,,rambutan,
 romanesco,verdura,,romanesco,inflorescencia
 romeritos,verdura,,seepweed,hojas y tallo
 ruibarbo,verdura,,rhubarb,tallo (peciolo)
+rutabaga,verdura,,rutabaga|swede,raíz
 salak,fruta,,salak,
 salsifí,verdura,,salsify,raíz
 sandía,fruta,,watermelon,
 tallo de malanga,verdura,,arum lobe,tallo
 tamarillo,fruta,,tamarillo,
+tamarindo,fruta,,tamarind,vaina (legumbre)
 tangelo,fruta,,tangelo,
+tejocote,fruta,,mexican hawthorn,
+tomate verde,fruta,,tomatillo|green tomatillo,
 toronja,fruta,,grapefruit|red grapefruit,
 tuna,fruta,,cactus fruit,
 tupinambo,verdura,,jerusalem artichoke|sunchoke,tubérculo
 uchuva,fruta,,physalis,
 uva,fruta,,grape,
 verdolaga,verdura,,purslane,hojas y tallo
+xoconostle,fruta,,sour prickly pear,
 yacón,verdura,,yacon,raíz
 yuca,verdura,,cassava,raíz
 zanahoria,verdura,,carrot,raíz
+zapote negro,fruta,,black sapote,
 zarzamora,fruta,,blackberry,

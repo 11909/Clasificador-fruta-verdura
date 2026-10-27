@@ -75,22 +75,39 @@ def limitar_por_clase(muestras: list, maximo: int | None, semilla: int, maximo_v
     return salida
 
 
-def repartir(muestras: list, n: int, rng: random.Random) -> list:
-    """Toma `n` imágenes repartidas por igual entre clases (una de cada clase por turno)."""
+def pesos(refuerzo: dict | None) -> dict[str, int]:
+    """{clase: n} con los nombres en español normalizados ("Rábano" -> "rabano"), para buscar el peso
+    de una clase por su alimento."""
+    return {normalizar(k): int(v) for k, v in (refuerzo or {}).items()}
+
+
+def peso(clase: str, pesos_: dict[str, int], alimentos: dict[str, str]) -> int:
+    """Imágenes por turno de una clase: la de su alimento en `pesos_`, o 1."""
+    if not pesos_:
+        return 1
+    clave = clave_de(clase, alimentos)
+    return pesos_.get(alimentos[clave] if clave else normalizar(clase), 1)
+
+
+def repartir(muestras: list, n: int, rng: random.Random, refuerzo: dict | None = None) -> list:
+    """Toma `n` imágenes repartidas por igual entre clases (una de cada clase por turno; las clases de
+    `refuerzo` toman tantas por turno como diga su número)."""
     clases = defaultdict(list)
     for m in muestras:
         clases[m[2]].append(m)
-    colas = [rng.sample(grupo, len(grupo)) for _, grupo in sorted(clases.items())]
+    colas = [(clase, rng.sample(grupo, len(grupo))) for clase, grupo in sorted(clases.items())]
     rng.shuffle(colas)
+    pesos_, alimentos = pesos(refuerzo), cargar_alimentos() if refuerzo else {}
     tomadas = []
-    while len(tomadas) < n and any(colas):
-        for cola in colas:
-            if cola and len(tomadas) < n:
-                tomadas.append(cola.pop())
+    while len(tomadas) < n and any(cola for _, cola in colas):
+        for clase, cola in colas:
+            for _ in range(peso(clase, pesos_, alimentos)):
+                if cola and len(tomadas) < n:
+                    tomadas.append(cola.pop())
     return tomadas
 
 
-def balancear_por_etiqueta(muestras: list, maximo: int | None, semilla: int) -> list:
+def balancear_por_etiqueta(muestras: list, maximo: int | None, semilla: int, refuerzo: dict | None = None) -> list:
     """Deja el mismo número de imágenes de fruta y de verdura: el de la etiqueta con menos
     imágenes, o `maximo` si es menor. Dentro de cada etiqueta reparte por igual entre clases
     (una imagen de cada clase por turno) para no perder variedades."""
@@ -103,7 +120,7 @@ def balancear_por_etiqueta(muestras: list, maximo: int | None, semilla: int) -> 
     objetivo = min(len(v) for v in por_etiqueta.values())
     if maximo:
         objetivo = min(objetivo, maximo)
-    return [m for _, grupo in sorted(por_etiqueta.items()) for m in repartir(grupo, objetivo, rng)]
+    return [m for _, grupo in sorted(por_etiqueta.items()) for m in repartir(grupo, objetivo, rng, refuerzo)]
 
 
 def es_web(ruta) -> bool:
@@ -140,48 +157,51 @@ def _colas_por_clase(primero: list, despues: list, rng: random.Random) -> dict[s
 
 
 def completar_por_clase(equipo: list, kaggle: list, maximo: int | None, semilla: int,
-                        maximo_verdura: int | None = None) -> list:
+                        maximo_verdura: int | None = None, refuerzo: dict | None = None) -> list:
     """Cada clase entrena con hasta `maximo` imágenes (`maximo_verdura` en las verduras) entre Drive y
     el dataset combinado: primero las de Drive y el resto del combinado, para que una clase con muchas
-    fotos en Drive no quede más grande que las demás."""
+    fotos en Drive no quede más grande que las demás. Las clases de `refuerzo` multiplican su tope."""
     if not maximo and not maximo_verdura:
         return equipo + kaggle
-    salida = []
-    for cola in _colas_por_clase(equipo, kaggle, random.Random(semilla)).values():
+    salida, pesos_ = [], pesos(refuerzo)
+    for clase, cola in _colas_por_clase(equipo, kaggle, random.Random(semilla)).items():
         tope = (maximo_verdura or maximo) if cola[0][1] == ETIQUETAS.index("verdura") else maximo
+        tope = tope * pesos_.get(clase, 1) if tope else tope
         salida += cola[:tope] if tope else cola
     return salida
 
 
 def muestra_balanceada(muestras: list, por_etiqueta: int, fraccion_test: float, semilla: int,
-                       equipo: tuple[list, list] = ([], [])) -> tuple[list, list]:
+                       equipo: tuple[list, list] = ([], []), refuerzo: dict | None = None) -> tuple[list, list]:
     """Toma `por_etiqueta` imágenes de fruta y las mismas de verdura y las divide en train y test.
 
     Dentro de cada etiqueta reparte por igual entre clases (una imagen de cada clase por turno). Cada
     clase toma primero sus fotos de Drive (`equipo` = (train, test), con su división fija) y se completa
     con `muestras`; de esas, `fraccion_test` de cada clase va a test. Si a una etiqueta no le alcanza,
-    las dos se quedan con lo que tenga la más corta."""
+    las dos se quedan con lo que tenga la más corta. `refuerzo` ({alimento: n}) da n imágenes por turno a
+    esos alimentos, para que pesen más (p. ej. las verduras de colores que el modelo confunde con fruta)."""
     rng = random.Random(semilla)
     e_train, e_test = equipo
     del_equipo, en_test = {m[0] for m in e_train + e_test}, {m[0] for m in e_test}
     colas = defaultdict(list)
     for clase, cola in _colas_por_clase(e_train + e_test, muestras, rng).items():
-        colas[cola[0][1]].append(cola[::-1])  # se toma del final
-    disponibles = [sum(len(c) for c in colas[y]) for y in range(len(ETIQUETAS))]
+        colas[cola[0][1]].append((clase, cola[::-1]))  # se toma del final
+    disponibles = [sum(len(c) for _, c in colas[y]) for y in range(len(ETIQUETAS))]
     por_etiqueta = min(por_etiqueta, *disponibles)
-    train, test, por_clase = [], [], defaultdict(list)
+    train, test, por_clase, pesos_ = [], [], defaultdict(list), pesos(refuerzo)
     for y in range(len(ETIQUETAS)):
         rng.shuffle(colas[y])
         tomadas = 0
         while tomadas < por_etiqueta:
-            for cola in colas[y]:
-                if cola and tomadas < por_etiqueta:
-                    m = cola.pop()
-                    tomadas += 1
-                    if m[0] in del_equipo:
-                        (test if m[0] in en_test else train).append(m)
-                    else:
-                        por_clase[m[2]].append(m)
+            for clase, cola in colas[y]:
+                for _ in range(pesos_.get(clase, 1)):
+                    if cola and tomadas < por_etiqueta:
+                        m = cola.pop()
+                        tomadas += 1
+                        if m[0] in del_equipo:
+                            (test if m[0] in en_test else train).append(m)
+                        else:
+                            por_clase[m[2]].append(m)
     for _, grupo in sorted(por_clase.items()):
         rng.shuffle(grupo)
         n_test = round(len(grupo) * fraccion_test)
