@@ -87,6 +87,15 @@ Abre [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](ht
 | "No encontré el secreto GITHUB_TOKEN" | Agrégalo y activa la casilla (paso 3.3). |
 | "AVISO: no pude bajar la carpeta de Drive" | El notebook sigue sin las fotos del equipo. Revisa que la carpeta esté compartida como *Cualquier persona con el enlace*, o espera un rato si Drive dice que hubo demasiados accesos. |
 
-El dataset combinado de Kaggle ya está creado (`mendezrosalesmiguel/frankeinstein`); solo se reconstruye si cambian `data/mapping.csv` o las fuentes de Kaggle (ver [docs/detalles.md](docs/detalles.md)).
+## Reconstruir el dataset combinado (Frankenstein)
+
+El dataset combinado de Kaggle ya está creado (`mendezrosalesmiguel/frankeinstein`). Solo se reconstruye si cambian `data/mapping.csv` o las fuentes de `configs/dataset.yaml`.
+
+1. **Abre el notebook:** [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://www.kaggle.com/kernels/welcome?src=https://github.com/11909/Clasificador-fruta-verdura/blob/main/notebooks/kaggle_build_dataset.ipynb). Kaggle crea una copia en tu cuenta. Si ya tienes el notebook con el que se creó el Frankenstein, mejor ábrelo desde **Your Work**: su primera celda clona `main` en cada corrida, así que ya trae los cambios, y el dataset queda ligado a ese notebook.
+2. Activa **Settings → Internet**. Las fuentes se descargan solas, sin Add Input.
+3. **Save Version → Save & Run All**. Tarda un rato porque baja y procesa las 4 fuentes.
+4. En la versión guardada, abre **Output** y elige **New Version** sobre `mendezrosalesmiguel/frankeinstein` (desde el notebook que lo creó). Así `kaggle_train.ipynb` sigue usando el mismo dataset, ya actualizado. Revisa `conteos.csv` para ver cuántas fotos quedaron por alimento.
+
+Más detalles en [docs/detalles.md](docs/detalles.md#crear-el-dataset).
 
 Todo lo demás (cómo funciona el modelo, el criterio de etiquetas, las fuentes del dataset, uso local) está en [docs/detalles.md](docs/detalles.md).
