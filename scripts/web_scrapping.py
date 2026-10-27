@@ -359,6 +359,9 @@ def empaquetar(salida: Path, lote: str = ""):
                 for p in fotos[k:k + FOTOS_POR_ZIP]:
                     z.write(p, p.name)
         total += len(fotos)
+    if not total:
+        sys.exit(f"No hay fotos en {salida / 'fotos'}/. --empaquetar solo arma los zips: primero baja las fotos "
+                 "con el mismo comando sin --empaquetar (con --plan y --excluir).")
     print(f"\n{total} fotos en {destino}/: sube esas carpetas a la raíz de la carpeta de Drive del equipo.\n"
           "Si una carpeta ya existe en Drive, sube solo el zip dentro de la que ya está.")
 
