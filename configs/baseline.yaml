@@ -68,7 +68,7 @@ ajustar_umbral: true
 # Cómo se elige el modelo final: "vistos" = mayor f1_macro con fraccion_vistos de las fotos de cada
 # alimento apartadas de train (fotos nuevas de alimentos vistos, como en la app); "cv" = mayor f1_macro
 # de la validación cruzada (alimentos que el modelo no vio). La validación cruzada se reporta igual.
-elegir_por: cv
+elegir_por: vistos
 fraccion_vistos: 0.2
 
 # false = ignora los "grid" de los modelos y usa solo sus params fijos (más rápido)
