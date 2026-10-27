@@ -37,6 +37,10 @@ def descomprimir_zips(carpeta: str, destino_raiz: str | None = None) -> list[str
     destino_raiz = Path(destino_raiz) if destino_raiz else carpeta.parent / f"{carpeta.name}_zips"
     raices = []
     for zip_path in sorted(carpeta.rglob("*.zip")):
+        if not zipfile.is_zipfile(zip_path):
+            # Una descarga cortada o una página de error de Drive guardada como .zip
+            print(f"AVISO: {zip_path.relative_to(carpeta)} no es un zip válido; lo salto. Bórralo y vuelve a correr.")
+            continue
         with zipfile.ZipFile(zip_path) as z:
             if zip_path.parent == carpeta:
                 destino = destino_raiz / zip_path.stem
@@ -61,32 +65,55 @@ def _soltar(datos: bytes, carpeta: Path, nombre: str, prefijo: str):
     destino.write_bytes(datos)
 
 
-def descargar_drive(url: str, destino: str = "/kaggle/working/fotos_equipo") -> list[str]:
+def descargar_drive(url: str, destino: str = "/kaggle/working/fotos_equipo", rondas: int = 4,
+                    pausa: float = 60) -> list[str]:
     """Baja la carpeta de Drive `url` (compartida como "cualquier persona con el enlace") y
     devuelve las raíces con carpetas de alimentos: la propia carpeta y una por zip de la raíz.
 
-    Si algunos archivos no bajan (Drive limita las descargas cuando son miles), sigue con los que
-    sí bajaron en lugar de descartar todo; `resume` salta los que ya estaban de un intento previo."""
-    import inspect
+    Primero lista la carpeta y después baja archivo por archivo. Tras muchas descargas seguidas Drive
+    empieza a rechazarlas ("demasiados accesos"), y todo lo que va después en orden alfabético se
+    quedaba sin bajar; por eso los que fallan se reintentan hasta `rondas` veces, esperando cada vez
+    más (`pausa`, 2·`pausa`...). Si aun así faltan, sigue con lo que sí bajó y dice qué alimentos
+    quedaron sin fotos. Los archivos que ya estaban de una corrida previa no se vuelven a bajar."""
+    import time
 
     import gdown
     from gdown.exceptions import DownloadError
 
-    opciones = {"retries": 3} if "retries" in inspect.signature(gdown.download_folder).parameters else {}
-    try:
-        gdown.download_folder(url, output=destino, quiet=True, resume=True, **opciones)
-    except DownloadError as e:
-        if not Path(destino).is_dir():
-            raise
-        fallidos = str(e).count("\n- ")
-        print(f"Aviso: {fallidos} archivos de Drive no se pudieron bajar; sigo con los que sí bajaron. "
-              "Vuelve a correr esta celda para reintentar solo los que faltan.")
+    archivos = gdown.download_folder(url, output=destino, quiet=True, skip_download=True)
+    Path(destino).mkdir(parents=True, exist_ok=True)
+    pendientes = [a for a in archivos if not Path(a.local_path).is_file()]
+    for ronda in range(rondas):
+        if ronda:
+            espera = pausa * 2 ** (ronda - 1)
+            print(f"Drive rechazó {len(pendientes)} archivos; espero {espera:.0f} s y los reintento "
+                  f"(intento {ronda + 1} de {rondas}).")
+            time.sleep(espera)
+        fallidos = []
+        for a in pendientes:
+            Path(a.local_path).parent.mkdir(parents=True, exist_ok=True)
+            try:
+                gdown.download(id=a.id, output=a.local_path, quiet=True, resume=True)
+            except DownloadError:
+                fallidos.append(a)
+        pendientes = fallidos
+        if not pendientes:
+            break
+    if pendientes:
+        carpetas = sorted({Path(a.path).parts[0] for a in pendientes})
+        print(f"AVISO: {len(pendientes)} archivos de Drive no se pudieron bajar; sigo con los que sí bajaron. "
+              f"Carpetas afectadas: {', '.join(carpetas)}. Vuelve a correr esta celda para reintentar "
+              "solo los que faltan.")
     for sub in sorted(p for p in Path(destino).iterdir() if p.is_dir()):
         n = sum(1 for p in sub.iterdir() if p.is_file())
         if n == 50:
             print(f"Aviso: {sub.name}/ trae justo 50 archivos; Drive podría haber listado solo 50. "
                   "Si hay más, súbanlos en zips dentro de la carpeta.")
     raices = [destino, *descomprimir_zips(destino)]
+    vacias = [sub.name for sub in sorted(p for p in Path(destino).iterdir() if p.is_dir())
+              if not any(f.suffix.lower() in EXTENSIONES for f in sub.rglob("*"))]
+    if vacias:
+        print(f"AVISO: {len(vacias)} carpetas de Drive quedaron sin fotos: {', '.join(vacias)}")
     fotos = sum(1 for r in raices for p in Path(r).rglob("*") if p.suffix.lower() in EXTENSIONES)
     print(f"Drive: {fotos} fotos bajadas")
     return raices
