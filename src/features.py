@@ -9,6 +9,9 @@ Cada imagen se convierte en un vector numérico que concatena:
 - hog_fino: HOG con celdas de 8 px (más detalle de forma)
 - lbp_multi: LBP a tres radios (textura fina y gruesa)
 - forma: silueta del objeto separado del fondo por saturación (área, excentricidad, solidez...)
+- color_lab: media y desviación en Lab y histograma conjunto a-b (Lab separa mejor los tonos que HSV)
+- bovw: "bolsa de palabras visuales": descriptores SIFT en una rejilla densa a 128 px, contados contra un
+  vocabulario de patrones locales aprendido de las fotos de train (`aprender_vocabulario`)
 
 Con `segmentar` ("saturacion" o "grabcut") primero se separa el alimento del fondo: el color se mide
 solo sobre el alimento, el fondo se pinta de un gris liso antes de HOG y LBP, y la silueta sale de
@@ -19,7 +22,7 @@ from pathlib import Path
 import numpy as np
 from joblib import Parallel, delayed
 from PIL import Image
-from skimage.color import rgb2gray, rgb2hsv
+from skimage.color import rgb2gray, rgb2hsv, rgb2lab
 from skimage.feature import hog, local_binary_pattern
 from skimage.filters import threshold_otsu
 from skimage.measure import label, regionprops
@@ -139,8 +142,52 @@ def _forma(rgb: np.ndarray, m: np.ndarray | None = None) -> np.ndarray:
                      alto / max(ancho, 1), r.perimeter ** 2 / (4 * np.pi * max(r.area, 1))], dtype=np.float32)
 
 
+def _color_lab(rgb: np.ndarray, m: np.ndarray | None = None, bins: int = 8) -> np.ndarray:
+    px = rgb2lab(rgb)[m] if m is not None else rgb2lab(rgb).reshape(-1, 3)
+    ab, _, _ = np.histogram2d(px[:, 1], px[:, 2], bins=bins, range=((-80, 80), (-80, 80)))
+    return np.concatenate([px.mean(0) / 100, px.std(0) / 100, ab.ravel() / len(px)])
+
+
+LADO_SIFT, PASO_SIFT = 128, 8
+
+
+def descriptores_sift(imagen: Image.Image) -> np.ndarray:
+    """Descriptores SIFT (128 valores) en una rejilla densa de la imagen en gris a 128x128: 225 por imagen."""
+    import cv2
+    gris = np.asarray(imagen.convert("L").resize((LADO_SIFT, LADO_SIFT)))
+    puntos = [cv2.KeyPoint(float(x), float(y), 2 * PASO_SIFT)
+              for y in range(PASO_SIFT, LADO_SIFT, PASO_SIFT) for x in range(PASO_SIFT, LADO_SIFT, PASO_SIFT)]
+    return cv2.SIFT_create().compute(gris, puntos)[1].astype(np.float32)
+
+
+def _bovw(imagen: Image.Image, vocabulario: np.ndarray) -> np.ndarray:
+    d = descriptores_sift(imagen)
+    distancias = (d ** 2).sum(1)[:, None] - 2 * d @ vocabulario.T + (vocabulario ** 2).sum(1)[None]
+    h = np.bincount(distancias.argmin(1), minlength=len(vocabulario)).astype(np.float32)
+    return np.sqrt(h / h.sum())  # raíz de las frecuencias: que unas pocas palabras comunes no dominen
+
+
+def _descriptores_ruta(ruta: str, n: int, semilla: int) -> np.ndarray:
+    with Image.open(ruta) as imagen:
+        d = descriptores_sift(imagen)
+    return d[np.random.default_rng(semilla).choice(len(d), min(n, len(d)), replace=False)]
+
+
+def aprender_vocabulario(rutas: list[str], palabras: int = 256, por_imagen: int = 40, max_imagenes: int = 3000,
+                         semilla: int = 42) -> np.ndarray:
+    """Vocabulario para "bovw": agrupa con k-means descriptores SIFT tomados de hasta `max_imagenes` fotos
+    de train. Se guarda con el modelo, así que al predecir se usa el mismo."""
+    from sklearn.cluster import MiniBatchKMeans
+    rng = np.random.default_rng(semilla)
+    elegidas = [rutas[i] for i in rng.choice(len(rutas), min(max_imagenes, len(rutas)), replace=False)]
+    d = np.vstack(Parallel(n_jobs=-1, batch_size=32)(delayed(_descriptores_ruta)(r, por_imagen, semilla)
+                                                     for r in elegidas))
+    km = MiniBatchKMeans(palabras, random_state=semilla, n_init=3, batch_size=4096).fit(d)
+    return km.cluster_centers_.astype(np.float32)
+
+
 def extraer(imagen: Image.Image, tamano: int = 64, tipos=TIPOS, bins_color: int = 16,
-            segmentar: str | None = None) -> np.ndarray:
+            segmentar: str | None = None, vocabulario: np.ndarray | None = None) -> np.ndarray:
     rgb = np.asarray(imagen.convert("RGB").resize((tamano, tamano)), dtype=np.float32) / 255.0
     gris = rgb2gray(rgb)
     m = mascara(rgb, segmentar) if segmentar else None
@@ -148,7 +195,10 @@ def extraer(imagen: Image.Image, tamano: int = 64, tipos=TIPOS, bins_color: int 
         gris = np.where(m, gris, gris[m].mean())  # fondo liso: sin bordes ni textura fuera del alimento
     partes = {"color": lambda: _color(rgb, bins_color, m), "hog": lambda: _hog(gris), "lbp": lambda: _lbp(gris),
               "color_espacial": lambda: _color_espacial(rgb, m), "hog_fino": lambda: _hog_fino(gris),
-              "lbp_multi": lambda: _lbp_multi(gris), "forma": lambda: _forma(rgb, m)}
+              "lbp_multi": lambda: _lbp_multi(gris), "forma": lambda: _forma(rgb, m),
+              "color_lab": lambda: _color_lab(rgb, m), "bovw": lambda: _bovw(imagen, vocabulario)}
+    if "bovw" in tipos and vocabulario is None:
+        raise ValueError('"bovw" necesita un vocabulario (aprender_vocabulario con fotos de train)')
     return np.concatenate([partes[t]() for t in tipos]).astype(np.float32)
 
 

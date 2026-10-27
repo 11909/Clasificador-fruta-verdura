@@ -22,7 +22,7 @@ from sklearn.model_selection import (GridSearchCV, LeaveOneGroupOut, LeaveOneOut
 from src.dataset import (balancear_por_etiqueta, completar_por_clase, conteo, dividir_equipo, es_web,
                          fuente_de, limitar_por_clase, listar_muestras, muestra_balanceada)
 from src.evaluate import elegir_umbral, intervalos_bootstrap, metricas, predecir_con_umbral
-from src.features import extraer_con_cache
+from src.features import aprender_vocabulario, extraer_con_cache
 from src.limpieza import limpiar
 from src.mapping import ETIQUETAS
 from src.modelo import guardar_modelo
@@ -86,7 +86,10 @@ def separar_vistos(grupos: np.ndarray, fraccion: float, semilla: int) -> np.ndar
 
 def caracteristicas(muestras: list, cfg_feat: dict, cache_dir: Path, nombre: str) -> np.ndarray:
     rutas = [m[0] for m in muestras]
-    clave = hashlib.md5(json.dumps([rutas, cfg_feat]).encode()).hexdigest()[:10]
+    resto = {k: v for k, v in cfg_feat.items() if k != "vocabulario"}
+    vocabulario = cfg_feat.get("vocabulario")
+    clave = hashlib.md5(json.dumps([rutas, resto]).encode()
+                        + (vocabulario.tobytes() if vocabulario is not None else b"")).hexdigest()[:10]
     inicio = time.time()
     X = extraer_con_cache(rutas, cache_dir / f"{nombre}_{clave}.npy", **cfg_feat)
     print(f"características {nombre}: {X.shape} en {time.time() - inicio:.0f} s")
@@ -165,6 +168,11 @@ def main(config_path: str):
     print(f"train {conteo(train)} | test {conteo(test)}")
     guardar_muestras(train, test, salida / "muestras.csv")
 
+    if "bovw" in cfg["features"]["tipos"] and cfg["features"].get("vocabulario") is None:
+        # Vocabulario de palabras visuales solo con fotos de train (sin etiquetas); se guarda con el modelo
+        inicio = time.time()
+        cfg["features"] = {**cfg["features"], "vocabulario": aprender_vocabulario([m[0] for m in train], semilla=semilla)}
+        print(f"vocabulario de {len(cfg['features']['vocabulario'])} palabras visuales en {time.time() - inicio:.0f} s")
     X = caracteristicas(train, cfg["features"], salida / "cache", "train")
     y = np.array([m[1] for m in train])
     grupos = np.array([m[2] for m in train])

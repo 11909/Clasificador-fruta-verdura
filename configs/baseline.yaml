@@ -36,8 +36,9 @@ data:
 
 features:
   tamano: 64                # la imagen se reduce a 64x64 antes de extraer
-  # color, hog, lbp (los originales), color_espacial, hog_fino, lbp_multi, forma; quita alguno para comparar su aporte
-  tipos: [color, color_espacial, hog_fino, lbp_multi, forma]
+  # color, hog, lbp (los originales), color_espacial, hog_fino, lbp_multi, forma, color_lab, bovw;
+  # quita alguno para comparar su aporte. bovw aprende su vocabulario de las fotos de train.
+  tipos: [color, color_espacial, forma, color_lab, bovw]
   bins_color: 16
   # Separa el alimento del fondo antes de medir: grabcut (OpenCV), saturacion o null (imagen completa)
   segmentar: grabcut

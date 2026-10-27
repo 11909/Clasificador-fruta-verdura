@@ -216,6 +216,9 @@ En `configs/baseline.yaml` se listan los modelos a comparar. Cada uno se evalúa
   - `lbp` / `lbp_multi`: textura; `lbp_multi` la mide a 3 escalas (radios 1, 2 y 3).
   - `forma`: separa el alimento del fondo por saturación y mide su área, redondez, alargamiento, solidez y excentricidad.
   - `segmentar` separa el alimento del fondo antes de medir. `saturacion` toma los píxeles más saturados (Otsu); `grabcut` parte de esa máscara y la refina con GrabCut de OpenCV, tomando el borde de la imagen como fondo. Se queda la región más grande; el color se mide solo sobre ella, el fondo se pinta de gris liso antes de HOG y LBP, y `forma` usa esa misma máscara. Si la máscara sale casi vacía o casi completa, se usa la imagen entera.
+  - `color_lab`: media y desviación en Lab y un histograma conjunto de los canales a y b, medidos sobre el alimento. Lab separa mejor los tonos que HSV.
+  - `bovw` (bolsa de palabras visuales): descriptores SIFT en una rejilla densa (225 por foto, a 128 px), contados contra un vocabulario de 256 patrones locales que se aprende con k-means de las fotos de train y se guarda con el modelo.
+  - Por defecto: `color`, `color_espacial`, `forma`, `color_lab` y `bovw` (489 dimensiones). Con 4,051 fotos reales de 40 alimentos del proyecto, validando con fotos nuevas de alimentos vistos, gradient_boosting pasó de 0.73 a 0.78 de accuracy balanceada frente a los tipos anteriores (1,981 dimensiones), y svm de 0.60 a 0.71. Con alimentos no vistos quedó igual (~0.60).
   - Los modelos publicados antes guardan sus propios tipos, así que siguen funcionando.
 - **Reducción de dimensiones:** `pca` aplica PCA antes del modelo.
 
