@@ -427,15 +427,19 @@ def main():
         descartes = {"prueba": 0, "repetida": 0, "estudio": 0, "chica o dañada": 0, "no es el alimento": 0}
         no_es = re.compile("|".join(rf"\b{re.escape(w)}" for w in fila.get("excluir", "").split()) or "$^", re.I)
         inicio = time.time()
-        for fuente in fuentes:
-            for busqueda in fila["busquedas"].split("|"):
-                if n >= meta:
-                    break
+        # Primera vuelta: cada búsqueda aporta su parte de la meta, para que no salgan todas de la
+        # primera (p. ej. betabel suelto, con hojas, partido...). La segunda completa lo que falte.
+        busquedas = fila["busquedas"].split("|")
+        for ronda in (0, 1):
+            for fuente, (i, busqueda) in ((f, b) for f in fuentes for b in enumerate(busquedas)):
+                tope = meta if ronda else -(-meta * (i + 1) // len(busquedas))
+                if n >= tope:
+                    continue
                 try:
                     for c, datos in FUENTES[fuente](busqueda, vistos, pausa=a.pausa, hilos=a.hilos,
                                                      excluir=fila.get("excluir", ""),
-                                                     cuantas=min(2 * (meta - n) + 10, 300)):
-                        if n >= meta:
+                                                     cuantas=min(2 * (tope - n) + 10, 300)):
+                        if n >= tope:
                             break
                         if datos is None:
                             descartes["prueba" if c["titulo"] in excluidos else "repetida"] += 1
