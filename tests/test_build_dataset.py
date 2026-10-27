@@ -187,6 +187,22 @@ def test_descomprimir_zips_en_raiz_y_en_carpeta_de_alimento(tmp_path):
     assert (drive / "zanahoria" / "luis_001.jpg").exists() and not (drive / "zanahoria" / "notas.txt").exists()
 
 
+def test_dos_zips_en_una_carpeta_no_se_pisan(tmp_path):
+    import zipfile
+    from src.equipo import descomprimir_zips
+
+    betabel = tmp_path / "drive" / "betabel"
+    betabel.mkdir(parents=True)
+    for nombre, contenido in (("web_betabel_1.zip", b"a"), ("web_betabel_2.zip", b"b")):
+        with zipfile.ZipFile(betabel / nombre, "w") as z:  # los dos traen 0001.jpg
+            z.writestr("0001.jpg", contenido)
+            z.writestr("otra/0001.jpg", contenido + b"2")
+    for _ in range(2):  # volver a descomprimir no crea copias
+        descomprimir_zips(str(tmp_path / "drive"))
+    fotos = sorted(p.name for p in betabel.glob("*.jpg"))
+    assert len(fotos) == 4 and {(betabel / f).read_bytes() for f in fotos} == {b"a", b"a2", b"b", b"b2"}
+
+
 def test_faltantes_usa_kaggle_y_equipo():
     from collections import Counter
     from src.equipo import faltantes

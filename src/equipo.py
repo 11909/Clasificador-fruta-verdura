@@ -46,8 +46,19 @@ def descomprimir_zips(carpeta: str, destino_raiz: str | None = None) -> list[str
             else:
                 for miembro in _miembros(z):
                     if Path(miembro).suffix.lower() in EXTENSIONES:
-                        (zip_path.parent / Path(miembro).name).write_bytes(z.read(miembro))
+                        _soltar(z.read(miembro), zip_path.parent, Path(miembro).name, zip_path.stem)
     return raices
+
+
+def _soltar(datos: bytes, carpeta: Path, nombre: str, prefijo: str):
+    """Escribe una foto de un zip en la carpeta del alimento. Si ya hay otra distinta con ese nombre
+    (otro zip de la misma carpeta, o dos subcarpetas del zip con 001.jpg), le antepone el nombre del zip
+    y, si hace falta, un número, para no pisarla. Volver a descomprimir deja los mismos nombres."""
+    destino, n = carpeta / nombre, 1
+    while destino.exists() and destino.read_bytes() != datos:
+        destino = carpeta / (f"{prefijo}_{nombre}" if n == 1 else f"{prefijo}_{n}_{nombre}")
+        n += 1
+    destino.write_bytes(datos)
 
 
 def descargar_drive(url: str, destino: str = "/kaggle/working/fotos_equipo") -> list[str]:
