@@ -64,3 +64,24 @@ def test_borra_el_borrador_si_falla_una_subida(salida, github, monkeypatch):
 def test_falta_el_modelo(tmp_path):
     with pytest.raises(FileNotFoundError):
         pub.publicar(tmp_path, "t", "x/y")
+
+
+def test_compara_con_el_publicado_en_el_mismo_test(salida, ruta_modelo, monkeypatch):
+    from tests.conftest import imagen
+    rutas = []
+    for i, (color, real) in enumerate([((210, 10, 10), "fruta"), ((10, 210, 10), "verdura")] * 2):
+        imagen(color).save(salida / f"{i}.png")
+        rutas.append((str(salida / f"{i}.png"), real))
+    with open(salida / "predicciones_test.csv", "w", encoding="utf-8") as f:
+        f.write("fuente,clase,real,predicho,prob_verdura,ruta\n")
+        f.writelines(f"drive,x,{real},{real},,{ruta}\n" for ruta, real in rutas)
+    res = pub.comparar_con_publicado(salida, str(ruta_modelo))
+    assert res["balanced_accuracy"] == 1.0 and (salida / pub.MISMO_TEST).exists()
+
+
+def test_publica_si_supera_al_publicado_en_el_mismo_test(salida, github, monkeypatch):
+    # El Release dice 0.9 (otro test), pero con el mismo test el publicado saca 0.7 y el nuevo 0.85
+    monkeypatch.setattr(pub, "metricas_publicadas", lambda token, repo: {"balanced_accuracy": 0.9, "release": "m"})
+    (salida / pub.MISMO_TEST).write_text(json.dumps({"balanced_accuracy": 0.7}))
+    assert pub.publicar(salida, "t", "x/y")
+    assert "con el mismo test: balanced_accuracy 0.7000" in github.llamadas[0][2]["body"]
