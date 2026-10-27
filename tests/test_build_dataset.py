@@ -28,6 +28,21 @@ def test_resolver_clase_limpia_prefijos_y_plurales():
     assert resolver_clase("freshxyz", fuente, MAPPING)[1] is None
 
 
+def test_clases_de_las_fuentes_de_kaggle_quedan_mapeadas():
+    # nombres reales de carpeta de freshrotten y PackEat que antes quedaban sin mapeo o en otro alimento
+    import yaml
+    fuentes = {f["nombre"]: f for f in yaml.safe_load(open("configs/dataset.yaml"))["fuentes"]}
+    mapping = cargar_mapping()
+    casos = {"freshrotten": {"freshpatato": "papa", "rottentamto": "jitomate"},
+             "packeat": {"cabbage_broccoli": "brocoli", "cabbage_cauliflower": "coliflor", "beet_round": "betabel",
+                         "raddish_round": "rabano", "salad_green": "lechuga", "tangerine_tangerine": "mandarina",
+                         "pepper_chili": "chile", "pepper_sweet_red": "pimiento", "daikon_daikon": "rabano"}}
+    for fuente, clases in casos.items():
+        for carpeta, alimento in clases.items():
+            assert resolver_clase(carpeta, fuentes[fuente], mapping)[0] == alimento, carpeta
+    assert fuentes["packeat"]["splits"] == {"train": "train/train", "test": "test/test"}
+
+
 def test_construir_combina_deduplica_y_reporta(tmp_path):
     a, b = tmp_path / "a", tmp_path / "b"
     for i in range(3):
