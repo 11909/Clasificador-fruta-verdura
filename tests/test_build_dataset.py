@@ -355,3 +355,30 @@ def test_zip_danado_no_tumba_los_demas(tmp_path):
         z.writestr("oca/web_oca_0001.jpg", b"x")
     descomprimir_zips(str(drive))
     assert (drive / "oca" / "web_oca_0001.jpg").exists()
+
+
+def test_descargar_drive_completo_se_detiene_si_faltan(tmp_path, monkeypatch):
+    import pytest
+    from src.equipo import descargar_drive
+
+    eq = _drive_falso(tmp_path, monkeypatch, {"oca/oca.zip": 99})
+    with pytest.raises(RuntimeError, match="oca"):
+        descargar_drive("https://drive.google.com/x", str(eq), rondas=2, pausa=0, completo=True)
+    # la segunda corrida solo pide lo que falta
+    eq = _drive_falso(tmp_path, monkeypatch, {})
+    assert descargar_drive("https://drive.google.com/x", str(eq), pausa=0, completo=True) == [str(eq)]
+
+
+def test_copiar_kaggle_quita_carpeta_envolvente_y_descomprime(tmp_path):
+    import zipfile
+    from src.equipo import copiar_kaggle
+
+    origen = tmp_path / "input" / "fotos-equipo" / "Fotos equipo"  # como queda el zip que arma Drive
+    (origen / "kale").mkdir(parents=True)
+    (origen / "oca").mkdir()
+    (origen / "kale" / "a.jpg").write_bytes(b"x")
+    with zipfile.ZipFile(origen / "oca" / "oca.zip", "w") as z:
+        z.writestr("oca/web_oca_0001.jpg", b"y")
+    destino = tmp_path / "eq"
+    assert copiar_kaggle(str(tmp_path / "input" / "fotos-equipo"), str(destino)) == [str(destino)]
+    assert (destino / "kale" / "a.jpg").exists() and (destino / "oca" / "web_oca_0001.jpg").exists()
