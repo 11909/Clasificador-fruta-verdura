@@ -2,7 +2,7 @@
 
 Uso local:      python -m app.app                       (modelo publicado)
                 python -m app.app --modelo outputs/modelo.joblib
-En un notebook: from app.app import crear_demo; crear_demo().launch(share=True)
+En un notebook: from app.app import crear_demo; crear_demo().launch()  (en Colab se ve inline; en Kaggle usar share=True)
 
 La interfaz solo llama a Clasificador.clasificar(); para otra interfaz (web, escritorio, móvil)
 basta con hacer lo mismo.
