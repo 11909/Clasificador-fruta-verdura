@@ -60,21 +60,26 @@ def _soltar(datos: bytes, carpeta: Path, nombre: str, prefijo: str):
     y, si hace falta, un número, para no pisarla. Volver a descomprimir deja los mismos nombres."""
     destino, n = carpeta / nombre, 1
     while destino.exists() and destino.read_bytes() != datos:
-        destino = carpeta / (f"{prefijo}_{nombre}" if n == 1 else f"{prefijo}_{n}_{nombre}")
+        # las fotos web_ conservan el prefijo para que sigan contando como fotos de internet
+        web, resto = ("web_", nombre[4:]) if nombre.startswith("web_") else ("", nombre)
+        destino = carpeta / (f"{web}{prefijo}_{resto}" if n == 1 else f"{web}{prefijo}_{n}_{resto}")
         n += 1
     destino.write_bytes(datos)
 
 
-def descargar_drive(url: str, destino: str = "/kaggle/working/fotos_equipo", rondas: int = 4,
-                    pausa: float = 60) -> list[str]:
+def descargar_drive(url: str, destino: str = "/kaggle/working/fotos_equipo", rondas: int = 12,
+                    pausa: float = 60, pausa_max: float = 600, completo: bool = False) -> list[str]:
     """Baja la carpeta de Drive `url` (compartida como "cualquier persona con el enlace") y
     devuelve las raíces con carpetas de alimentos: la propia carpeta y una por zip de la raíz.
 
     Primero lista la carpeta y después baja archivo por archivo. Tras muchas descargas seguidas Drive
     empieza a rechazarlas ("demasiados accesos"), y todo lo que va después en orden alfabético se
     quedaba sin bajar; por eso los que fallan se reintentan hasta `rondas` veces, esperando cada vez
-    más (`pausa`, 2·`pausa`...). Si aun así faltan, sigue con lo que sí bajó y dice qué alimentos
-    quedaron sin fotos. Los archivos que ya estaban de una corrida previa no se vuelven a bajar."""
+    más (`pausa`, 2·`pausa`... hasta `pausa_max`; con los valores por defecto, hasta ~1 h 25 min sin
+    avanzar). Si una vuelta bajó algo, la siguiente espera vuelve a empezar desde `pausa`. Si aun así
+    faltan, con `completo=True` se detiene con un error (para no entrenar con medio Drive); si no, sigue
+    con lo que sí bajó y dice qué alimentos quedaron sin fotos. Los archivos que ya estaban de una
+    corrida previa no se vuelven a bajar."""
     import time
 
     import gdown
@@ -83,11 +88,12 @@ def descargar_drive(url: str, destino: str = "/kaggle/working/fotos_equipo", ron
     archivos = gdown.download_folder(url, output=destino, quiet=True, skip_download=True)
     Path(destino).mkdir(parents=True, exist_ok=True)
     pendientes = [a for a in archivos if not Path(a.local_path).is_file()]
+    seguidas = 0  # vueltas seguidas sin bajar nada
     for ronda in range(rondas):
         if ronda:
-            espera = pausa * 2 ** (ronda - 1)
+            espera = min(pausa * 2 ** (seguidas - 1), pausa_max) if seguidas else pausa
             print(f"Drive rechazó {len(pendientes)} archivos; espero {espera:.0f} s y los reintento "
-                  f"(intento {ronda + 1} de {rondas}).")
+                  f"(intento {ronda + 1} de {rondas}).", flush=True)
             time.sleep(espera)
         fallidos = []
         for a in pendientes:
@@ -96,11 +102,16 @@ def descargar_drive(url: str, destino: str = "/kaggle/working/fotos_equipo", ron
                 gdown.download(id=a.id, output=a.local_path, quiet=True, resume=True)
             except DownloadError:
                 fallidos.append(a)
+        seguidas = seguidas + 1 if len(fallidos) == len(pendientes) else 0
         pendientes = fallidos
         if not pendientes:
             break
     if pendientes:
         carpetas = sorted({Path(a.path).parts[0] for a in pendientes})
+        if completo:
+            raise RuntimeError(f"Drive no dejó bajar {len(pendientes)} archivos de {len(carpetas)} carpetas "
+                               f"({', '.join(carpetas)}). Espera unos minutos y vuelve a correr esta celda: "
+                               "solo baja los que faltan.")
         print(f"AVISO: {len(pendientes)} archivos de Drive no se pudieron bajar; sigo con los que sí bajaron. "
               f"Carpetas afectadas: {', '.join(carpetas)}. Vuelve a correr esta celda para reintentar "
               "solo los que faltan.")
@@ -109,13 +120,58 @@ def descargar_drive(url: str, destino: str = "/kaggle/working/fotos_equipo", ron
         if n == 50:
             print(f"Aviso: {sub.name}/ trae justo 50 archivos; Drive podría haber listado solo 50. "
                   "Si hay más, súbanlos en zips dentro de la carpeta.")
+    return _preparar(destino, "Drive")
+
+
+def _carpetas_de_alimentos(carpeta: Path, alimentos: dict):
+    """Carpetas de alimento dentro de `carpeta`, a cualquier profundidad: las que se llaman como un
+    alimento del mapping o traen fotos o zips sueltos. Las demás (la carpeta que agrega Drive al
+    descargar, o una por zip si Drive partió la descarga en varios) se recorren por dentro."""
+    for sub in sorted(p for p in carpeta.iterdir() if p.is_dir()):
+        sueltos = any(f.is_file() and f.suffix.lower() in EXTENSIONES | {".zip"} for f in sub.iterdir())
+        if clave_de(sub.name, alimentos) or sueltos:
+            yield sub
+        else:
+            yield from _carpetas_de_alimentos(sub, alimentos)
+
+
+def copiar_kaggle(dataset: str, destino: str = "/kaggle/working/fotos_equipo") -> list[str]:
+    """Copia las fotos del equipo desde un dataset de Kaggle (sin límite de descargas como Drive) y
+    devuelve las raíces con carpetas de alimentos, igual que `descargar_drive`.
+
+    `dataset` es una carpeta (p. ej. la de Add Input en /kaggle/input/...) o "dueño/nombre", que se busca
+    en /kaggle/input o se descarga con kagglehub. Dentro debe tener la misma estructura que la carpeta
+    de Drive: una carpeta por alimento con fotos o zips. Se copia a `destino` porque /kaggle/input es de
+    solo lectura y los zips se descomprimen junto a ellos."""
+    import glob
+    import shutil
+
+    origen = Path(dataset)
+    if not origen.is_dir():
+        nombre = dataset.rstrip("/").split("/")[-1]
+        adjuntos = [Path(p) for p in glob.glob(f"/kaggle/input/**/{nombre}", recursive=True) if Path(p).is_dir()]
+        if adjuntos:
+            origen = adjuntos[0]
+        else:
+            import kagglehub
+            origen = Path(kagglehub.dataset_download(dataset))
+    print(f"Fotos del equipo desde Kaggle: {origen}")
+    alimentos = cargar_alimentos()
+    for carpeta in _carpetas_de_alimentos(origen, alimentos):
+        # si Drive partió la descarga en varios zips, un alimento puede venir en más de uno: se juntan
+        shutil.copytree(carpeta, Path(destino) / carpeta.name, dirs_exist_ok=True)
+    return _preparar(destino, "Kaggle")
+
+
+def _preparar(destino: str, fuente: str) -> list[str]:
+    """Descomprime los zips de `destino`, avisa qué carpetas quedaron sin fotos y cuenta las fotos."""
     raices = [destino, *descomprimir_zips(destino)]
     vacias = [sub.name for sub in sorted(p for p in Path(destino).iterdir() if p.is_dir())
               if not any(f.suffix.lower() in EXTENSIONES for f in sub.rglob("*"))]
     if vacias:
-        print(f"AVISO: {len(vacias)} carpetas de Drive quedaron sin fotos: {', '.join(vacias)}")
+        print(f"AVISO: {len(vacias)} carpetas de {fuente} quedaron sin fotos: {', '.join(vacias)}")
     fotos = sum(1 for r in raices for p in Path(r).rglob("*") if p.suffix.lower() in EXTENSIONES)
-    print(f"Drive: {fotos} fotos bajadas")
+    print(f"{fuente}: {fotos} fotos en {len([p for p in Path(destino).iterdir() if p.is_dir()])} carpetas")
     return raices
 
 

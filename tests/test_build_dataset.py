@@ -203,6 +203,21 @@ def test_dos_zips_en_una_carpeta_no_se_pisan(tmp_path):
     assert len(fotos) == 4 and {(betabel / f).read_bytes() for f in fotos} == {b"a", b"a2", b"b", b"b2"}
 
 
+def test_fotos_web_repetidas_siguen_siendo_web(tmp_path):
+    import zipfile
+    from src.dataset import es_web
+    from src.equipo import descomprimir_zips
+
+    oca = tmp_path / "drive" / "oca"
+    oca.mkdir(parents=True)
+    for nombre, contenido in (("oca.zip", b"a"), ("oca_2.zip", b"b")):
+        with zipfile.ZipFile(oca / nombre, "w") as z:
+            z.writestr("oca/web_oca_0001.jpg", contenido)
+    descomprimir_zips(str(tmp_path / "drive"))
+    fotos = sorted(oca.glob("*.jpg"))
+    assert len(fotos) == 2 and all(es_web(f) for f in fotos)
+
+
 def test_faltantes_usa_kaggle_y_equipo():
     from collections import Counter
     from src.equipo import faltantes
@@ -340,3 +355,34 @@ def test_zip_danado_no_tumba_los_demas(tmp_path):
         z.writestr("oca/web_oca_0001.jpg", b"x")
     descomprimir_zips(str(drive))
     assert (drive / "oca" / "web_oca_0001.jpg").exists()
+
+
+def test_descargar_drive_completo_se_detiene_si_faltan(tmp_path, monkeypatch):
+    import pytest
+    from src.equipo import descargar_drive
+
+    eq = _drive_falso(tmp_path, monkeypatch, {"oca/oca.zip": 99})
+    with pytest.raises(RuntimeError, match="oca"):
+        descargar_drive("https://drive.google.com/x", str(eq), rondas=2, pausa=0, completo=True)
+    # la segunda corrida solo pide lo que falta
+    eq = _drive_falso(tmp_path, monkeypatch, {})
+    assert descargar_drive("https://drive.google.com/x", str(eq), pausa=0, completo=True) == [str(eq)]
+
+
+def test_copiar_kaggle_junta_las_partes_de_la_descarga_de_drive(tmp_path):
+    import zipfile
+    from src.equipo import copiar_kaggle
+
+    # Drive partió la descarga en dos zips y Kaggle descomprime cada uno en su carpeta
+    base = tmp_path / "input" / "fotos-equipo"
+    for parte, archivo in (("Fotos-001", "a.jpg"), ("Fotos-002", "b.jpg")):
+        (base / parte / "Fotos" / "kale").mkdir(parents=True)
+        (base / parte / "Fotos" / "kale" / archivo).write_bytes(b"x")
+    (base / "Fotos-002" / "Fotos" / "oca").mkdir()
+    with zipfile.ZipFile(base / "Fotos-002" / "Fotos" / "oca" / "oca.zip", "w") as z:
+        z.writestr("oca/web_oca_0001.jpg", b"y")
+    destino = tmp_path / "eq"
+    assert copiar_kaggle(str(base), str(destino)) == [str(destino)]
+    assert sorted(p.name for p in destino.iterdir()) == ["kale", "oca"]
+    assert (destino / "kale" / "a.jpg").exists() and (destino / "kale" / "b.jpg").exists()
+    assert (destino / "oca" / "web_oca_0001.jpg").exists()
