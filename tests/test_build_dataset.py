@@ -203,6 +203,21 @@ def test_dos_zips_en_una_carpeta_no_se_pisan(tmp_path):
     assert len(fotos) == 4 and {(betabel / f).read_bytes() for f in fotos} == {b"a", b"a2", b"b", b"b2"}
 
 
+def test_fotos_web_repetidas_siguen_siendo_web(tmp_path):
+    import zipfile
+    from src.dataset import es_web
+    from src.equipo import descomprimir_zips
+
+    oca = tmp_path / "drive" / "oca"
+    oca.mkdir(parents=True)
+    for nombre, contenido in (("oca.zip", b"a"), ("oca_2.zip", b"b")):
+        with zipfile.ZipFile(oca / nombre, "w") as z:
+            z.writestr("oca/web_oca_0001.jpg", contenido)
+    descomprimir_zips(str(tmp_path / "drive"))
+    fotos = sorted(oca.glob("*.jpg"))
+    assert len(fotos) == 2 and all(es_web(f) for f in fotos)
+
+
 def test_faltantes_usa_kaggle_y_equipo():
     from collections import Counter
     from src.equipo import faltantes

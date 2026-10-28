@@ -56,7 +56,9 @@ def _soltar(datos: bytes, carpeta: Path, nombre: str, prefijo: str):
     y, si hace falta, un número, para no pisarla. Volver a descomprimir deja los mismos nombres."""
     destino, n = carpeta / nombre, 1
     while destino.exists() and destino.read_bytes() != datos:
-        destino = carpeta / (f"{prefijo}_{nombre}" if n == 1 else f"{prefijo}_{n}_{nombre}")
+        # las fotos web_ conservan el prefijo para que sigan contando como fotos de internet
+        web, resto = ("web_", nombre[4:]) if nombre.startswith("web_") else ("", nombre)
+        destino = carpeta / (f"{web}{prefijo}_{resto}" if n == 1 else f"{web}{prefijo}_{n}_{resto}")
         n += 1
     destino.write_bytes(datos)
 
