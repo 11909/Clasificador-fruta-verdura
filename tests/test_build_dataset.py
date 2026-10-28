@@ -285,16 +285,73 @@ def test_completar_por_clase_usa_drive_primero_sin_pasar_el_tope():
     assert por_clase["rabano negro"] == 180  # Drive solo, recortado al tope de verdura
 
 
-def test_descargar_drive_sigue_con_lo_que_bajo(tmp_path, monkeypatch):
+def _drive_falso(tmp_path, monkeypatch, rechazos):
+    """gdown simulado: lista kale/a.jpg, kale/b.jpg y oca/oca.zip, y `rechazos[nombre]` dice cuántas
+    veces Drive rechaza ese archivo antes de dejarlo bajar."""
+    import zipfile
+    from types import SimpleNamespace
+
     import gdown
     from gdown.exceptions import DownloadError
     from PIL import Image
+
+    eq = tmp_path / "eq"
+    rutas = ["kale/a.jpg", "kale/b.jpg", "oca/oca.zip"]
+
+    def listar(url, output, skip_download=False, **kwargs):
+        assert skip_download
+        return [SimpleNamespace(id=r, path=r, local_path=str(eq / r)) for r in rutas]
+
+    def bajar(id, output, **kwargs):
+        if rechazos.get(id, 0):
+            rechazos[id] -= 1
+            raise DownloadError("Too many users have viewed or downloaded this file recently.")
+        if id.endswith(".zip"):
+            with zipfile.ZipFile(output, "w") as z:  # con carpeta interna, como los del web scraping
+                for k in range(3):
+                    buf = __import__("io").BytesIO()
+                    Image.new("RGB", (20, 20), (k * 80, 0, 0)).save(buf, "JPEG")
+                    z.writestr(f"oca/web_oca_000{k}.jpg", buf.getvalue())
+        else:
+            Image.new("RGB", (20, 20)).save(output)
+        return output
+
+    monkeypatch.setattr(gdown, "download_folder", listar)
+    monkeypatch.setattr(gdown, "download", bajar)
+    return eq
+
+
+def test_descargar_drive_reintenta_lo_que_drive_rechaza(tmp_path, monkeypatch):
+    from collections import Counter
+    from src.dataset import dividir_equipo
     from src.equipo import descargar_drive
 
-    def bajar_a_medias(url, output, **kwargs):
-        (tmp_path / "eq" / "kale").mkdir(parents=True)
-        Image.new("RGB", (20, 20)).save(tmp_path / "eq" / "kale" / "a.jpg")
-        raise DownloadError("Failed to download the following files:\n- eq/kale/b.jpg")
+    # Drive deja de servir después de varias descargas: todo lo que va después falla en la primera vuelta
+    eq = _drive_falso(tmp_path, monkeypatch, {"kale/b.jpg": 1, "oca/oca.zip": 2})
+    assert descargar_drive("https://drive.google.com/x", str(eq), pausa=0) == [str(eq)]
+    tr, te = dividir_equipo(str(eq), 0.3, 42)
+    assert Counter(m[2] for m in tr + te) == {"kale": 2, "oca": 3}
 
-    monkeypatch.setattr(gdown, "download_folder", bajar_a_medias)
-    assert descargar_drive("https://drive.google.com/x", str(tmp_path / "eq")) == [str(tmp_path / "eq")]
+
+def test_descargar_drive_sigue_con_lo_que_bajo(tmp_path, monkeypatch, capsys):
+    from src.equipo import descargar_drive
+
+    eq = _drive_falso(tmp_path, monkeypatch, {"oca/oca.zip": 99})
+    assert descargar_drive("https://drive.google.com/x", str(eq), rondas=2, pausa=0) == [str(eq)]
+    salida = capsys.readouterr().out
+    assert "Carpetas afectadas: oca" in salida and "sin fotos: oca" in salida
+    assert (eq / "kale" / "b.jpg").exists()
+
+
+def test_zip_danado_no_tumba_los_demas(tmp_path):
+    import zipfile
+    from src.equipo import descomprimir_zips
+
+    drive = tmp_path / "drive"
+    (drive / "oca").mkdir(parents=True)
+    (drive / "nopal").mkdir()
+    (drive / "nopal" / "nopal.zip").write_bytes(b"<html>Google Drive - Quota exceeded</html>")
+    with zipfile.ZipFile(drive / "oca" / "oca.zip", "w") as z:
+        z.writestr("oca/web_oca_0001.jpg", b"x")
+    descomprimir_zips(str(drive))
+    assert (drive / "oca" / "web_oca_0001.jpg").exists()
