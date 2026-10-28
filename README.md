@@ -43,12 +43,15 @@ Para las frutas que solo tenían fotos de Fruits-360 hay un script que baja foto
    - **Internet: On.** Es obligatorio: el notebook clona el repo y descarga el dataset y las fotos de Drive.
    - **Accelerator: None.** No hace falta GPU, porque los modelos corren en CPU.
    - **Add Input → Datasets →** busca `mendezrosalesmiguel/frankeinstein` y agrégalo. Es obligatorio para **Save & Run All**: en una versión guardada Kaggle no deja descargar datasets que no estén adjuntos.
+   - Si las fotos del equipo están en un dataset de Kaggle (recomendado, porque Drive corta las descargas), agrégalo igual con **Add Input → Datasets** (p. ej. `mendezrosalesmiguel/fotos-equipo`) y ponlo en `EQUIPO_KAGGLE`.
 3. **Agrega el token:** **Add-ons → Secrets → Add a new secret**, con nombre `GITHUB_TOKEN` y el token como valor. Activa la casilla junto al secreto. Sin token entrena igual, pero no publica el modelo.
 4. **Ajusta la celda Parámetros** (opcional). Lo principal:
 
    | Parámetro | Qué hace | Valor por defecto |
    |---|---|---|
    | `MUESTRA_POR_ETIQUETA` | Toma N frutas + N verduras, repartidas por igual entre clases: cada clase toma primero sus fotos de Drive y se completa con el dataset combinado, dividido 80/20. `None` = usar los splits del dataset combinado: cada clase llega a su tope por clase, con Drive primero. | `5000` |
+   | `EQUIPO_KAGGLE` | Dataset de Kaggle con las carpetas de fotos del equipo, en lugar de Drive. Cómo crearlo: docs/detalles.md, "Fotos del equipo desde Kaggle". `""` = bajar de Drive. | `""` |
+   | `DRIVE_COMPLETO` | Si Drive no deja bajar todo después de reintentar, se detiene en vez de entrenar con carpetas vacías. Vuelve a correr la celda para bajar solo lo que falta. | `True` |
    | `FRACCION_TEST_MUESTRA` | Parte que va a test en la versión preliminar. | `0.2` |
    | `MAX_POR_CLASE` / `MAX_POR_CLASE_VERDURA` | Imágenes por fruta / verdura en los splits normales. Más es mejor, pero más lento. | `150` / `180` |
    | `LIMPIEZA` | Quita fotos casi repetidas de Fruits-360 y deja máximo 100 de esa fuente por clase. No cambia el dataset de Kaggle. `None` = sin limpiar. | activada |
