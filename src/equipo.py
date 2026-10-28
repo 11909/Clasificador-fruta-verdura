@@ -157,9 +157,18 @@ def copiar_kaggle(dataset: str, destino: str = "/kaggle/working/fotos_equipo") -
             origen = Path(kagglehub.dataset_download(dataset))
     print(f"Fotos del equipo desde Kaggle: {origen}")
     alimentos = cargar_alimentos()
-    for carpeta in _carpetas_de_alimentos(origen, alimentos):
-        # si Drive partió la descarga en varios zips, un alimento puede venir en más de uno: se juntan
-        shutil.copytree(carpeta, Path(destino) / carpeta.name, dirs_exist_ok=True)
+    origenes = [origen]
+    # Si Kaggle no descomprimió el zip subido (queda en la raíz del dataset), se descomprime aparte
+    for zip_path in sorted(origen.glob("*.zip")):
+        if zipfile.is_zipfile(zip_path):
+            extraido = Path(destino).parent / f"{Path(destino).name}_subidos" / zip_path.stem
+            with zipfile.ZipFile(zip_path) as z:
+                z.extractall(extraido)
+            origenes.append(extraido)
+    for raiz in origenes:
+        for carpeta in _carpetas_de_alimentos(raiz, alimentos):
+            # si Drive partió la descarga en varios zips, un alimento puede venir en más de uno: se juntan
+            shutil.copytree(carpeta, Path(destino) / carpeta.name, dirs_exist_ok=True)
     return _preparar(destino, "Kaggle")
 
 

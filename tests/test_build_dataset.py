@@ -386,3 +386,17 @@ def test_copiar_kaggle_junta_las_partes_de_la_descarga_de_drive(tmp_path):
     assert sorted(p.name for p in destino.iterdir()) == ["kale", "oca"]
     assert (destino / "kale" / "a.jpg").exists() and (destino / "kale" / "b.jpg").exists()
     assert (destino / "oca" / "web_oca_0001.jpg").exists()
+
+
+def test_copiar_kaggle_descomprime_el_zip_si_kaggle_no_lo_hizo(tmp_path):
+    import zipfile
+    from src.equipo import copiar_kaggle
+
+    base = tmp_path / "input" / "fotos-equipo"
+    base.mkdir(parents=True)
+    with zipfile.ZipFile(base / "Fotos-001.zip", "w") as z:
+        z.writestr("Fotos/kale/a.jpg", b"x")
+    destino = tmp_path / "work" / "eq"
+    copiar_kaggle(str(base), str(destino))
+    assert (destino / "kale" / "a.jpg").exists()
+
