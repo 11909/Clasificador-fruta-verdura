@@ -190,11 +190,11 @@ Si un alimento no tiene carpeta, créala con el nombre de la columna `alimento` 
 
 Drive deja de servir archivos después de muchas descargas seguidas. El notebook reintenta solo (hasta ~1 h 25 min sin avanzar) y, con `DRIVE_COMPLETO = True`, se detiene con un error en lugar de entrenar sin las carpetas que faltan; volver a correr la celda baja solo lo que falta. Para no depender de Drive:
 
-1. En Drive, abre la carpeta de fotos del equipo, selecciona todas las carpetas y **Descargar**. Drive arma uno o varios zips (si son varios, descomprímelos en una sola carpeta).
-2. En Kaggle: **Datasets → New Dataset**, sube esa carpeta (o el zip) y ponle de nombre `fotos-equipo`. Kaggle descomprime el zip de afuera; los zips de cada alimento se quedan como están y el notebook los descomprime.
+1. En Drive, abre la carpeta de fotos del equipo, selecciona todas las carpetas y **Descargar**. Drive arma uno o varios zips.
+2. En Kaggle: **Datasets → New Dataset**, sube esos zips tal cual y ponle de nombre `fotos-equipo`. Kaggle descomprime cada zip de afuera; los zips de cada alimento se quedan como están y el notebook los descomprime.
 3. En el notebook: **Add Input → Datasets →** `fotos-equipo` y en la celda Parámetros `EQUIPO_KAGGLE = "mendezrosalesmiguel/fotos-equipo"`.
 
-`copiar_kaggle` (en `src/equipo.py`) salta la carpeta envolvente que agrega Drive al descargar, copia todo a `/kaggle/working/fotos_equipo` y descomprime los zips igual que con Drive. Cuando agreguen fotos nuevas, súbanlas al dataset con **New Version**.
+`copiar_kaggle` (en `src/equipo.py`) busca las carpetas de alimento a cualquier profundidad (salta la carpeta que agrega Drive y junta un alimento que Drive haya partido en varios zips), las copia a `/kaggle/working/fotos_equipo` y descomprime los zips igual que con Drive. Cuando agreguen fotos nuevas, súbanlas al dataset con **New Version**.
 
 ### Más adelante: fuentes fuera de Kaggle
 

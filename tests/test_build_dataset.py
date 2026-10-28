@@ -369,16 +369,20 @@ def test_descargar_drive_completo_se_detiene_si_faltan(tmp_path, monkeypatch):
     assert descargar_drive("https://drive.google.com/x", str(eq), pausa=0, completo=True) == [str(eq)]
 
 
-def test_copiar_kaggle_quita_carpeta_envolvente_y_descomprime(tmp_path):
+def test_copiar_kaggle_junta_las_partes_de_la_descarga_de_drive(tmp_path):
     import zipfile
     from src.equipo import copiar_kaggle
 
-    origen = tmp_path / "input" / "fotos-equipo" / "Fotos equipo"  # como queda el zip que arma Drive
-    (origen / "kale").mkdir(parents=True)
-    (origen / "oca").mkdir()
-    (origen / "kale" / "a.jpg").write_bytes(b"x")
-    with zipfile.ZipFile(origen / "oca" / "oca.zip", "w") as z:
+    # Drive partió la descarga en dos zips y Kaggle descomprime cada uno en su carpeta
+    base = tmp_path / "input" / "fotos-equipo"
+    for parte, archivo in (("Fotos-001", "a.jpg"), ("Fotos-002", "b.jpg")):
+        (base / parte / "Fotos" / "kale").mkdir(parents=True)
+        (base / parte / "Fotos" / "kale" / archivo).write_bytes(b"x")
+    (base / "Fotos-002" / "Fotos" / "oca").mkdir()
+    with zipfile.ZipFile(base / "Fotos-002" / "Fotos" / "oca" / "oca.zip", "w") as z:
         z.writestr("oca/web_oca_0001.jpg", b"y")
     destino = tmp_path / "eq"
-    assert copiar_kaggle(str(tmp_path / "input" / "fotos-equipo"), str(destino)) == [str(destino)]
-    assert (destino / "kale" / "a.jpg").exists() and (destino / "oca" / "web_oca_0001.jpg").exists()
+    assert copiar_kaggle(str(base), str(destino)) == [str(destino)]
+    assert sorted(p.name for p in destino.iterdir()) == ["kale", "oca"]
+    assert (destino / "kale" / "a.jpg").exists() and (destino / "kale" / "b.jpg").exists()
+    assert (destino / "oca" / "web_oca_0001.jpg").exists()

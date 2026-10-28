@@ -123,14 +123,16 @@ def descargar_drive(url: str, destino: str = "/kaggle/working/fotos_equipo", ron
     return _preparar(destino, "Drive")
 
 
-def _raiz_de_alimentos(carpeta: Path) -> Path:
-    """Baja por las carpetas envolventes (una sola subcarpeta y ningún archivo), como la que agrega
-    Drive al descargar todo en un zip, hasta la que tiene las carpetas de los alimentos."""
-    while True:
-        hijos = list(carpeta.iterdir())
-        if len(hijos) != 1 or not hijos[0].is_dir():
-            return carpeta
-        carpeta = hijos[0]
+def _carpetas_de_alimentos(carpeta: Path, alimentos: dict):
+    """Carpetas de alimento dentro de `carpeta`, a cualquier profundidad: las que se llaman como un
+    alimento del mapping o traen fotos o zips sueltos. Las demás (la carpeta que agrega Drive al
+    descargar, o una por zip si Drive partió la descarga en varios) se recorren por dentro."""
+    for sub in sorted(p for p in carpeta.iterdir() if p.is_dir()):
+        sueltos = any(f.is_file() and f.suffix.lower() in EXTENSIONES | {".zip"} for f in sub.iterdir())
+        if clave_de(sub.name, alimentos) or sueltos:
+            yield sub
+        else:
+            yield from _carpetas_de_alimentos(sub, alimentos)
 
 
 def copiar_kaggle(dataset: str, destino: str = "/kaggle/working/fotos_equipo") -> list[str]:
@@ -153,9 +155,11 @@ def copiar_kaggle(dataset: str, destino: str = "/kaggle/working/fotos_equipo") -
         else:
             import kagglehub
             origen = Path(kagglehub.dataset_download(dataset))
-    origen = _raiz_de_alimentos(origen)
     print(f"Fotos del equipo desde Kaggle: {origen}")
-    shutil.copytree(origen, destino, dirs_exist_ok=True)
+    alimentos = cargar_alimentos()
+    for carpeta in _carpetas_de_alimentos(origen, alimentos):
+        # si Drive partió la descarga en varios zips, un alimento puede venir en más de uno: se juntan
+        shutil.copytree(carpeta, Path(destino) / carpeta.name, dirs_exist_ok=True)
     return _preparar(destino, "Kaggle")
 
 
